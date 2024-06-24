@@ -1,0 +1,183 @@
+<?php
+include "block.php";
+
+if(getRealIpAddr() != getSession($_GET['user'])['IP']){
+  header("Location:../index.php");
+}
+
+?>
+<!DOCTYPE html>
+<html style="overflow-x:hidden;overflow-y:auto;">
+<head>
+  <title>Help Trader</title>
+  <link rel="shortcut icon" href="../favicon.png">
+  <meta name="viewport" content="width=device-width initial-scale=1.0 maximum-scale=1.0" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+  <script src="block.js"></script>
+  <link rel="stylesheet" href="./style.css">
+  <link href="c3.css" rel="stylesheet">
+  <script src="c3.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+
+  <style>
+  </style>
+
+  <script>
+  </script>
+</head>
+<body onload="inicio()"> 
+
+<div id='preloader'>
+  	<div class='charge_logo'>
+      <div class='charge_word'>
+        <div class='loader'></div>
+      </div>
+    </div>
+  </div>
+
+<input type="hidden" id="recordCount" value="">
+<input type="hidden" id="priceMax" value="">
+<input type="hidden" id="priceMin" value="">
+<input type="hidden" id="recupera" value="">
+<input type="hidden" id="btAgregar" value="">
+<input type="hidden" id="balance" value="">
+<input type="hidden" id="cantidadComprada" value='0' >
+<input type="hidden" id="price" value='0' >
+<input type="hidden" id="perdidas" value="0">
+<span style=display:none; id="techo"></span>
+
+<dialog class="dialog_retiro" id="config" close>
+    <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" ><input type="radio" id="xconf" name="">Configuracion</div>
+    <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('config').close()">X</a><br>
+    <hr>
+    <span>Moneda Par </span><input style="width:100px;" title="Example: HNTUSDT, HNTBUSD" type="text" maxlength="10" id="moneda" value=""><span style="cursor:pointer;" title="Insertar una Nueva" onclick="Reset()">&#9088;</span><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:default;" onclick="deletePar()">Delete</span><br>
+    <span>Asset </span><input style="width:100px;" title="Asset is: HNT, BNB, BTC" type="text" maxlength="10" id="asset" value=""><br>
+    <span>Capital </span><input style="width:100px;" type="number" step="0.01" id="capital" value="" onkeyup="calculo()" onchange="calculo()"><br>    
+    <span>Impuesto </span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" >USDT<br>
+    <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
+    <span>Precio Venta </span><input style="width:80px;" type="number" step="0.01" id="precio_venta" value="" ><br>
+    <span>StopLoss </span><input style="width:80px;" type="number" step="0.01" id="stop" value="" ><br>
+    <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Local</label>
+    <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Binance</label>   
+    <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>
+  </dialog>  
+
+<div style="padding:5px;">  
+  <div class="price_entrada">
+    <label style="margin-left:34px;font-size:21px;font-weight:bold;" id="priceMoneda"></label>
+    <label title="Config" style="margin-left:20px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
+  </div>
+  <div class="price_entrada">
+    <label style="display:none;" id="priceBtc"></label>    
+  </div>
+</div>
+
+<div class="chart">
+  <div style="margin-left:34px;font-size:11px;">
+    <input type="radio" id="xmes" name="fav_language" value="xmes" onclick="xmes()">
+    <label for="xmes">MES</label>
+    <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">
+    <label for="xano">ALL</label>
+  </div>
+  <div class="grafico" id="chart" ></div>  
+</div>
+
+<div class="div1">
+  <div id="izquierda" class="izquierda" style="height:190px;">  
+  <table style=width:100%;text-align:right;color:#767E8A;border-spacing:0px; >
+    <tr><td></td></tr>
+    <tr><td>Alerta <select style="text-transform:uppercase;font-weight: bold;border:0;outline:0;color:#EAECEF; background:#171A1E;" id="colorAlerta">
+      <option value="mute" selected label="Mute &#128263;">
+     <!-- <option value="verde" label="verde &#128266;">
+      <option value="naranja" label="naranja &#128266;"> -->
+      <option value="roja" label="Compra &#128266;">
+    </select>
+</td></tr>
+    <tr><td><label style="color:#EAECEF;font-weight: bold;"id="utc"></label></td></tr>
+    <!--<tr><td><label title="Posible Resistencia" style="font-weight:bold;" id="resistencia"></label></td></tr>-->
+    <tr><td><label title="Promedio de Precio" style="font-weight:bold;" id="zona"></label></td></tr>
+    <tr><td><label style="font-weight:bold;" id="tendencia"></label></td></tr>
+    <tr><td>  <label style="font-weight:bold;" id="totalTendencia"></label></td></tr>
+  </table>
+  </div> 
+
+  <div id="derecha" class="derecha" style="height:190px;">    
+    <table style=width:100%;text-align:right;color:#767E8A;border-spacing:0px; >
+      <tr><td></td><td></td></tr>
+      <tr><td><span style="font-weight:bold;cursor:pointer;font-size:16px;color:white;" title="Suma la Ganancia al Capital" onclick="sumarGanancia()">&#8721;</span><span> Capital</span></td><td><input style="background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="showCapital" value="0.00" readonly></td></tr>
+      <tr><td><span style=""><span title="Reset Ganancias" style="cursor:pointer;font-size:24px; background:transparent;color:white;" onclick="resetGanancias()">&#8630;</span>Ganancias</span></td><td><input style="background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="ganancias" value="0.00" readonly ></td></tr>
+      <tr><td><span style="">Disp </span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="disponible" value="0.00" readonly ></td></tr>
+      <tr><td><span style="">Inv x Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="invxcompra" value="0.00" readonly ></td></tr>
+      <tr><td><span style="">Ult. Venta</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="ultimaventa" value="0.00" readonly ></td></tr>
+    </table>
+  </div>
+
+  <div id="abajo" class="abajo">    
+    <label title="Nivel vela con dia anterior Bitcoin" class=stylenivel id="antbtc"></label> 
+    <label title="Max de vela con dia anterior" class=stylenivel id="ant"></label>  
+    <label title="Min de Vela con dia anterior" class=stylenivel id="symbol" style="display:none;"></label>
+    <label title="Posiblidad de Compra" class=stylenivel id="nivelcompra"></label>
+    <span style="float:right;font-weight:bold;" id="mindia"></span>
+    <label id="buttonMuted" class="mute is-muted" onclick="toggleMute()" style=" display:none;margin-left:13px;font-size:21px;cursor: pointer;">&#128266;</label>
+  </div>
+</div>
+
+<div class="div3" >
+    <div class=bar>
+      <button id="tabButtonOpera" class="bar tabButton" style="color:#F0B90B;" onclick=clickTabOpera()>Operaciones</button>
+      <button id="tabButtonBinance" class="bar tabButton" onclick=clickTabBinance()>Ordenes en Binance</button>
+    </div>
+
+    <div id=tabOpera class=tabContainer>
+      <div id="div3"></div>
+    </div>
+
+    <div class=tabContainer id=tabBinance style=display:none;>
+      <div  id="div2"></div>
+    </div>   
+
+</div>
+
+<div class="div2">
+  <div class="izquierda_asset" id="listasset"></div>
+  <div id="derecha" class="derecha" style="">
+    <div class=bar>
+      <button id="tabButtonComprar" class="bar tabButton" style="background:#1E2026;color:#4BC883;border-top:2px solid #F0B90B;" onclick=clickTabComprar()>Comprar</button>
+      <button id="tabButtonVender" class="bar tabButton" onclick=clickTabVender()>Vender</button>
+    </div>
+    <div id=tabComprar class=tabContainer>
+      <table style=width:100%;text-align:right;>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.01"></td></tr>
+        <tr><td>Cantidad</td><td><span style="" id="piso"></span></td></tr>
+        <tr><td>StopLoss</td><td><span style="" id="stoploss"></span></td></tr>
+        <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input type="checkbox" id="sugerirPrecioCompra" checked></td></tr>        
+        <tr><td></td><td>.</td></tr>
+        <tr><td></td><td>.</td></tr>
+      </table>
+      <br>
+      <button class='appbtn' style="background:#4BC883;margin:0;width:100%;color:white;" type="button" onclick="agregar()">COMPRAR <span style="font-weight: bold;" id="cualmoneda"></span></button>
+    </div>
+
+    <div class=tabContainer id=tabVender style=display:none;>
+      <table style=width:100%;text-align:right;>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra2" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.01" readonly></td></tr>
+        <tr><td>Balance</td><td><input style="width:110px;margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="mbalance" value="0.00" readonly ></td></tr>
+        <tr><td>Total</td><td><span style=width:100px;font-weight:bold;color:white; id="totalBalanceVenta">0.00USDT</span></td></tr>
+        <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input type="checkbox" id="sugerirPrecioVenta" checked></td></tr>
+        <tr><td></td><td>.</td></tr>
+        <tr><td></td><td>.</td></tr>        
+      </table>
+      <br>   
+      <button title="Vender a Negativo" type=button cclass='appbtn' style="background:#F6465D;margin:0;width:100%;color:white;" onclick=negativo()>VENDER <span style="font-weight: bold;" id="cualmoneda2"></span></button>
+    </div>
+  </div>  
+</div>
+
+<dialog class="dialog_retiro" id="retiro" close>
+  <div style="display:inline-block;" id="iconmoney"></div>
+  <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('retiro').close()">X</a><br>
+</dialog>
+<br><br>
+</body>
+</html>
