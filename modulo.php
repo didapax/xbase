@@ -71,12 +71,6 @@ function price($price){
 
 function formatPrice($valor,$moneda){
   switch ($moneda) {
-    case "RUNEUSDT":
-    case "ATOMUSDT":
-    case "NEARUSDT":
-    case "INJUSDT":
-        return number_format($valor,3,".","");
-        break;
     case "ADAUSDT":
     case "MATICUSDT":
         return number_format($valor,4,".","");
@@ -84,7 +78,19 @@ function formatPrice($valor,$moneda){
     case "TRXUSDT":
     case "DOGEUSDT":        
         return number_format($valor,5,".","");
-        break;        
+        break;      
+    case "RUNEUSDT":
+    case "RUNEUSDC":
+    case "ATOMUSDT":
+    case "NEARUSDT":
+    case "INJUSDT":
+          return number_format($valor,3,".","");
+          break;          
+    case "BTCUSDT":
+    case "ETHUSDT":
+    case "LTCUSDT":
+          return number_format($valor,2,".","");
+          break;
     case "BNBUSDT":
         return number_format($valor,1,".","");
         break;
@@ -92,7 +98,7 @@ function formatPrice($valor,$moneda){
         return number_format($valor,0,".","");
         break;        
     default:
-      return number_format($valor,2,".","");
+      return $valor;
   }
 }
 
@@ -629,7 +635,8 @@ function refreshDataAuto(){
     while($row = mysqli_fetch_array($resultado)){        
       $asset = $row['ASSET'];    
       $available_mon=$row['MONEDA'];
-      $available = formatPrice($price[$available_mon],$available_mon);
+      //$available = formatPrice($price[$available_mon],$available_mon);
+      $available = $price[$available_mon];
       $axie = readPrices($available_mon);
       $priceArriba = formatPrice($axie['ARRIBA'],$available_mon);
       $priceAbajo = formatPrice($axie['ABAJO'],$available_mon);

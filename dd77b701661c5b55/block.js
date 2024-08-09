@@ -346,7 +346,7 @@ function  quantity(valor,moneda){
   }
 }
 
-function leerDatos(){
+function leerDatos(){ 
   $.get("block?getPriceBinance=",
     function(data){      
       datos= JSON.parse(data);
@@ -398,7 +398,7 @@ function leerDatos(){
     });
 }
 
-function refreshDatos(){
+function refreshDatos(){ 
   if(navigator.onLine){
     $.get("block?getPriceBinance&auto=", function(data){
       datos= JSON.parse(data);

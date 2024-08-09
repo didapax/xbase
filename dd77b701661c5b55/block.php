@@ -239,8 +239,8 @@ if(isset($_POST['agregar'])){
   refreshDatos();
 }
 
-if(isset($_GET['getpante'])){
-  $row = readDatos();
+if(isset($_GET['getpante'])){ 
+  $row = readDatos(); 
   $moneda=$row['MONEDA'];
   $precio = $_GET['nprice'];
   $puntos = readParametros()['PUNTOS'];
