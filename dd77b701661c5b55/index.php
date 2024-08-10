@@ -16,6 +16,8 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
   <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
   <script src="block.js"></script>
   <link rel="stylesheet" href="./style.css">
+  <script src="../SweetAlert/sweetalert2.all.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="../SweetAlert/sweetalert2.min.css" />       
   <link href="c3.css" rel="stylesheet">
   <script src="c3.js"></script>
   <script src="https://d3js.org/d3.v5.min.js"></script>
@@ -148,7 +150,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     </div>
     <div id=tabComprar class=tabContainer>
       <table style=width:100%;text-align:right;>
-        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001"></td></tr>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="0" id="precioCompra" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001"></td></tr>
         <tr><td>Cantidad</td><td><span style="" id="piso"></span></td></tr>
         <tr><td>StopLoss</td><td><span style="" id="stoploss"></span></td></tr>
         <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input type="checkbox" id="sugerirPrecioCompra" checked></td></tr>        
@@ -161,10 +163,10 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 
     <div class=tabContainer id=tabVender style=display:none;>
       <table style=width:100%;text-align:right;>
-        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra2" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001" readonly></td></tr>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="0" id="precioCompra2" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001" ></td></tr>
         <tr><td>Balance</td><td><input style="width:110px;margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="mbalance" value="0.00" readonly ></td></tr>
         <tr><td>Total</td><td><span style=width:100px;font-weight:bold;color:white; id="totalBalanceVenta">0.00USDT</span></td></tr>
-        <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input type="checkbox" id="sugerirPrecioVenta" checked></td></tr>
+        <tr><td></td><td><label for="sugerirPrecioVenta">Market</label><input type="checkbox" id="sugerirPrecioVenta" checked></td></tr>
         <tr><td></td><td>.</td></tr>
         <tr><td></td><td>.</td></tr>        
       </table>

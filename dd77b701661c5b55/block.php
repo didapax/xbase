@@ -98,10 +98,9 @@ if(isset($_POST['borrar'])){
 if(isset($_POST['negativoBuy'])){
   $trader = readTrader($_POST['negativo']);
   $datos = readParametros();
-  $pagar = ($trader['CANTIDAD'] * 5/100)+$trader['CANTIDAD'];
+  $pagar = $trader['CANTIDAD'];
   $quantity = quantity($pagar,$trader['MONEDA']);
   
-  if($datos['DISPONIBLE'] > ($quantity*readPrices($trader['MONEDA'])['ACTUAL'])){  
     $api = new Binance\API(sqlApiKey(), sqlApiSecret());
     $api->useServerTime();
     $binance = $api->marketBuy($trader['MONEDA'], $quantity);
@@ -130,9 +129,7 @@ if(isset($_POST['negativoBuy'])){
   
     reordenarEscalones();
     refreshDatos();
-  }else{
-    echo "error: No hay saldo + 5% de Interes Suficiente para pagar.!";
-  }
+
 }
 
 if(isset($_POST['negativo'])){
@@ -147,19 +144,25 @@ if(isset($_POST['negativo'])){
       $api->useServerTime();
       $quantity = quantity(($cantidad - ($datos['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
       $api->useServerTime();
-      $order = $api->marketSell($moneda, $quantity);
+      if($_POST['tipo']=="Limit"){
+        $order = $api->sell($moneda, $quantity, $price);
+      }else{
+        $order = $api->marketSell($moneda, $quantity);        
+      }
+      $price = formatPrice(readPrices($moneda)['ACTUAL'],$moneda);
+
       $ganancia = $datos['GANANCIA'] + ($cantidad * readPrices($moneda)['ACTUAL']);
       $laventa = $quantity * formatPrice(readPrices($moneda)['ACTUAL'],$moneda);
       sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia}");
 
-      sqlconector("INSERT INTO TRADER(MONEDA,CANTIDAD,PRECIOVENTA,GANANCIA,NEGATIVO,ESCALON) VALUES(
-        '{$moneda}',
-        {$cantidad},
-        ".formatPrice(readPrices($moneda)['ACTUAL'],$moneda).",
-        {$laventa},
+      sqlconector("INSERT INTO TRADER(MONEDA,TIPO,CANTIDAD,PRECIOVENTA,GANANCIA,NEGATIVO,ESCALON) VALUES(
+        '$moneda',
+        'SELL',
+        $cantidad,
+        $price,
+        $laventa,
         1,
-        {$escalon}
-      )");
+        $escalon)");
 
       reordenarEscalones();
       refreshDatos();      

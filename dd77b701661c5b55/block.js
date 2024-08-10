@@ -1,10 +1,11 @@
-var context= new AudioContext();
-var alarMuted = 1;
+/* Javascript */
+let alarMuted = 1;
 let chart;
 let dollarUSLocale = Intl.NumberFormat('en-IN');
 let datos;
 
 function jsNota(frecuencia){
+        const context= new AudioContext();
         var o= context.createOscillator();
         g=context.createGain();
         o.connect(g);
@@ -60,38 +61,66 @@ function agregar(){
     if(navigator.onLine){
       var valor= "Limit";
       var t_precio = ""+priceFixed(document.getElementById('precioCompra').value);
+      let cantidad = document.getElementById('cantidadComprada').value;
+      let moneda = document.getElementById('moneda').value;
+
       if(document.getElementById('sugerirPrecioCompra').checked === true){
         valor = "Market";
         t_precio = "";
       }
-      var r = confirm("Confirma Va a Comprar "+ document.getElementById('cantidadComprada').value +" Moneda Par "+document.getElementById('moneda').value+" a un Pecio "+valor+" "+t_precio);
-      if (r == true) {
-        if(document.getElementById("btAgregar").value === "0"){
-          $.post("block",{
-            agregar:"" ,
-            tipo: valor,
-            moneda: document.getElementById('moneda').value,
-            compra: document.getElementById('invxcompra').value,
-            cantidad: document.getElementById('cantidadComprada').value,
-            preciocompra: document.getElementById('precioCompra').value
-          },function(data){
-            if(data == "error: 0001"){
-              alert("Hubo un Error al Insertar el Escalon Intente de Nuevo.");
-            }else{ 
-              leerDatos();
-            }        
+
+      Swal.fire({
+        title: 'Comprar',
+        text: `Confirmas la Operacion Comprar ${cantidad}  ${moneda} a un Pecio ${valor} de ${t_precio}`,
+        icon: 'warning',
+        confirmButtonColor: '#EC7063',
+        confirmButtonText: 'Si Comprar',
+        showCancelButton: true,
+        cancelButtonText: "No Comprar"
+        }).then((result) => {
+            if (result.isConfirmed) {
+              if(document.getElementById("btAgregar").value === "0"){
+                $.post("block",{
+                  agregar:"" ,
+                  tipo: valor,
+                  moneda: document.getElementById('moneda').value,
+                  compra: document.getElementById('invxcompra').value,
+                  cantidad: document.getElementById('cantidadComprada').value,
+                  preciocompra: document.getElementById('precioCompra').value
+                },function(data){
+                  if(data == "error: 0001"){
+                    Swal.fire({
+                      title: 'xbase',
+                      text: "Hubo un Error al Insertar el Escalon Intente de Nuevo.!",
+                      icon: 'info',
+                      confirmButtonColor: '#3085d6',
+                      confirmButtonText: 'Ok'
+                      });                
+                  }else{ 
+                    leerDatos();
+                  }        
+                });
+              }
+              else{
+                Swal.fire({
+                  title: 'xbase',
+                  text: "No se pudo agregar la Compra.!",
+                  icon: 'error',
+                  confirmButtonColor: '#3085d6',
+                  confirmButtonText: 'Ok'
+                  });          
+              }
+            }
           });
-        }
-        else{
-          alert("No se puede Agregar la Compra..!");
-        }
-      }
-      else {
-        /*txt = "You pressed Cancel!";*/
-      }
     }
     else{
-      alert("No hay Conexion...");
+      Swal.fire({
+        title: 'xbase',
+        text: "No hay Conexion",
+        icon: 'error',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Ok'
+        });
     }
 }
 
@@ -104,100 +133,139 @@ function crear(){
 }
 
 function perdida(id){
-  var r = confirm("Estas Seguro de Vender.!");
-    if (r == true) {
-      $.post("block",{
-        perdida:id
-      },function(data){
-        leerDatos();
+  Swal.fire({
+    title: 'xbase',
+    text: "Estas Seguro de Vender.!",
+    icon: 'info',
+    confirmButtonColor: '#EC7063',
+    confirmButtonText: 'Si Vender',
+    showCancelButton: true,
+    cancelButtonText: "No estoy seguro"
+    }).then((result) => {
+        if (result.isConfirmed) {
+          $.post("block",{
+            perdida:id
+          },function(data){
+            leerDatos();
+          });        
+        }
       });
-    }
-    else {
-      /*txt = "You pressed Cancel!";*/
-    }
 }
 
 function deletePar(){
-  var r = confirm("Estas Seguro de Eliminar a "+document.getElementById('moneda').value+"...?");
-    if (r == true) {
-      $.post("block",{
-        deletepar: document.getElementById('moneda').value
-      },function(data){
-        window.location.href="../index";
-      });
-    }
-    else {
-      /*txt = "You pressed Cancel!";*/
-    }
+  Swal.fire({
+    title: 'xbase',
+    text: "Estas Seguro de Eliminar a "+document.getElementById('moneda').value+"...?",
+    icon: 'info',
+    confirmButtonColor: '#EC7063',
+    confirmButtonText: 'Si Eliminar',
+    showCancelButton: true,
+    cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+          $.post("block",{
+            deletepar: document.getElementById('moneda').value
+          },function(data){
+            window.location.href="../index";
+          });
+        }
+    });
 }
 
 function negativo(){
-  var r = confirm("Estas Seguro de Tomar Prestado "+document.getElementById('mbalance').value+" .?");
-    if (r == true) {
-      let totalVenta = document.getElementById('balance').value * document.getElementById('price').value;
-      if(totalVenta >20){
-            $.post("block",{
-              negativo: 0,
-              cantidad: document.getElementById('balance').value,
-              moneda: document.getElementById('moneda').value
-            },function(data){
-              leerDatos();
-            });
-      }else{
-        alert("Prestamos mayor de 20$..!");
-      }
-    }
-    else {
-      /*txt = "You pressed Cancel!";*/
-    }
+  let valor= "Limit";
+  let precio = document.getElementById('precioCompra2').value *1;
+  let moneda = document.getElementById('moneda').value;
+  let cantidad = document.getElementById('balance').value*1;
+
+  if(document.getElementById('sugerirPrecioVenta').checked === true){
+    valor = "Market";
+  }  
+  Swal.fire({
+    title: 'xbase',
+    text: "Estas Seguro de Vender "+document.getElementById('mbalance').value+" .?",
+    icon: 'info',
+    confirmButtonColor: '#EC7063',
+    confirmButtonText: 'Si Vender',
+    showCancelButton: true,
+    cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+          $.post("block",{              
+            negativo: 1,
+            tipo: valor,
+            cantidad: cantidad,
+            precio: precio,
+            moneda: moneda
+          },function(data){
+            leerDatos();
+          });
+        }
+      });
 }
 
 function negativoBuy(id){
-    var r = confirm("Estas Seguro de Pagar el Prestamo..?");
-    if (r == true) {
-        $.post("block",{
+  Swal.fire({
+    title: 'Retirar',
+    text: "Estas Seguro de Liquidar tu posicion..?",
+    icon: 'info',
+    confirmButtonColor: '#EC7063',
+    confirmButtonText: 'Si Liquidar',
+    showCancelButton: true,
+    cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+          $.post("block",{
             negativoBuy: 0,
             negativo: id
         },function(data){
             if(data.includes("error")){
-                alert(data);
+                //alert(data);
             }
             leerDatos();
         });
-    }
-    else {
-      /*txt = "You pressed Cancel!";*/
-    }
+        }
+      });
 }
 
 function borrar(id){
-  var r = confirm("Estas Seguro de Eliminar el escalon con sus Ordenes.?");
-    if (r == true) {
-      $.post("block",{
-        borrar: id
-      },function(data){
-        leerDatos();
-        /*window.location.href="index";*/
-      });
-    }
-    else {
-      /*txt = "You pressed Cancel!";*/
-    }
+  Swal.fire({
+    title: 'xbase',
+    text: "Estas Seguro de Eliminar el escalon con sus Ordenes.?",
+    icon: 'info',
+    confirmButtonColor: '#EC7063',
+    confirmButtonText: 'Si Eliminar',
+    showCancelButton: true,
+    cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+          $.post("block",{
+            borrar: id
+          },function(data){
+            leerDatos();
+          });
+        }
+    });
 }
 
 function autosell(id){
-  var r = confirm("Confirma Auto Sell.?");
-    if (r == true) {
-      $.post("block",{
-        autosell: id
-      },function(data){
-        refreshDatos();
-        /*window.location.href="index";*/
-      });
-    }
-    else {
-      /*txt = "You pressed Cancel!";*/
-    }
+  Swal.fire({
+    title: 'xbase',
+    text: "Confirma que quieres activar el Auto Sell.? se vendera a precio de mercado",
+    icon: 'info',
+    confirmButtonColor: '#EC7063',
+    confirmButtonText: 'Si Activar',
+    showCancelButton: true,
+    cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+          $.post("block",{
+            autosell: id
+          },function(data){
+            refreshDatos();
+          });
+        }
+    });
 }
 
 function Reset(){
@@ -211,7 +279,13 @@ function Reset(){
       });
     }
     else{
-    alert("Debe Existir una Moneda..!")
+    Swal.fire({
+      title: 'xbase',
+      text: "Debe existir una Moneda, serciorate que la escribiste bien..!",
+      icon: 'error',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Ok'
+      });    
     }
 }
 
@@ -419,7 +493,11 @@ function refreshDatos(){
         document.getElementById('precioCompra').value = formatPrice(datos.price,datos.moneda);
       }
 
-      document.getElementById('precioCompra2').value = formatPrice(datos.price,datos.moneda);
+      if(document.getElementById('sugerirPrecioVenta').checked === true){
+        document.getElementById('precioCompra2').value = formatPrice(datos.price,datos.moneda);
+      }      
+
+      //document.getElementById('precioCompra2').value = formatPrice(datos.price,datos.moneda);
       document.title = datos.asset+" "+datos.labelpricemoneda; 
       document.getElementById('priceMoneda').innerHTML = "<span style='margin-right:5px;color:white;'>"+datos.asset+"</span> "+datos.labelpricemoneda;
       document.getElementById('price').value = formatPrice(datos.price,datos.moneda);
@@ -521,7 +599,13 @@ function sumarGanancia(){
     resetGanancias();
     Guardar();
   }else{
-    alert("No hay ganancias que sumar");
+    Swal.fire({
+      title: 'xbase',
+      text: "No hay ganancias que sumar!",
+      icon: 'info',
+      confirmButtonColor: '#3085d6',
+      confirmButtonText: 'Ok'
+      });      
   }
 }
 

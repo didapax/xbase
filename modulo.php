@@ -226,29 +226,63 @@ function autoLiquida($id){
   $param = readParametros();
   $moneda = $row['MONEDA'];
   $price = $row['PRECIOCOMPRA'];
-  $stopPrice = calcularMargenPerdida($price,$param['STOPLOSS']);
-  $autoSell = calcularMargenGanancia($price,$param['AUTOSHELL']);
+
   if($param['BINANCE']==1){
-    $api = new Binance\API(sqlApiKey(), sqlApiSecret());
-    if(readPrices($moneda)['ACTUAL'] <= $stopPrice){
-      $api->useServerTime();
-      $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
-      $api->useServerTime();
-      $order = $api->marketSell($moneda, $quantity);
-      if(isset($order['orderId'])){
-        liquidar($id);
-      }
-    }
-    if($row['AUTOSELL']==1){
-        if(readPrices($moneda)['ACTUAL'] > $autoSell){
-            $api->useServerTime();
-            $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
-            $api->useServerTime();
-            $order = $api->marketSell($moneda, $quantity);
-            if(isset($order['orderId'])){
-                liquidar($id);
-            }            
+    if($row['TIPO'] == "BUY"){
+      $stopPrice = calcularMargenPerdida($price,$param['STOPLOSS']);      
+      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+      //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE VENDE RAPIDAMENTE
+      if(readPrices($moneda)['ACTUAL'] <= $stopPrice){
+        $api->useServerTime();
+        $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+        $api->useServerTime();
+        $order = $api->marketSell($moneda, $quantity);
+        if(isset($order['orderId'])){
+          liquidar($id);
         }
+      }    
+    }
+    else{
+      $stopPrice = calcularMargenGanancia($price,$param['STOPLOSS']);      
+      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+      //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE COMPRA RAPIDAMENTE
+      if(readPrices($moneda)['ACTUAL'] >= $stopPrice){
+        $api->useServerTime();
+        $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+        $api->useServerTime();
+        $order = $api->marketBuy($moneda, $quantity);
+        if(isset($order['orderId'])){
+          liquidar($id);
+        }
+      }    
+    }
+
+    //AQUI VA LA LOGICA SI LA VENTA O LA COMPRA ESTA AUTOMATICA O MANUAL
+    if($row['AUTOSELL']==1){
+      if($row['TIPO'] == "BUY"){
+        $autoSell = calcularMargenGanancia($price,$param['AUTOSHELL']);
+        if(readPrices($moneda)['ACTUAL'] > $autoSell){
+          $api->useServerTime();
+          $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+          $api->useServerTime();
+          $order = $api->marketSell($moneda, $quantity);
+          if(isset($order['orderId'])){
+              liquidar($id);
+          }            
+      }
+      }
+      else{
+        $autoSell = calcularMargenPerdida($price,$param['AUTOSHELL']);
+        if(readPrices($moneda)['ACTUAL'] < $autoSell){
+          $api->useServerTime();
+          $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+          $api->useServerTime();
+          $order = $api->marketBuy($moneda, $quantity);
+          if(isset($order['orderId'])){
+              liquidar($id);
+          }            
+        }
+      }
     }
   }
 }
@@ -807,9 +841,10 @@ function findEscalones(){
             $porcenMaxNeg = "0deg";
           }
           $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>".quantity($row['CANTIDAD'],$row['MONEDA'])." ".readDatosMoneda($row['MONEDA'])['ASSET']."<span style=color:{$fg};> {$sy}</span></div>";
-          $botones = "<button disabled type=button class=escalbutton style=background:#EAB92B;width:21px;>&#10006;</button><button type=button class=escalbutton style=background:#4BC883;color:white; onclick=negativoBuy(".$row['ID'].")>Pagar</button>";
+          $botones = "<input title='Auto' type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell(".$row['ID'].")><button type=button class=escalbutton style=background:green;color:white; onclick=negativoBuy(".$row['ID'].")>Buy</button>";
           $cadena = $cadena . "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>".formatPrice($row['PRECIOVENTA'],$row['MONEDA'])."$</td><td>{$precioMoneda}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg}>{$real_ganancia}$</span></td><td style=text-align:right;>{$botones}</td></tr>";
-        }else{
+        }
+        else{
           $precioCompra = formatPrice($row['PRECIOCOMPRA'],$row['MONEDA']);
           if($didable_cancel_button == "disabled"){
             $botones= "<input type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell(".$row['ID'].")><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida(".$row['ID'].")>Sell</button>";              
