@@ -43,17 +43,19 @@ if(isset($_POST['guardar'])){
   $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
   $invxcompra = number_format($_POST['capital'] / $_POST['escalones'],2,".","");
   $disponible= $_POST['capital'] - $inversion;
+  $stoploss = $_POST['stop'];
+  $autoshell = $_POST['precio_venta'];
 
   sqlconector("UPDATE DATOS SET
     MONEDA='{$moneda}',
-    ASSET='{$asset}',
-    PRECIO_VENTA = {$_POST['precio_venta']}
+    ASSET='{$asset}'
      WHERE MONEDA ='{$moneda}'");  
 
   sqlconector("UPDATE PARAMETROS SET
   CAPITAL={$_POST['capital']},
   ESCALONES={$_POST['escalones']},
-  PUNTOS={$_POST['stop']},
+  STOPLOSS={$stoploss},
+  AUTOSHELL={$autoshell},
   INVXCOMPRA={$invxcompra},
   DISPONIBLE={$disponible},
   IMPUESTO={$_POST['impuesto']}
@@ -243,8 +245,8 @@ if(isset($_GET['getpante'])){
   $row = readDatos(); 
   $moneda=$row['MONEDA'];
   $precio = $_GET['nprice'];
-  $puntos = readParametros()['PUNTOS'];
-  $pante = price(ajustPante($precio,$puntos)); 
+  $puntos = readParametros()['STOPLOSS'];
+  $pante = price(calcularMargenPerdida($precio,$puntos)); 
   $obj = array('pante' => $pante,'moneda' => $moneda,'puntos' => $puntos); 
   
   echo json_encode($obj);   

@@ -56,8 +56,8 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <span>Capital </span><input style="width:100px;" type="number" step="0.01" id="capital" value="" onkeyup="calculo()" onchange="calculo()"><br>    
     <span>Impuesto </span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" >USDT<br>
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
-    <span>Precio Venta </span><input style="width:80px;" type="number" step="0.01" id="precio_venta" value="" ><br>
-    <span>StopLoss </span><input style="width:80px;" type="number" step="0.01" id="stop" value="" ><br>
+    <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
+    <span>Perdida %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
     <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Local</label>
     <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Binance</label>   
     <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>
@@ -148,7 +148,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     </div>
     <div id=tabComprar class=tabContainer>
       <table style=width:100%;text-align:right;>
-        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.01"></td></tr>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001"></td></tr>
         <tr><td>Cantidad</td><td><span style="" id="piso"></span></td></tr>
         <tr><td>StopLoss</td><td><span style="" id="stoploss"></span></td></tr>
         <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input type="checkbox" id="sugerirPrecioCompra" checked></td></tr>        
@@ -161,7 +161,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 
     <div class=tabContainer id=tabVender style=display:none;>
       <table style=width:100%;text-align:right;>
-        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra2" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.01" readonly></td></tr>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="" id="precioCompra2" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001" readonly></td></tr>
         <tr><td>Balance</td><td><input style="width:110px;margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="mbalance" value="0.00" readonly ></td></tr>
         <tr><td>Total</td><td><span style=width:100px;font-weight:bold;color:white; id="totalBalanceVenta">0.00USDT</span></td></tr>
         <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input type="checkbox" id="sugerirPrecioVenta" checked></td></tr>

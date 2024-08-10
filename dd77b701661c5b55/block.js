@@ -40,8 +40,14 @@ function calculo(){
 }
 
 function escalon(){
-  document.getElementById('cantidadComprada').value = quantity((document.getElementById('invxcompra').value / document.getElementById('precioCompra').value),document.getElementById('moneda').value);
-  document.getElementById('piso').innerHTML = "<span style=font-weight:bold;color:white;>" + document.getElementById('cantidadComprada').value+"<span style=font-weight:bold;color:gray;>"+document.getElementById('asset').value+"</span></span>";
+  let cantidad = document.getElementById('invxcompra').value*1;
+  let precio = document.getElementById('precioCompra').value*1;
+  let total = cantidad / precio;
+  let moneda = document.getElementById('moneda').value;
+  let cantidadComprada;
+  document.getElementById('cantidadComprada').value = quantity(total,moneda);
+  cantidadComprada = document.getElementById('cantidadComprada').value;
+  document.getElementById('piso').innerHTML = "<span style=font-weight:bold;color:white;>" + cantidadComprada +"<span style=font-weight:bold;color:gray;>"+document.getElementById('asset').value+"</span></span>";
 
   $.get("block?getpante=&nprice="+document.getElementById('precioCompra').value,
   function(data){ 
@@ -292,28 +298,33 @@ function priceFixed(valor){
 
 function formatPrice(valor,moneda){
   switch (moneda) {
+    case "TRXUSDT":
+    case "DOGEUSDT":        
+        return (valor *1).toFixed(5);
+        break;     
+    case "ADAUSDT":
+    case "MATICUSDT":
+        return (valor *1).toFixed(4);
+        break;             
     case "RUNEUSDT":
     case "ATOMUSDT":
     case "NEARUSDT":
     case "INJUSDT":
         return (valor *1).toFixed(3);
-        break;
-    case "ADAUSDT":
-    case "MATICUSDT":
-        return (valor *1).toFixed(4);
-        break;    
-    case "TRXUSDT":
-    case "DOGEUSDT":        
-        return (valor *1).toFixed(5);
-        break;        
+        break;  
+    case "BTCUSDT":
+    case "ETHUSDT":
+    case "LTCUSDT":      
+        return (valor *1).toFixed(2);
+        break;      
     case "BNBUSDT":
         return (valor *1).toFixed(1);
         break;
     case "PAXGUSDT":
         return (valor *1).toFixed(0);
-        break;        
+        break;   
     default:
-      return (valor *1).toFixed(2);
+      return valor *1;
   }
 }
 
@@ -339,6 +350,7 @@ function  quantity(valor,moneda){
         return (valor *1).toFixed(1);
         break;        
     case "DOGEUSDT":
+    case "SHIBUSDC":
         return (valor *1).toFixed(0);
         break;
     default:
@@ -398,7 +410,7 @@ function leerDatos(){
     });
 }
 
-function refreshDatos(){ 
+function refreshDatos(){
   if(navigator.onLine){
     $.get("block?getPriceBinance&auto=", function(data){
       datos= JSON.parse(data);

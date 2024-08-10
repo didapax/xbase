@@ -124,6 +124,7 @@ function  quantity($valor,$moneda){
         return number_format($valor,1,".","");
         break;        
     case "DOGEUSDT":
+    case "SHIBUSDC":
         return number_format($valor,0,"","");
         break;
     default:
@@ -176,46 +177,16 @@ function reordenarEscalones(){
   }
 }
 
-function ajustPactu($precio,$puntosArriba){
-  $devuelvo=0;
-  $precioCompra = $precio;
-  if($precioCompra > 1 && $precioCompra < 20) $devuelvo = $precioCompra + ($puntosArriba * 1);
-  if($precioCompra > 19 && $precioCompra < 50) $devuelvo = $precioCompra + ($puntosArriba * 3);
-  if($precioCompra > 49 && $precioCompra < 100) $devuelvo = $precioCompra + ($puntosArriba * 5);
-  if($puntosArriba < 1) $puntosArriba = 1;
-  if($precioCompra > 99 && $precioCompra < 1000) $devuelvo = $precioCompra + ($puntosArriba * 8);
-  if($precioCompra > 999 && $precioCompra < 10000) $devuelvo = $precioCompra + ($puntosArriba * 13);
-  if($precioCompra > 9999 && $precioCompra < 100000) $devuelvo = $precioCompra + ($puntosArriba * 21);
-  if($precioCompra < 1 && $precioCompra > 0.09 ) $devuelvo = $precioCompra + ($puntosArriba / 100);
-  if($precioCompra < 0.1 && $precioCompra > 0.0099 ) $devuelvo = $precioCompra + ($puntosArriba / 1000);
-  if($precioCompra < 0.01 && $precioCompra > 0.00099 ) $devuelvo = $precioCompra + ($puntosArriba / 10000);
-  if($precioCompra < 0.001 && $precioCompra > 0.000099 ) $devuelvo = $precioCompra + ($puntosArriba / 100000);
-  if($precioCompra < 0.0001 && $precioCompra > 0.0000099 ) $devuelvo = $precioCompra + ($puntosArriba / 1000000);
-  if($precioCompra < 0.00001 && $precioCompra > 0.00000099 ) $devuelvo = $precioCompra + ($puntosArriba / 10000000);
-  if($precioCompra < 0.000001 && $precioCompra > 0.000000099 ) $devuelvo = $precioCompra + ($puntosArriba / 100000000);
-
-  return $devuelvo;
+// Función para calcular el margen de ganancia
+function calcularMargenGanancia($precioActual, $margen) {
+  $precioGanancia = $precioActual * (1 + $margen / 100);
+  return $precioGanancia;
 }
 
-function ajustPante($precio,$puntosArriba){
-  $devuelvo=0;
-  $precioCompra = $precio;
-  if($precioCompra > 1 && $precioCompra < 20) $devuelvo = $precioCompra - ($puntosArriba * 1);
-  if($precioCompra > 19 && $precioCompra < 50) $devuelvo = $precioCompra - ($puntosArriba * 3);
-  if($precioCompra > 49 && $precioCompra < 100) $devuelvo = $precioCompra - ($puntosArriba * 5);
-  if($puntosArriba < 1) $puntosArriba = 1;
-  if($precioCompra > 99 && $precioCompra < 1000) $devuelvo = $precioCompra - ($puntosArriba * 8);
-  if($precioCompra > 999 && $precioCompra < 10000) $devuelvo = $precioCompra - ($puntosArriba * 13);
-  if($precioCompra > 9999 && $precioCompra < 100000) $devuelvo = $precioCompra - ($puntosArriba * 21);
-  if($precioCompra < 1 && $precioCompra > 0.09 ) $devuelvo = $precioCompra - ($puntosArriba / 100);
-  if($precioCompra < 0.1 && $precioCompra > 0.0099 ) $devuelvo = $precioCompra - ($puntosArriba / 1000);
-  if($precioCompra < 0.01 && $precioCompra > 0.00099 ) $devuelvo = $precioCompra - ($puntosArriba / 10000);
-  if($precioCompra < 0.001 && $precioCompra > 0.000099 ) $devuelvo = $precioCompra - ($puntosArriba / 100000);
-  if($precioCompra < 0.0001 && $precioCompra > 0.0000099 ) $devuelvo = $precioCompra - ($puntosArriba / 1000000);
-  if($precioCompra < 0.00001 && $precioCompra > 0.00000099 ) $devuelvo = $precioCompra - ($puntosArriba / 10000000);
-  if($precioCompra < 0.000001 && $precioCompra > 0.000000099 ) $devuelvo = $precioCompra - ($puntosArriba / 100000000);
-
-  return $devuelvo;
+// Función para calcular el margen de pérdida
+function calcularMargenPerdida($precioActual, $margen) {
+  $precioPerdida = $precioActual * (1 - $margen / 100);
+  return $precioPerdida;
 }
 
 function ifOrderExist($order) {
@@ -255,9 +226,8 @@ function autoLiquida($id){
   $param = readParametros();
   $moneda = $row['MONEDA'];
   $price = $row['PRECIOCOMPRA'];
-  $puntos = $param['PUNTOS'];
-  $stopPrice = ajustPante($price,$puntos);
-  $autoSell = ajustPactu($price,$puntos);
+  $stopPrice = calcularMargenPerdida($price,$param['STOPLOSS']);
+  $autoSell = calcularMargenGanancia($price,$param['AUTOSHELL']);
   if($param['BINANCE']==1){
     $api = new Binance\API(sqlApiKey(), sqlApiSecret());
     if(readPrices($moneda)['ACTUAL'] <= $stopPrice){
@@ -516,28 +486,6 @@ function sqlApiSecret(){
   return readParametros()['SECRET'];
 }
 
-/*function resistencia($moneda){
-  $precio = readPrices($moneda)['ACTUAL'];
-  if($precio<1){
-    return row_sqlconector("SELECT ABAJO AS RESISTENCIA, COUNT(ABAJO) AS CUENTA FROM PRICES WHERE MONEDA='{$moneda}' GROUP BY ABAJO ORDER BY CUENTA DESC LIMIT 1")['RESISTENCIA'];
-  }  
-  if($precio>1 && $precio < 100){
-    return row_sqlconector("SELECT FLOOR(ABAJO) AS RESISTENCIA, COUNT(FLOOR(ABAJO)) AS CUENTA FROM PRICES WHERE MONEDA='{$moneda}' GROUP BY FLOOR(ABAJO) ORDER BY CUENTA DESC LIMIT 1")['RESISTENCIA'];
-  }
-  if($precio>100 && $precio < 1000){
-    return row_sqlconector("SELECT FLOOR(LEFT(ABAJO,2)) AS RESISTENCIA, COUNT(FLOOR(LEFT(ABAJO,2))) AS CUENTA FROM PRICES WHERE MONEDA='{$moneda}' GROUP BY FLOOR(LEFT(ABAJO,2)) ORDER BY CUENTA DESC LIMIT 1")['RESISTENCIA']."0";
-  }  
-  if($precio>1000 && $precio < 10000){
-    return row_sqlconector("SELECT FLOOR(LEFT(ABAJO,2)) AS RESISTENCIA, COUNT(FLOOR(LEFT(ABAJO,2))) AS CUENTA FROM PRICES WHERE MONEDA='{$moneda}' GROUP BY FLOOR(LEFT(ABAJO,2)) ORDER BY CUENTA DESC LIMIT 1")['RESISTENCIA']."00";
-  }    
-  if($precio>10000 && $precio < 100000){
-    return row_sqlconector("SELECT FLOOR(LEFT(ABAJO,2)) AS RESISTENCIA, COUNT(FLOOR(LEFT(ABAJO,2))) AS CUENTA FROM PRICES WHERE MONEDA='{$moneda}' GROUP BY FLOOR(LEFT(ABAJO,2)) ORDER BY CUENTA DESC LIMIT 1")['RESISTENCIA']."000";
-  } 
-  if($precio>100000 && $precio < 1000000){
-    return row_sqlconector("SELECT FLOOR(LEFT(ABAJO,3)) AS RESISTENCIA, COUNT(FLOOR(LEFT(ABAJO,3))) AS CUENTA FROM PRICES WHERE MONEDA='{$moneda}' GROUP BY FLOOR(LEFT(ABAJO,3)) ORDER BY CUENTA DESC LIMIT 1")['RESISTENCIA']."0000";
-  }
-}*/
-
 function totalmoneda($moneda){
   $totalMoneda="0";
   $totalInversion="0";
@@ -605,8 +553,8 @@ function totales($moneda){
   $recupera = 0;
   $color = "#4DCB85";
   for($i = 0.1; $i <= 100; $i++){
-    if(($total * ajustPactu($price,$i)+$disponible) >= $capital){
-      $recupera = number_format(ajustPactu($price,$i),2,".","");
+    if(($total * calcularMargenGanancia($price,$i)+$disponible) >= $capital){
+      $recupera = number_format(calcularMargenGanancia($price,$i),2,".","");
       break;
     }
   }
@@ -798,14 +746,14 @@ function findEscalones(){
     }else{      
       $consulta = "select * from TRADER ORDER BY ESCALON";
       $resultado = mysqli_query( $conexion, $consulta );
-      $puntos = readParametros()['PUNTOS'];      
+      $puntos = readParametros()['STOPLOSS'];
       while($row = mysqli_fetch_array($resultado)){
         $colorAlert = "#CFCFD3";
         $colorRow = "transparent";
         $available = readPrices($row['MONEDA']);
         $precioActual = formatPrice($available['ACTUAL'],$row['MONEDA']);
         $precioMoneda = formatPrice($precioActual,$row['MONEDA']);
-        $stopPrice = ajustPante($row['PRECIOCOMPRA'],$puntos);
+        $stopPrice = calcularMargenPerdida($row['PRECIOCOMPRA'],$puntos);
         $precioAbajo = $available['ABAJO'];
         $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) *3.6 )."deg";
 
@@ -971,8 +919,8 @@ function refreshDatos(){
     'id' => $row['ID'],'recordCount' => $recordCount,'colordisp' => $colorDisp,
     'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($totalPromedio,$moneda),
     'verescalones' => findEscalones(),'verbinance' => findBinance(),'labelpricebitcoin' => $labelPriceBitcoin,
-    'labelpricemoneda' => $labelPriceMoneda,'precio_venta' => $row['PRECIO_VENTA'],'listasset' => listAsset(),
-    'stop' => $row2['PUNTOS'],'balance' => $sumMoneda['m_balance'],'nivelcompra' => nivelCompra($moneda) ); 
+    'labelpricemoneda' => $labelPriceMoneda,'precio_venta' => $row2['AUTOSHELL'],'listasset' => listAsset(),
+    'stop' => $row2['STOPLOSS'],'balance' => $sumMoneda['m_balance'],'nivelcompra' => nivelCompra($moneda) ); 
 
     sqlconector("UPDATE PARAMETROS SET DATOS='".json_encode($obj)."'");
   }  

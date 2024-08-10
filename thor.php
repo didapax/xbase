@@ -30,7 +30,6 @@ else{
   $api = new Binance\API(sqlApiKey(), sqlApiSecret());
   while ($limit <= $tiempo)
   {
-    echo $limit;
     $api->useServerTime();
     $price = $api->prices();
     $api->useServerTime();
