@@ -56,8 +56,8 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <span>Moneda Par </span><input style="width:100px;" title="Example: HNTUSDT, HNTBUSD" type="text" maxlength="10" id="moneda" value=""><span style="cursor:pointer;" title="Insertar una Nueva" onclick="Reset()">&#9088;</span><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:default;" onclick="deletePar()">Delete</span><br>
     <span>Asset </span><input style="width:100px;" title="Asset is: HNT, BNB, BTC" type="text" maxlength="10" id="asset" value=""><br>
     <span>Capital </span><input style="width:100px;" type="number" step="0.01" id="capital" value="" onkeyup="calculo()" onchange="calculo()"><br>    
-    <span>Impuesto </span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" >USDT<br>
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
+    <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>
     <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
     <span>Perdida %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
     <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Xampp</label>

@@ -227,8 +227,7 @@ function autoLiquida($id){
   $moneda = $row['MONEDA'];
   $price = $row['PRECIOCOMPRA'];
 
-  if($param['BINANCE']==1){
-    if($row['TIPO'] == "BUY"){
+  if($row['TIPO'] == "BUY"){
       $stopPrice = calcularMargenPerdida($price,$param['STOPLOSS']);      
       $api = new Binance\API(sqlApiKey(), sqlApiSecret());
       //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE VENDE RAPIDAMENTE
@@ -241,8 +240,8 @@ function autoLiquida($id){
           liquidar($id);
         }
       }    
-    }
-    else{
+  }
+  else{
       $stopPrice = calcularMargenGanancia($price,$param['STOPLOSS']);      
       $api = new Binance\API(sqlApiKey(), sqlApiSecret());
       //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE COMPRA RAPIDAMENTE
@@ -255,11 +254,11 @@ function autoLiquida($id){
           liquidar($id);
         }
       }    
-    }
+  }
 
-    //AQUI VA LA LOGICA SI LA VENTA O LA COMPRA ESTA AUTOMATICA O MANUAL
-    if($row['AUTOSELL']==1){
-      if($row['TIPO'] == "BUY"){
+  //AQUI VA LA LOGICA SI LA VENTA O LA COMPRA ESTA AUTOMATICA O MANUAL
+  if($row['AUTOSELL']==1){
+    if($row['TIPO'] == "BUY"){
         $autoSell = calcularMargenGanancia($price,$param['AUTOSHELL']);
         if(readPrices($moneda)['ACTUAL'] > $autoSell){
           $api->useServerTime();
@@ -270,8 +269,8 @@ function autoLiquida($id){
               liquidar($id);
           }            
       }
-      }
-      else{
+    }
+    else{
         $autoSell = calcularMargenPerdida($price,$param['AUTOSHELL']);
         if(readPrices($moneda)['ACTUAL'] < $autoSell){
           $api->useServerTime();
@@ -282,7 +281,6 @@ function autoLiquida($id){
               liquidar($id);
           }            
         }
-      }
     }
   }
 }
@@ -530,21 +528,20 @@ function totalmoneda($moneda){
   $bk="";
   
   if(row_sqlconector("select COUNT(*) AS TOTAL from TRADER where MONEDA='{$moneda}'")['TOTAL'] > 0){
-    if(readParametros()['BINANCE']==1){
-      $totalMoneda = price(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
-      $totalInversion = price(row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
-    }else{
-      $totalMoneda = price(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}'")['SUMA']);
-      $totalInversion = price(row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}'")['SUMA']);
-    }
+
+    $totalMoneda = price(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
+    $totalInversion = price(row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
+
     if($totalMoneda == 0){
       $estado = "Buy";
       $totalMoneda = 0;
     }else{
       $estado = "Sell";      
     }
+
     $totalFiat = price($totalMoneda *  $price);
-  }else{
+  }
+  else{
     $estado = "Buy";
     $totalMoneda = 0;
     $totalFiat = price($totalMoneda *  $price);
@@ -577,12 +574,8 @@ function totalmoneda($moneda){
 
 function totales($moneda){
   $price = readPrices($moneda)['ACTUAL'];
-  if(readParametros()['BINANCE']==1){
-    $total = number_format(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA'],2,".","");
-  }
-  else{
-    $total = number_format(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}'")['SUMA'],2,".","");
-  }  
+  $total = number_format(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA'],2,".","");
+ 
   $capital = number_format(readParametros()['CAPITAL'],2,".","");
   $disponible = number_format(readParametros()['DISPONIBLE'],2,".","");
   $recupera = 0;
@@ -948,10 +941,10 @@ function refreshDatos(){
     'maxdia' => $priceArriba,'mindia' => $priceAbajo, 'totalTendencia' => totalTendencia($moneda),
     'utc' => date('g:i A'),'techo' => $promedioFlotante,'piso' => $promedioUndante,'totalmoneda' => $sumMoneda['total'], 
     'ant' => readFlotadorAnterior($moneda),'nivel' => nivel($moneda),'nivelbtc' => nivelBtc(),
-    'porcenmax' => $porcenmax,'ganancia' => $row2['GANANCIA'],'perdida' => $row2['PERDIDA'],'capital' => $row2['CAPITAL'],
-    'disponible' => $row2['DISPONIBLE'], 'escalones' => $row2['ESCALONES'],'invxcompra' => $row2['INVXCOMPRA'],
+    'porcenmax' => $porcenmax,'ganancia' => price($row2['GANANCIA']),'perdida' => price($row2['PERDIDA']),'capital' => price($row2['CAPITAL']),
+    'disponible' => price($row2['DISPONIBLE']), 'escalones' => $row2['ESCALONES'],'invxcompra' => $row2['INVXCOMPRA'],
     'totalpromedio' => $totalPromedio,'xdisponible' => $xdisponible, 'grafico' => returnGrafica($moneda),
-    'auto' => $auto,'bina' => $bina,'impuesto' => $row2['IMPUESTO'], 
+    'auto' => $auto,'bina' => $bina,'impuesto' => price($row2['IMPUESTO']), 
     'id' => $row['ID'],'recordCount' => $recordCount,'colordisp' => $colorDisp,
     'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($totalPromedio,$moneda),
     'verescalones' => findEscalones(),'verbinance' => findBinance(),'labelpricebitcoin' => $labelPriceBitcoin,
