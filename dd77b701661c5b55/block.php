@@ -228,7 +228,7 @@ if(isset($_GET['getpante'])){
   echo json_encode($obj);   
 }
 
-if(isset($_GET['getPriceBinance'])){
+if(isset($_GET['getPriceBinance'])){ 
   if( isset($_GET['auto']) ){
     if(readParametros()['LOCAL']==1){
       refreshDataAuto();

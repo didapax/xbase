@@ -50,7 +50,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 <span style=display:none; id="techo"></span>
 
 <dialog class="dialog_retiro" id="config" close>
-    <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" ><input type="radio" id="xconf" name="">Configuracion</div>
+    <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Configuracion</div>
     <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('config').close()">X</a><br>
     <hr>
     <span>Moneda Par </span><input style="width:100px;" title="Example: HNTUSDT, HNTBUSD" type="text" maxlength="10" id="moneda" value=""><span style="cursor:pointer;" title="Insertar una Nueva" onclick="Reset()">&#9088;</span><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:default;" onclick="deletePar()">Delete</span><br>
@@ -60,8 +60,8 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
     <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
     <span>Perdida %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
-    <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Local</label>
-    <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Binance</label>   
+    <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Xampp</label>
+    <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Server</label>   
     <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>
   </dialog>  
 
