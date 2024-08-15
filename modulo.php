@@ -287,46 +287,47 @@ function autoLiquida($id){
   }
 }
 
-function liquidar($id){
-  $datos= readParametros();
+function liquidar($id){  
   $row = row_sqlconector("SELECT * FROM TRADER WHERE ID={$id}");
 
-  $moneda = $row['MONEDA'];
-  $precioVenta = readPrices($moneda)['ACTUAL'];
-  $compra = $row['COMPRA'];
-  $cantidad = quantity(($row['CANTIDAD'] - ($datos['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
-  $newventa =  $cantidad * $precioVenta;
-  $newganancia = 0;
-  $newperdida = 0;
-
-  if($newventa < $compra){
-    $newperdida = $compra - $newventa;
-  }
-  else{
-    $newganancia = $newventa - $compra;
-  }
-
-  $capital = $datos['CAPITAL'];
-  $ganancia = $datos['GANANCIA'] + $newganancia;
-  $perdida = $datos['PERDIDA'] + $newperdida;
-  $ajuste = $ganancia - $perdida;
-
-  if($ajuste < 0){
-    $ganancia=0;
-    $perdida=0;
-    $capital = $datos['CAPITAL'] + $ajuste;
-  }
+  if($row['TIPO'] == "BUY"){
+    $datos= readParametros();
+    $moneda = $row['MONEDA'];
+    $precioVenta = readPrices($moneda)['ACTUAL'];
+    $compra = $row['COMPRA'];
+    $cantidad = quantity(($row['CANTIDAD'] - ($datos['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+    $newventa =  $cantidad * $precioVenta;
+    $newganancia = 0;
+    $newperdida = 0;
   
-  sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida},CAPITAL={$capital}");
-  sqlconector("UPDATE DATOS SET ULTIMAVENTA={$precioVenta} WHERE MONEDA='{$moneda}'");
-  sqlconector("DELETE FROM TRADER WHERE ID={$id}");
-
-  $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
-  sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion));
-
-  $invxcompra = $capital / $datos['ESCALONES'];
-  sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra}");
-
+    if($newventa < $compra){
+      $newperdida = $compra - $newventa;
+    }
+    else{
+      $newganancia = $newventa - $compra;
+    }
+  
+    $capital = $datos['CAPITAL'];
+    $ganancia = $datos['GANANCIA'] + $newganancia;
+    $perdida = $datos['PERDIDA'] + $newperdida;
+    $ajuste = $ganancia - $perdida;
+  
+    if($ajuste < 0){
+      $ganancia=0;
+      $perdida=0;
+      $capital = $datos['CAPITAL'] + $ajuste;
+    }
+    
+    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida},CAPITAL={$capital}");
+    sqlconector("UPDATE DATOS SET ULTIMAVENTA={$precioVenta} WHERE MONEDA='{$moneda}'");
+    sqlconector("DELETE FROM TRADER WHERE ID={$id}");
+  
+    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
+    sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion));
+  
+    $invxcompra = $capital / $datos['ESCALONES'];
+    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra}");
+  }
   reordenarEscalones();
   refreshDatos();
 }

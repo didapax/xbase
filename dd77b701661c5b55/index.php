@@ -168,7 +168,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
         <tr><td>Total</td><td><span style=width:100px;font-weight:bold;color:white; id="totalBalanceVenta">0.00USDT</span></td></tr>
         <tr><td></td><td><label for="sugerirPrecioVenta">Market</label><input type="checkbox" id="sugerirPrecioVenta" checked></td></tr>
         <tr><td></td><td>.</td></tr>
-        <tr><td></td><td>.</td></tr>        
+        <tr><td></td><td>.</td></tr>
       </table>
       <br>   
       <button title="Vender a Negativo" type=button cclass='appbtn' style="background:#F6465D;margin:0;width:100%;color:white;" onclick=negativo()>VENDER <span style="font-weight: bold;" id="cualmoneda2"></span></button>

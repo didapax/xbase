@@ -95,7 +95,7 @@ if(isset($_POST['borrar'])){
   refreshDatos();
 }
 
-if(isset($_POST['negativoBuy'])){
+if(isset($_POST['negativoBuy'])){ 
   $trader = readTrader($_POST['negativo']);
   $datos = readParametros();
   $pagar = $trader['CANTIDAD'];
@@ -104,25 +104,8 @@ if(isset($_POST['negativoBuy'])){
     $api = new Binance\API(sqlApiKey(), sqlApiSecret());
     $api->useServerTime();
     $binance = $api->marketBuy($trader['MONEDA'], $quantity);
-    $newperdida = $quantity * readPrices($trader['MONEDA'])['ACTUAL'];
-  
-    $capital = $datos['CAPITAL'];
-    $ganancia = $datos['GANANCIA'];
-    $perdida = $datos['PERDIDA'] + $newperdida;
-    $ajuste = $ganancia -$perdida;
-  
-    if($ajuste < 0){
-      $ganancia=0;
-      $perdida=0;
-      $capital = $datos['CAPITAL'] + $ajuste;
-    }
-    
-    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida},CAPITAL={$capital}");
   
     sqlconector("DELETE FROM TRADER WHERE ID={$_POST['negativo']}");
-  
-    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
-    sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion));
   
     $invxcompra = $datos['CAPITAL'] / $datos['ESCALONES'];
     sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra}");
@@ -225,16 +208,6 @@ if(isset($_POST['agregar'])){
     }else{
       echo "error: 0001"; 
     }
-  }
-  else{ //inserta el escalon modo Prueba
-    sqlconector("INSERT INTO TRADER(MONEDA,ORDERID,COMPRA,CANTIDAD,PRECIOCOMPRA,ESCALON) VALUES(
-      '{$_POST['moneda']}',
-      '',
-      {$_POST['compra']},
-      {$quantity},
-      {$_POST['preciocompra']},
-      {$escalon}
-    )");
   }
 
   $capital = $datos['CAPITAL'];

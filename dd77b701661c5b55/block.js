@@ -59,19 +59,21 @@ function escalon(){
 
 function agregar(){
     if(navigator.onLine){
-      var valor= "Limit";
-      var t_precio = ""+priceFixed(document.getElementById('precioCompra').value);
+      let valor= "Limit";
+      let t_precio = ""+priceFixed(document.getElementById('precioCompra').value);
+      let simbol = document.getElementById('asset').value;
       let cantidad = document.getElementById('cantidadComprada').value;
       let moneda = document.getElementById('moneda').value;
+      let mensaje =`Confirmas la Operacion Comprar ${cantidad}  ${simbol} a un Pecio ${valor} de ${t_precio} Usdc`;
 
       if(document.getElementById('sugerirPrecioCompra').checked === true){
         valor = "Market";
-        t_precio = "";
+        mensaje =`Confirmas la Operacion Comprar ${cantidad}  ${simbol} a precio de  ${valor}`;
       }
 
       Swal.fire({
-        title: 'Comprar',
-        text: `Confirmas la Operacion Comprar ${cantidad}  ${moneda} a un Pecio ${valor} de ${t_precio}`,
+        title: `Comprar ${moneda}`,
+        text: mensaje,
         icon: 'warning',
         confirmButtonColor: '#EC7063',
         confirmButtonText: 'Si Comprar',
@@ -363,11 +365,7 @@ function alertas(data){
 }
 
 function priceFixed(valor){
-  if((valor *1) > 1){
-    return (valor *1).toFixed(2);
-  }else{
-    return (valor *1).toFixed(4);
-  }
+  return valor;
 }
 
 function formatPrice(valor,moneda){
@@ -496,15 +494,12 @@ function refreshDatos(){
       if(document.getElementById('sugerirPrecioVenta').checked === true){
         document.getElementById('precioCompra2').value = formatPrice(datos.price,datos.moneda);
       }      
-
-      //document.getElementById('precioCompra2').value = formatPrice(datos.price,datos.moneda);
       document.title = datos.asset+" "+datos.labelpricemoneda; 
       document.getElementById('priceMoneda').innerHTML = "<span style='margin-right:5px;color:white;'>"+datos.asset+"</span> "+datos.labelpricemoneda;
       document.getElementById('price').value = formatPrice(datos.price,datos.moneda);
       document.getElementById('priceBtc').innerHTML = "<span style='margin-right:5px;color:white;'>BTC</span> "+datos.labelpricebitcoin;
       document.getElementById('tendencia').innerHTML = "Dia "+datos.tendencia;
       document.getElementById('totalTendencia').innerHTML = "Tendencia "+datos.totalTendencia;
-      /*document.getElementById('resistencia').innerHTML = "Resistencia <span style='color:white;'>"+datos.resistencia+"</span>";     */
       document.getElementById('zona').innerHTML = "Promedio <span style='color:white;'> "+dollarUSLocale.format(priceFixed(datos.totalpromedio))+"</span>";
       document.getElementById('utc').innerHTML = "<span style=color:#858E9B>Hora Utc </span>"+datos.utc;
       document.getElementById('ant').innerHTML = datos.nivel;
