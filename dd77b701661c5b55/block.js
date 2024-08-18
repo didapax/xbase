@@ -3,6 +3,8 @@ let alarMuted = 1;
 let chart;
 let dollarUSLocale = Intl.NumberFormat('en-IN');
 let datos;
+let fiat;
+let simbolo;
 
 function jsNota(frecuencia){
         const context= new AudioContext();
@@ -23,6 +25,7 @@ function Guardar(){
     invxcompra: (document.getElementById('invxcompra').value *1).toFixed(2),
     moneda: document.getElementById('moneda').value,
     asset: document.getElementById('asset').value,
+    par: document.getElementById('estableCoin').value,
     capital: document.getElementById('capital').value,
     escalones: document.getElementById('escalones').value,
     disponible: document.getElementById('disponible').value,
@@ -45,15 +48,14 @@ function escalon(){
   let precio = document.getElementById('precioCompra').value*1;
   let total = cantidad / precio;
   let moneda = document.getElementById('moneda').value;
-  let cantidadComprada;
-  document.getElementById('cantidadComprada').value = quantity(total,moneda);
-  cantidadComprada = document.getElementById('cantidadComprada').value;
-  document.getElementById('piso').innerHTML = "<span style=font-weight:bold;color:white;>" + cantidadComprada +"<span style=font-weight:bold;color:gray;>"+document.getElementById('asset').value+"</span></span>";
+  let cantidadComprada = quantity(total,simbolo,fiat);
+  document.getElementById('cantidadComprada').value = cantidadComprada;
+  document.getElementById('piso').innerHTML = `<span style=font-weight:bold;color:white;>${cantidadComprada}<span style=font-weight:bold;color:gray;>${simbolo}</span></span>`;
 
   $.get("block?getpante=&nprice="+document.getElementById('precioCompra').value,
   function(data){ 
     datos= JSON.parse(data);
-    document.getElementById('stoploss').innerHTML = "<span style=font-weight:bold;color:white;>" + datos.pante+"<span style=font-weight:bold;color:gray;>USDT</span></span>";
+    document.getElementById('stoploss').innerHTML = `<span style=font-weight:bold;color:white;>${datos.pante}<span style=font-weight:bold;color:gray;>${fiat}</span></span>`;
   });
 }
 
@@ -271,24 +273,45 @@ function autosell(id){
 }
 
 function Reset(){
-    let moneda = prompt("Insertar la Moneda/Par:", "");
-    if (moneda.length > 0) {
-      $.post("block",{
-        reset:"",
-        moneda: moneda.toUpperCase()
-      },function(data){
-        window.location.href="../index";
-      });
-    }
-    else{
+  let moneda = document.getElementById('newMoneda');
+  let asset = document.getElementById('newAssetSimbol');
+  let par = document.getElementById('newEstableCoin');
+
+  let monedaValue = moneda.value;
+  let assetValue = asset.value;
+  let parValue = par.value;
+
+  if(monedaValue && assetValue && parValue){
+    Swal.fire({
+      title: "xbase",
+      text: `insertando la Moneda con su Par ${monedaValue}, esta Usted Seguro?`,
+      icon: 'warning',
+      confirmButtonColor: '#EC7063',
+      confirmButtonText: 'Si Insertar',
+      showCancelButton: true,
+      cancelButtonText: "Cancelar"
+      }).then((result) => {
+          if (result.isConfirmed) {
+            $.post("block",{
+              reset:"",
+              moneda: monedaValue.toUpperCase(),
+              asset: assetValue.toUpperCase(),
+              par: parValue.toUpperCase()
+            },function(data){
+              window.location.href="../index";
+            });
+          }
+        });
+  }
+  else{
     Swal.fire({
       title: 'xbase',
-      text: "Debe existir una Moneda, serciorate que la escribiste bien..!",
+      text: "Faltan Datos, una o mas variables estan vacias llena el formulario bien..!",
       icon: 'error',
       confirmButtonColor: '#3085d6',
       confirmButtonText: 'Ok'
       });    
-    }
+  }
 }
 
 function moneyChangue(valor){
@@ -368,69 +391,36 @@ function priceFixed(valor){
   return valor;
 }
 
-function formatPrice(valor,moneda){
-  switch (moneda) {
-    case "TRXUSDT":
-    case "DOGEUSDT":        
-        return (valor *1).toFixed(5);
-        break;     
-    case "ADAUSDT":
-    case "MATICUSDT":
-        return (valor *1).toFixed(4);
-        break;             
-    case "RUNEUSDT":
-    case "ATOMUSDT":
-    case "NEARUSDT":
-    case "INJUSDT":
-        return (valor *1).toFixed(3);
-        break;  
-    case "BTCUSDT":
-    case "ETHUSDT":
-    case "LTCUSDT":      
+function  quantity(valor,simbolo,par){
+  if(par === "USDT" || par === "USDC"){
+    switch (simbolo) {
+      case "BTC":
+          return (valor *1).toFixed(5);
+      case "ETH":
+      case "PAXG":        
+          return (valor *1).toFixed(4);
+      case "BNB":
+      case "LTC":
+          return (valor *1).toFixed(3);
+      case "MATIC":
+      case "TRX":
+      case "RUNE":        
+      case "ADA":
+      case "NEAR":
+      case "INJ":
+          return (valor *1).toFixed(1);
+      case "DOGE":
+      case "SHIB":
+          return (valor *1).toFixed(0);
+      default:
         return (valor *1).toFixed(2);
-        break;      
-    case "BNBUSDT":
-        return (valor *1).toFixed(1);
-        break;
-    case "PAXGUSDT":
-        return (valor *1).toFixed(0);
-        break;   
-    default:
-      return valor *1;
+    }
+  }else{
+    return (valor *1).toFixed(2);
   }
 }
 
-function  quantity(valor,moneda){
-  switch (moneda) {
-    case "BTCUSDT":
-        return (valor *1).toFixed(5);
-        break;
-    case "ETHUSDT":
-    case "PAXGUSDT":        
-        return (valor *1).toFixed(4);
-        break;        
-    case "BNBUSDT":
-    case "LTCUSDT":
-        return (valor *1).toFixed(3);
-        break;
-    case "MATICUSDT":
-    case "TRXUSDT":
-    case "RUNEUSDT":        
-    case "ADAUSDT":
-    case "NEARUSDT":
-    case "INJUSDT":
-        return (valor *1).toFixed(1);
-        break;        
-    case "DOGEUSDT":
-    case "SHIBUSDC":
-        return (valor *1).toFixed(0);
-        break;
-    default:
-      return (valor *1).toFixed(2);
-  }
-}
-
-function leerDatos(){ 
+function leerDatos(){
   $.get("block?getPriceBinance=",
     function(data){      
       datos= JSON.parse(data);
@@ -446,8 +436,12 @@ function leerDatos(){
       document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);
       document.getElementById('precio_venta').value = datos.precio_venta;
       document.getElementById('stop').value = datos.stop;
+      document.getElementById('newBalance').value = datos.balance_asset;
+      document.getElementById('estableCoin').value = datos.par;
       $("#div3").html(datos.verescalones);
       $("#div2").html(datos.verbinance);
+      fiat = datos.par;
+      simbolo = datos.asset;
       
       chart = c3.generate({
         data: {
@@ -488,15 +482,15 @@ function refreshDatos(){
       datos= JSON.parse(data);
 
       if(document.getElementById('sugerirPrecioCompra').checked === true){
-        document.getElementById('precioCompra').value = formatPrice(datos.price,datos.moneda);
+        document.getElementById('precioCompra').value = datos.price;
       }
 
       if(document.getElementById('sugerirPrecioVenta').checked === true){
-        document.getElementById('precioCompra2').value = formatPrice(datos.price,datos.moneda);
+        document.getElementById('precioCompra2').value = datos.price;
       }      
       document.title = datos.asset+" "+datos.labelpricemoneda; 
       document.getElementById('priceMoneda').innerHTML = "<span style='margin-right:5px;color:white;'>"+datos.asset+"</span> "+datos.labelpricemoneda;
-      document.getElementById('price').value = formatPrice(datos.price,datos.moneda);
+      document.getElementById('price').value = datos.price;
       document.getElementById('priceBtc').innerHTML = "<span style='margin-right:5px;color:white;'>BTC</span> "+datos.labelpricebitcoin;
       document.getElementById('tendencia').innerHTML = "Dia "+datos.tendencia;
       document.getElementById('totalTendencia').innerHTML = "Tendencia "+datos.totalTendencia;
@@ -508,17 +502,17 @@ function refreshDatos(){
       document.getElementById('nivelcompra').innerHTML = datos.nivelcompra;
       document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);
       document.getElementById('priceMax').value = priceFixed(datos.maxdia);
-      document.getElementById('mindia').innerHTML ="<span style='font-size:12px;color:white;'>L "+formatPrice(datos.mindia,datos.moneda)+"</span> <div style='vertical-align: middle;display:inline-block;height:4px;width:55px;background:#E8DCDC;overflow:hidden;'><div style='background:grey;height:4px;width:"+datos.porcenmax+";'></div></div> <span style='font-size:12px;color:white;'>"+formatPrice(datos.maxdia,datos.moneda)+" H</span>";
+      document.getElementById('mindia').innerHTML =`<span style='font-size:12px;color:white;'>L ${datos.mindia}</span> <div style='vertical-align: middle;display:inline-block;height:4px;width:55px;background:#E8DCDC;overflow:hidden;'><div style='background:grey;height:4px;width:${datos.porcenmax};'></div></div> <span style='font-size:12px;color:white;'>${datos.maxdia} H</span>`;
       document.getElementById('priceMin').value = priceFixed(datos.mindia);
       document.getElementById('disponible').value = priceFixed(datos.xdisponible);
       document.getElementById('invxcompra').value = (datos.invxcompra *1).toFixed(2);
-      document.getElementById('ultimaventa').value = formatPrice(datos.ultimaventa,datos.moneda);
+      document.getElementById('ultimaventa').value = datos.ultimaventa;
       document.getElementById('mbalance').value = priceFixed(datos.balance)+datos.asset;      
       document.getElementById('balance').value = priceFixed(datos.balance);
       document.getElementById('perdidas').value = priceFixed(datos.perdida);
       document.getElementById('recordCount').value = datos.recordCount;
       document.getElementById('recupera').value = priceFixed(datos.recupera);
-      document.getElementById('totalBalanceVenta').innerHTML = priceFixed(datos.balance * datos.price)+"USDT";
+      document.getElementById('totalBalanceVenta').innerHTML = priceFixed(datos.balance * datos.price)+fiat;
       document.getElementById('cualmoneda').innerHTML = datos.asset;
       document.getElementById('cualmoneda2').innerHTML = datos.asset;
       

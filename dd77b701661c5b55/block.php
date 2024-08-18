@@ -10,7 +10,7 @@ if( isset($_POST['crear']) ){
 if(isset($_POST['reset'])){
   if(!ifMonedaExist($_POST['moneda'])){
     sqlconector("UPDATE DATOS SET ACTIVO=0");
-    sqlconector("INSERT INTO DATOS(MONEDA,ACTIVO) VALUES('{$_POST['moneda']}',1)");
+    sqlconector("INSERT INTO DATOS(MONEDA,ASSET,PAR,ACTIVO) VALUES('{$_POST['moneda']}','{$_POST['asset']}','{$_POST['par']}',1)");
   }
   refreshDatos();
 }
@@ -45,10 +45,12 @@ if(isset($_POST['guardar'])){
   $disponible= $_POST['capital'] - $inversion;
   $stoploss = $_POST['stop'];
   $autoshell = $_POST['precio_venta'];
+  $par = $_POST['par'];
 
   sqlconector("UPDATE DATOS SET
     MONEDA='{$moneda}',
-    ASSET='{$asset}'
+    ASSET='{$asset}',
+    PAR='{$par}'
      WHERE MONEDA ='{$moneda}'");  
 
   sqlconector("UPDATE PARAMETROS SET
@@ -99,7 +101,8 @@ if(isset($_POST['negativoBuy'])){
   $trader = readTrader($_POST['negativo']);
   $datos = readParametros();
   $pagar = $trader['CANTIDAD'];
-  $quantity = quantity($pagar,$trader['MONEDA']);
+  $asset = readDatosMoneda($trader['MONEDA']);
+  $quantity = quantity($pagar,$asset['ASSET'],$asset['PAR']);
   
     $api = new Binance\API(sqlApiKey(), sqlApiSecret());
     $api->useServerTime();
@@ -121,10 +124,12 @@ if(isset($_POST['negativo'])){
     $ganancia = 0;
     $datos= readParametros();
     $escalon = recordCount("TRADER") +1;
+    $asset = readDatosMoneda($moneda);
 
     $api = new Binance\API(sqlApiKey(), sqlApiSecret());
     $api->useServerTime();
-    $quantity = quantity(($cantidad - ($datos['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+    $operacion = ($cantidad - $datos['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
+    $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);
     $api->useServerTime();
     if($_POST['tipo']=="Limit"){
       $order = $api->sell($moneda, $quantity, $price);
@@ -132,10 +137,10 @@ if(isset($_POST['negativo'])){
     else{
       $order = $api->marketSell($moneda, $quantity);        
     }
-    $price = formatPrice(readPrices($moneda)['ACTUAL'],$moneda);
+    $price = formatPrice(readPrices($moneda)['ACTUAL'],$asset['ASSET'],$asset['PAR']);
 
     $ganancia = $datos['GANANCIA'] + ($cantidad * readPrices($moneda)['ACTUAL']);
-    $laventa = $quantity * formatPrice(readPrices($moneda)['ACTUAL'],$moneda);
+    $laventa = $quantity * formatPrice(readPrices($moneda)['ACTUAL'],$asset['ASSET'],$asset['PAR']);
     sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia}");
 
     sqlconector("INSERT INTO TRADER(MONEDA,TIPO,CANTIDAD,PRECIOVENTA,GANANCIA,NEGATIVO,ESCALON) VALUES(
@@ -155,11 +160,12 @@ if(isset($_POST['perdida'])){
     $datos = readParametros();
     $trader = readTrader($_POST['perdida']);
     $moneda = $trader['MONEDA'];
-
+    $asset = readDatosMoneda($moneda);
+    $operacion = ($trader['CANTIDAD'] - $datos['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
     $escalon = recordCount("TRADER") +1;
     $api = new Binance\API(sqlApiKey(), sqlApiSecret());
     $api->useServerTime();
-    $quantity = quantity(($trader['CANTIDAD'] - ($datos['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+    $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);
     $api->useServerTime();
     $order = $api->marketSell($moneda, $quantity);
 
@@ -180,9 +186,10 @@ if(isset($_POST['bina'])){
 
 if(isset($_POST['agregar'])){
   $moneda = $_POST['moneda'];
+  $asset = readDatosMoneda($moneda);
   $datos = readParametros(); 
-  $quantity = quantity($_POST['cantidad'],$moneda);
-  $price = formatPrice($_POST['preciocompra'],$moneda);
+  $quantity = quantity($_POST['cantidad'],$asset['ASSET'],$asset['PAR']);
+  $price = formatPrice($_POST['preciocompra'],$asset['ASSET'],$asset['PAR']);
   $escalon = recordCount("TRADER") +1;
 
   $api = new Binance\API(sqlApiKey(), sqlApiSecret());
@@ -191,7 +198,7 @@ if(isset($_POST['agregar'])){
     $binance = $api->buy($moneda, $quantity, $price);
   }else{
     $binance = $api->marketBuy($moneda, $quantity);
-    $price = formatPrice(readPrices($moneda)['ACTUAL'],$moneda);
+    $price = formatPrice(readPrices($moneda)['ACTUAL'],$asset['ASSET'],$asset['PAR']);
   }    
   if(isset($binance['orderId'])){
     sqlconector("INSERT INTO TRADER(MONEDA,ORDERID,COMPRA,CANTIDAD,PRECIOCOMPRA,ESCALON) VALUES(

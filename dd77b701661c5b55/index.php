@@ -49,13 +49,25 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 <input type="hidden" id="perdidas" value="0">
 <span style=display:none; id="techo"></span>
 
+<dialog class="dialog_retiro" id="newAsset" close>
+  <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Nueva Criptomoneda</div>
+  <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('newAsset').close()">X</a><br>
+  <hr>  
+  <span>Moneda Par </span><input style="width:100px;" title="Example: HNTUSDT, HNTUSDC" type="text" maxlength="10" id="newMoneda" value=""><br>
+  <span>Asset </span><input style="width:100px;" title="Asset is: HNT, BNB, BTC" type="text" maxlength="10" id="newAssetSimbol" value=""><br>  
+  <span>Estable Coin </span><input style="width:100px;" title="USDT, USDC" type="text" maxlength="10" id="newEstableCoin" value=""><br>
+  <button style="margin-left: 55px;background:transparent;" type="button" onclick="Reset()"><span style='font-size:24px;'>&#9088;</span>Insertar</button>  
+</dialog>
+
 <dialog class="dialog_retiro" id="config" close>
     <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Configuracion</div>
     <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('config').close()">X</a><br>
     <hr>
-    <span>Moneda Par </span><input style="width:100px;" title="Example: HNTUSDT, HNTBUSD" type="text" maxlength="10" id="moneda" value=""><span style="cursor:pointer;" title="Insertar una Nueva" onclick="Reset()">&#9088;</span><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:default;" onclick="deletePar()">Delete</span><br>
-    <span>Asset </span><input style="width:100px;" title="Asset is: HNT, BNB, BTC" type="text" maxlength="10" id="asset" value=""><br>
-    <span>Capital </span><input style="width:100px;" type="number" step="0.01" id="capital" value="" onkeyup="calculo()" onchange="calculo()"><br>    
+    <span>Moneda Par </span><input readonly style="width:100px;"  type="text" maxlength="10" id="moneda" value=""><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:default;" onclick="deletePar()">Delete</span><br>
+    <span>Asset </span><input style="width:100px;"  type="text" maxlength="10" id="asset" value=""><br>
+    <span>Estable Coin </span><input style="width:100px;"  type="text" maxlength="10" id="estableCoin" value=""><br>
+    <span>Balance </span><input style="width:100px;" type="number" step="0.01" id="newBalance" value="0" ><br>
+    <span>Capital </span><input style="width:100px;" type="number" step="0.01" id="capital" value="0" onkeyup="calculo()" onchange="calculo()"> Usd<br>    
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
     <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>
     <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
@@ -69,6 +81,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
   <div class="price_entrada">
     <label style="margin-left:34px;font-size:21px;font-weight:bold;" id="priceMoneda"></label>
     <label title="Config" style="margin-left:20px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
+    <label style="margin-left:20px;font-weight:bold;font-size:21px;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').show()">&#9088;</label>
   </div>
   <div class="price_entrada">
     <label style="display:none;" id="priceBtc"></label>    
@@ -97,7 +110,6 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     </select>
 </td></tr>
     <tr><td><label style="color:#EAECEF;font-weight: bold;"id="utc"></label></td></tr>
-    <!--<tr><td><label title="Posible Resistencia" style="font-weight:bold;" id="resistencia"></label></td></tr>-->
     <tr><td><label title="Promedio de Precio" style="font-weight:bold;" id="zona"></label></td></tr>
     <tr><td><label style="font-weight:bold;" id="tendencia"></label></td></tr>
     <tr><td>  <label style="font-weight:bold;" id="totalTendencia"></label></td></tr>
@@ -117,9 +129,9 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 
   <div id="abajo" class="abajo">    
     <label title="Nivel vela con dia anterior Bitcoin" class=stylenivel id="antbtc"></label> 
-    <label title="Max de vela con dia anterior" class=stylenivel id="ant"></label>  
+    <label title="Posibilidad de Vender" class=stylenivel id="ant"></label>  
     <label title="Min de Vela con dia anterior" class=stylenivel id="symbol" style="display:none;"></label>
-    <label title="Posiblidad de Compra" class=stylenivel id="nivelcompra"></label>
+    <label title="Posiblidad de Comprar" class=stylenivel id="nivelcompra"></label>
     <span style="float:right;font-weight:bold;" id="mindia"></span>
     <label id="buttonMuted" class="mute is-muted" onclick="toggleMute()" style=" display:none;margin-left:13px;font-size:21px;cursor: pointer;">&#128266;</label>
   </div>

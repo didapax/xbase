@@ -140,6 +140,17 @@ font-family: 'Bebas Neue', cursive;
   border-radius:50%;
   height:34px;
   width:34px;
+  background-image:conic-gradient(#F23645 var(--data),#85929e 0deg);
+}
+
+.div1 .odometrosBtc{
+  font-weight: bold;
+  text-align: center;
+  margin:auto;
+  display:flex;
+  border-radius:50%;
+  height:34px;
+  width:34px;
   background-image:conic-gradient(#089981 var(--data),#F23645 0deg);
 }
 

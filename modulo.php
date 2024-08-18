@@ -55,6 +55,10 @@ function readDatosMonedaId($id){
   return row_sqlconector("select * from DATOS WHERE ID={$id}");
 }
 
+function readDatosAsset($asset){
+  return row_sqlconector("select * from DATOS WHERE ASSET='{$asset}'");
+}
+
 function readParametros(){
   return row_sqlconector("select * from PARAMETROS");
 }
@@ -69,66 +73,68 @@ function price($price){
   return number_format($price,4,".","");
 }
 
-function formatPrice($valor,$moneda){
-  switch ($moneda) {
-    case "ADAUSDT":
-    case "MATICUSDT":
-        return number_format($valor,4,".","");
-        break;    
-    case "TRXUSDT":
-    case "DOGEUSDT":        
-        return number_format($valor,5,".","");
-        break;      
-    case "RUNEUSDT":
-    case "RUNEUSDC":
-    case "ATOMUSDT":
-    case "NEARUSDT":
-    case "INJUSDT":
-          return number_format($valor,3,".","");
-          break;          
-    case "BTCUSDT":
-    case "ETHUSDT":
-    case "LTCUSDT":
-          return number_format($valor,2,".","");
-          break;
-    case "BNBUSDT":
-        return number_format($valor,1,".","");
-        break;
-    case "PAXGUSDT":
-        return number_format($valor,0,".","");
-        break;        
-    default:
+function formatPrice($valor, $asset, $par) {
+  // Verificar si $par es "USDT" o "USDC"
+  if ($par == "USDT" || $par == "USDC") {
+      // Seleccionar el formato basado en el valor de $asset
+      switch ($asset) {
+          case "ADA":
+          case "MATIC":
+              return number_format($valor, 4, ".", "");
+          case "TRX":
+          case "DOGE":
+              return number_format($valor, 5, ".", "");
+          case "RUNE":
+          case "ATOM":
+          case "NEAR":
+          case "INJ":
+              return number_format($valor, 3, ".", "");
+          case "BTC":
+          case "ETH":
+          case "LTC":
+              return number_format($valor, 2, ".", "");
+          case "BNB":
+              return number_format($valor, 1, ".", "");
+          case "PAXG":
+              return number_format($valor, 0, ".", "");
+          default:
+              return $valor; // Manejar el caso por defecto
+      }
+  } else {
+      // Manejar el caso cuando $par no es "USDT" o "USDC"
       return $valor;
   }
 }
 
-function  quantity($valor,$moneda){
-  switch ($moneda) {
-    case "BTCUSDT":
-        return number_format($valor,5,".","");
-        break;
-    case "ETHUSDT":
-    case "PAXGUSDT":        
-        return number_format($valor,4,".","");
-        break;        
-    case "BNBUSDT":
-    case "LTCUSDT":
-        return number_format($valor,3,".","");
-        break;
-    case "MATICUSDT":
-    case "TRXUSDT":
-    case "RUNEUSDT":        
-    case "ADAUSDT":
-    case "NEARUSDT":
-    case "INJUSDT":
-        return number_format($valor,1,".","");
-        break;        
-    case "DOGEUSDT":
-    case "SHIBUSDC":
-        return number_format($valor,0,"","");
-        break;
-    default:
-      return number_format($valor,2,".","");
+function  quantity($valor,$asset,$par){
+    // Verificar si $par es "USDT" o "USDC"
+    if ($par == "USDT" || $par == "USDC") {
+      // Seleccionar el formato basado en el valor de $asset
+      switch ($asset) {
+        case "BTC":
+          return number_format($valor,5,".","");
+        case "ETH":
+        case "PAXG":        
+          return number_format($valor,4,".","");
+        case "BNB":
+        case "LTC":
+          return number_format($valor,3,".","");
+        case "MATIC":
+        case "TRX":
+        case "RUNE":        
+        case "ADA":
+        case "NEAR":
+        case "INJ":
+          return number_format($valor,1,".","");
+        case "DOGE":
+        case "SHIB":
+          return number_format($valor,0,"","");
+        default:
+          return number_format($valor,2,".","");
+      }
+  } else {
+      // Manejar el caso cuando $par no es "USDT" o "USDC"
+      return $valor;
   }
 }
 
@@ -226,6 +232,9 @@ function autoLiquida($id){
   $param = readParametros();
   $moneda = $row['MONEDA'];
   $price = $row['PRECIOCOMPRA'];
+  $datos = readDatosMoneda($moneda);
+  $operacion = ($row['CANTIDAD'] - $param['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
+  $quantity = quantity($operacion,$datos['ASSET'],$datos['PAR']);
 
   if($row['TIPO'] == "BUY"){
       $stopPrice = calcularMargenPerdida($price,$param['STOPLOSS']);      
@@ -233,7 +242,6 @@ function autoLiquida($id){
       //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE VENDE RAPIDAMENTE
       if(readPrices($moneda)['ACTUAL'] <= $stopPrice){
         $api->useServerTime();
-        $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
         $api->useServerTime();
         $order = $api->marketSell($moneda, $quantity);
         if(isset($order['orderId'])){
@@ -247,7 +255,6 @@ function autoLiquida($id){
       //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE COMPRA RAPIDAMENTE
       if(readPrices($moneda)['ACTUAL'] >= $stopPrice){
         $api->useServerTime();
-        $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
         $api->useServerTime();
         $order = $api->marketBuy($moneda, $quantity);
         if(isset($order['orderId'])){
@@ -262,8 +269,6 @@ function autoLiquida($id){
         $autoSell = calcularMargenGanancia($price,$param['AUTOSHELL']);
         if(readPrices($moneda)['ACTUAL'] > $autoSell){
           $api->useServerTime();
-          $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
-          $api->useServerTime();
           $order = $api->marketSell($moneda, $quantity);
           if(isset($order['orderId'])){
               liquidar($id);
@@ -273,8 +278,6 @@ function autoLiquida($id){
     else{
         $autoSell = calcularMargenPerdida($price,$param['AUTOSHELL']);
         if(readPrices($moneda)['ACTUAL'] < $autoSell){
-          $api->useServerTime();
-          $quantity = quantity(($row['CANTIDAD'] - ($param['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
           $api->useServerTime();
           $order = $api->marketBuy($moneda, $quantity);
           if(isset($order['orderId'])){
@@ -287,13 +290,14 @@ function autoLiquida($id){
 
 function liquidar($id){  
   $row = row_sqlconector("SELECT * FROM TRADER WHERE ID={$id}");
-
+  $asset = readDatosMoneda($row['MONEDA']);
   if($row['TIPO'] == "BUY"){
     $datos= readParametros();
     $moneda = $row['MONEDA'];
     $precioVenta = readPrices($moneda)['ACTUAL'];
     $compra = $row['COMPRA'];
-    $cantidad = quantity(($row['CANTIDAD'] - ($datos['IMPUESTO']/ readPrices($moneda)['ACTUAL'])),$moneda);
+    $operacion = ($row['CANTIDAD'] - $datos['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
+    $cantidad = quantity($operacion,$asset['ASSET'],$asset['PAR']);
     $newventa =  $cantidad * $precioVenta;
     $newganancia = 0;
     $newperdida = 0;
@@ -433,7 +437,7 @@ function updateTendenciaAlcista($moneda){
 
 function nivel($moneda){
   $nprice = readPrices($moneda);
-  $asset = "SELL"; //readDatosMoneda($moneda)['ASSET']
+  $asset = "SELL"; 
   $min= 0;
   $max= 0;
 
@@ -445,7 +449,7 @@ function nivel($moneda){
     $max = $nprice['ARRIBA'];
   }
 
-  $porcenmax = (porcenConjunto(price($min), price($max), $nprice['ACTUAL']) *3.6 )."deg";
+  $porcenmax = (porcenConjunto(price($min), price($max), $nprice['ACTUAL']) *3.6 )."deg";  
   $nivel = "<div class=odometros style=--data:{$porcenmax};><div id=grad2>{$asset}</div></div>";
 
   return $nivel;
@@ -472,41 +476,43 @@ function nivelAnterior($moneda){
 }
 
 function nivelCompra($moneda){
+  $asset = readDatosAsset("BTC");
   $promedioUndante = row_sqlconector("SELECT (SUM(ABAJO) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
   $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
-  $promedioFlotanteBtc = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='BTCUSDT'")['PROMEDIO'];
+  $promedioFlotanteBtc = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='".$asset['MONEDA']."'")['PROMEDIO'];
   $totalPromedio = ($promedioFlotante + $promedioUndante) /2;
   $alerta = returnAlertas($totalPromedio,$moneda);
   $asset = "BUY";
-  $nivel="<div class=odometroalert style=--color1:#089981;--data1:-80deg;--color2:#089981;--data2:-220deg;--color3:#089981;--data3:-360deg;--color4:#F23645;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+  $nivel="<div class=odometroalert style=--color1:#089981;--data1:-80deg;--color2:#089981;--data2:-220deg;--color3:#089981;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   if($alerta == "verde"){
-    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:-220deg;--color3:#089981;--data3:-360deg;--color4:#F23645;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:-220deg;--color3:#089981;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
   if($alerta == "naranja"){
-    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:220deg;--color3:#089981;--data3:-360deg;--color4:#F23645;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:220deg;--color3:#089981;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
   if($alerta == "roja"){
-    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:220deg;--color3:#089981;--data3:360deg;--color4:#F23645;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:220deg;--color3:#089981;--data3:360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
 
   return $nivel; 
 }
 
 function nivelBtc(){
-  $nprice = readPrices("BTCUSDT");
+  $asset =  readDatosAsset("BTC");
+  $nprice = readPrices($asset['MONEDA']);
   $min= 0;
   $max= 0;
 
-  if($nprice['ARRIBA'] < readFlotadorAnterior("BTCUSDT")){
+  if($nprice['ARRIBA'] < readFlotadorAnterior($asset['MONEDA'])){
     $min = $nprice['ARRIBA'];
-    $max = readFlotadorAnterior("BTCUSDT");
+    $max = readFlotadorAnterior($asset['MONEDA']);
   }else{
-    $min = readFlotadorAnterior("BTCUSDT");
+    $min = readFlotadorAnterior($asset['MONEDA']);
     $max = $nprice['ARRIBA'];
   }
 
   $porcenmax = (porcenConjunto(price($min), price($max), $nprice['ACTUAL']) *3.6 )."deg";
-  $nivel = "<div class=odometros style=--data:{$porcenmax};><div id=grad2>BTC</div></div>";
+  $nivel = "<div class=odometrosBtc style=--data:{$porcenmax};><div id=grad2>BTC</div></div>";
 
   return $nivel;
 }
@@ -611,11 +617,10 @@ function refreshDataAuto(){
     while($row = mysqli_fetch_array($resultado)){        
       $asset = $row['ASSET'];    
       $available_mon=$row['MONEDA'];
-      //$available = formatPrice($price[$available_mon],$available_mon);
       $available = $price[$available_mon];
       $axie = readPrices($available_mon);
-      $priceArriba = formatPrice($axie['ARRIBA'],$available_mon);
-      $priceAbajo = formatPrice($axie['ABAJO'],$available_mon);
+      $priceArriba = formatPrice($axie['ARRIBA'],$row['ASSET'],$row['PAR']);
+      $priceAbajo = formatPrice($axie['ABAJO'],$row['ASSET'],$row['PAR']);
       updatePrices($available_mon,"ACTUAL={$available}");
 
       if( $priceArriba == 0){
@@ -708,7 +713,7 @@ function listAsset(){
       $colorAlerta="#171A1E";
       $asset = $row['ASSET'];
       $elid = $row['ID'];
-      $price = formatPrice(readPrices($moneda)['ACTUAL'],$moneda);
+      $price = formatPrice(readPrices($moneda)['ACTUAL'],$row['ASSET'],$row['PAR']);
       if($price < $promedioFlotante){
         $color = "#F37A8B";
       }
@@ -719,7 +724,7 @@ function listAsset(){
       /*if($alerta=="verde") $colorAlerta="green";
       if($alerta=="naranja") $colorAlerta="yellow";*/
       if($alerta=="roja") $colorAlerta="green";
-      $cadena = $cadena ."<tr><td><span onclick=moneyChangue({$elid}) style=cursor:pointer;color:{$color};>{$asset}</span></td><td><span style=color:{$color};font-weight:bold;>".formatPrice($price,$moneda)."</span></td><td><span class=bolita style=color:{$colorAlerta};>&#9679;</span></td></tr>";
+      $cadena = $cadena ."<tr><td><span onclick=moneyChangue({$elid}) style=cursor:pointer;color:{$color};>{$asset}</span></td><td><span style=color:{$color};font-weight:bold;>".formatPrice($price,$row['ASSET'],$row['PAR'])."</span></td><td><span class=bolita style=color:{$colorAlerta};>&#9679;</span></td></tr>";
     }
     $cadena = $cadena ."</table>";
   }
@@ -779,8 +784,9 @@ function findEscalones(){
         $colorAlert = "#CFCFD3";
         $colorRow = "transparent";
         $available = readPrices($row['MONEDA']);
-        $precioActual = formatPrice($available['ACTUAL'],$row['MONEDA']);
-        $precioMoneda = formatPrice($precioActual,$row['MONEDA']);
+        $datos = readDatosMoneda($row['MONEDA']);
+        $precioActual = formatPrice($available['ACTUAL'],$datos['ASSET'],$datos['PAR']);
+        $precioMoneda = formatPrice($precioActual,$datos['ASSET'],$datos['PAR']);
         $stopPrice = calcularMargenPerdida($row['PRECIOCOMPRA'],$puntos);
         $precioAbajo = $available['ABAJO'];
         $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) *3.6 )."deg";
@@ -834,12 +840,12 @@ function findEscalones(){
             $sy= "&#9660;";
             $porcenMaxNeg = "0deg";
           }
-          $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>".quantity($row['CANTIDAD'],$row['MONEDA'])." ".readDatosMoneda($row['MONEDA'])['ASSET']."<span style=color:{$fg};> {$sy}</span></div>";
+          $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>".quantity($row['CANTIDAD'],$datos['ASSET'],$datos['PAR'])." ".$datos['ASSET']."<span style=color:{$fg};> {$sy}</span></div>";
           $botones = "<input title='Auto' type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell(".$row['ID'].")><button type=button class=escalbutton style=background:green;color:white; onclick=negativoBuy(".$row['ID'].")>Buy</button>";
-          $cadena = $cadena . "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>".formatPrice($row['PRECIOVENTA'],$row['MONEDA'])."$</td><td>{$precioMoneda}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg}>{$real_ganancia}$</span></td><td style=text-align:right;>{$botones}</td></tr>";
+          $cadena = $cadena . "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>".formatPrice($row['PRECIOVENTA'],$datos['ASSET'],$datos['PAR'])."$</td><td>{$precioMoneda}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg}>{$real_ganancia}$</span></td><td style=text-align:right;>{$botones}</td></tr>";
         }
         else{
-          $precioCompra = formatPrice($row['PRECIOCOMPRA'],$row['MONEDA']);
+          $precioCompra = formatPrice($row['PRECIOCOMPRA'],$datos['ASSET'],$datos['PAR']);
           if($didable_cancel_button == "disabled"){
             $botones= "<input type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell(".$row['ID'].")><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida(".$row['ID'].")>Sell</button>";              
           }
@@ -885,31 +891,32 @@ function findBinance(){
   return $cadena;
 }
 
-function refreshDatos(){
+function refreshDatos(){  
   $row = readDatos();
-  $row2 = readParametros();   
+  $row2 = readParametros();
+  $rowBtc = readDatosAsset("BTC");
   $moneda=$row['MONEDA'];
-  $auto = $row2['LOCAL'];  
+  $auto = $row2['LOCAL'];
   if(strlen($moneda) > 0){
     $readPrice = readPrices($moneda);
-    $bitcoin = readPrices('BTCUSDT')['ACTUAL'];
-    $priceMoneda = $readPrice['ACTUAL'];
-    $priceArriba= $readPrice['ARRIBA'];
-    $priceAbajo= $readPrice['ABAJO'];
-    $labelPriceMoneda = formatPrice($priceMoneda,$moneda);
-    $labelPriceBitcoin = formatPrice($bitcoin,"BTCUSDT");
+    $bitcoin = formatPrice(readPrices($rowBtc['MONEDA'])['ACTUAL'],$rowBtc['ASSET'],$rowBtc['PAR']);
+    $priceMoneda = formatPrice($readPrice['ACTUAL'],$row['ASSET'],$row['PAR']);
+    $priceArriba= formatPrice($readPrice['ARRIBA'],$row['ASSET'],$row['PAR']);
+    $priceAbajo= formatPrice($readPrice['ABAJO'],$row['ASSET'],$row['PAR']);
+    $labelPriceMoneda = formatPrice($priceMoneda,$row['ASSET'],$row['PAR']);
+    $labelPriceBitcoin = formatPrice($bitcoin,$rowBtc['ASSET'],$rowBtc['PAR']);
     $color = "red";
     $colorbtc = "red";
     $colorDisp = "red";
     $symbol = "&#9660;";
     $promedioUndante = row_sqlconector("SELECT (SUM(ABAJO) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
     $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
-    $promedioFlotanteBtc = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='BTCUSDT'")['PROMEDIO'];
+    $promedioFlotanteBtc = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='".$rowBtc['MONEDA']."'")['PROMEDIO'];
     $totalPromedio = ($promedioFlotante + $promedioUndante) /2;  
     $porcenmax = porcenConjunto($priceAbajo, $priceArriba, $priceMoneda)."%";  
-    $capital = $row2['CAPITAL'];
+    $capital = price($row2['CAPITAL']);
     $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
-    $xdisponible =   $capital - $inversion;    
+    $xdisponible =   price($capital - $inversion);
     $bina = $row2['BINANCE'];
     $recordCount = recordCount("TRADER");
     $sumMoneda = totalmoneda($moneda);
@@ -936,7 +943,7 @@ function refreshDatos(){
       $colorbtc = "#4BC883";
     }  
     
-    $obj = array('asset' => $row['ASSET'], 'ultimaventa' => $row['ULTIMAVENTA'], 'price' => $priceMoneda,'btc' => $bitcoin, 
+    $obj = array('balance_asset'=>$row['BALANCE_ASSET'],'par'=>$row['PAR'],'asset' => $row['ASSET'], 'ultimaventa' => $row['ULTIMAVENTA'], 'price' => $priceMoneda,'btc' => $bitcoin, 
     'colorbtc' => $colorbtc, 'symbol' => $symbol, 'moneda' => $moneda,'tendencia' => dayTendencia($moneda),'color' => $color,
     'maxdia' => $priceArriba,'mindia' => $priceAbajo, 'totalTendencia' => totalTendencia($moneda),
     'utc' => date('g:i A'),'techo' => $promedioFlotante,'piso' => $promedioUndante,'totalmoneda' => $sumMoneda['total'], 
@@ -949,7 +956,7 @@ function refreshDatos(){
     'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($totalPromedio,$moneda),
     'verescalones' => findEscalones(),'verbinance' => findBinance(),'labelpricebitcoin' => $labelPriceBitcoin,
     'labelpricemoneda' => $labelPriceMoneda,'precio_venta' => $row2['AUTOSHELL'],'listasset' => listAsset(),
-    'stop' => $row2['STOPLOSS'],'balance' => $sumMoneda['m_balance'],'nivelcompra' => nivelCompra($moneda) ); 
+    'stop' => $row2['STOPLOSS'],'balance' => quantity($sumMoneda['m_balance'],$row['ASSET'],$row['PAR']),'nivelcompra' => nivelCompra($moneda) ); 
 
     sqlconector("UPDATE PARAMETROS SET DATOS='".json_encode($obj)."'");
   }  
