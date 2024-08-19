@@ -891,7 +891,7 @@ function findBinance(){
   return $cadena;
 }
 
-function refreshDatos(){  
+function refreshDatos(){
   $row = readDatos();
   $row2 = readParametros();
   $rowBtc = readDatosAsset("BTC");
@@ -921,6 +921,7 @@ function refreshDatos(){
     $recordCount = recordCount("TRADER");
     $sumMoneda = totalmoneda($moneda);
     $symbol = nivelAnterior($moneda);
+    $mercado = totalTendencia($rowBtc['MONEDA']);
         
     if($priceMoneda < $promedioFlotante){
         $color = "#F37A8B";
@@ -943,7 +944,7 @@ function refreshDatos(){
       $colorbtc = "#4BC883";
     }  
     
-    $obj = array('balance_asset'=>$row['BALANCE_ASSET'],'par'=>$row['PAR'],'asset' => $row['ASSET'], 'ultimaventa' => $row['ULTIMAVENTA'], 'price' => $priceMoneda,'btc' => $bitcoin, 
+    $obj = array('balance_asset'=>$row['BALANCE_ASSET'],'par'=>$row['PAR'],'asset' => $row['ASSET'], 'ultimaventa' => quantity($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 'price' => $priceMoneda,'btc' => $bitcoin, 
     'colorbtc' => $colorbtc, 'symbol' => $symbol, 'moneda' => $moneda,'tendencia' => dayTendencia($moneda),'color' => $color,
     'maxdia' => $priceArriba,'mindia' => $priceAbajo, 'totalTendencia' => totalTendencia($moneda),
     'utc' => date('g:i A'),'techo' => $promedioFlotante,'piso' => $promedioUndante,'totalmoneda' => $sumMoneda['total'], 
@@ -951,7 +952,7 @@ function refreshDatos(){
     'porcenmax' => $porcenmax,'ganancia' => price($row2['GANANCIA']),'perdida' => price($row2['PERDIDA']),'capital' => price($row2['CAPITAL']),
     'disponible' => price($row2['DISPONIBLE']), 'escalones' => $row2['ESCALONES'],'invxcompra' => $row2['INVXCOMPRA'],
     'totalpromedio' => $totalPromedio,'xdisponible' => $xdisponible, 'grafico' => returnGrafica($moneda),
-    'auto' => $auto,'bina' => $bina,'impuesto' => price($row2['IMPUESTO']), 
+    'auto' => $auto,'bina' => $bina,'impuesto' => price($row2['IMPUESTO']), 'mercado' =>$mercado, 
     'id' => $row['ID'],'recordCount' => $recordCount,'colordisp' => $colorDisp,
     'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($totalPromedio,$moneda),
     'verescalones' => findEscalones(),'verbinance' => findBinance(),'labelpricebitcoin' => $labelPriceBitcoin,

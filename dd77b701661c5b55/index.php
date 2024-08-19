@@ -112,7 +112,8 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <tr><td><label style="color:#EAECEF;font-weight: bold;"id="utc"></label></td></tr>
     <tr><td><label title="Promedio de Precio" style="font-weight:bold;" id="zona"></label></td></tr>
     <tr><td><label style="font-weight:bold;" id="tendencia"></label></td></tr>
-    <tr><td>  <label style="font-weight:bold;" id="totalTendencia"></label></td></tr>
+    <tr><td><label style="font-weight:bold;" id="totalTendencia"></label></td></tr>
+    <tr><td><label style="font-weight:bold;" id="mercado"></label></td></tr>
   </table>
   </div> 
 

@@ -494,6 +494,7 @@ function refreshDatos(){
       document.getElementById('priceBtc').innerHTML = "<span style='margin-right:5px;color:white;'>BTC</span> "+datos.labelpricebitcoin;
       document.getElementById('tendencia').innerHTML = "Dia "+datos.tendencia;
       document.getElementById('totalTendencia').innerHTML = "Tendencia "+datos.totalTendencia;
+      document.getElementById('mercado').innerHTML = "Mercado "+datos.mercado;
       document.getElementById('zona').innerHTML = "Promedio <span style='color:white;'> "+dollarUSLocale.format(priceFixed(datos.totalpromedio))+"</span>";
       document.getElementById('utc').innerHTML = "<span style=color:#858E9B>Hora Utc </span>"+datos.utc;
       document.getElementById('ant').innerHTML = datos.nivel;
@@ -512,7 +513,8 @@ function refreshDatos(){
       document.getElementById('perdidas').value = priceFixed(datos.perdida);
       document.getElementById('recordCount').value = datos.recordCount;
       document.getElementById('recupera').value = priceFixed(datos.recupera);
-      document.getElementById('totalBalanceVenta').innerHTML = priceFixed(datos.balance * datos.price)+fiat;
+      let resultado = datos.balance * datos.price;
+      document.getElementById('totalBalanceVenta').innerHTML = resultado.toFixed(2) +fiat;
       document.getElementById('cualmoneda').innerHTML = datos.asset;
       document.getElementById('cualmoneda2').innerHTML = datos.asset;
       
