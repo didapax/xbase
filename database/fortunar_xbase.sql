@@ -1,14 +1,13 @@
 -- phpMyAdmin SQL Dump
--- version 4.9.7
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: localhost:3306
--- Tiempo de generación: 25-11-2022 a las 13:15:36
--- Versión del servidor: 5.7.39-cll-lve
--- Versión de PHP: 7.4.30
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 19-08-2024 a las 04:20:41
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -25,35 +24,34 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `USER`
+-- Estructura de tabla para la tabla `user`
 --
 
-CREATE TABLE `USER` (
+CREATE TABLE `user` (
   `ID` int(11) NOT NULL,
   `USUARIO` varchar(255) DEFAULT NULL,
   `PASSWORD` varchar(255) DEFAULT NULL,
-  `SALDO` decimal(16,4) NOT NULL DEFAULT '0.0000',
-  `RATE` int(11) DEFAULT '1',
-  `BLOQUEADO` int(11) DEFAULT '0',
+  `SALDO` decimal(16,8) NOT NULL DEFAULT 0.00000000,
+  `RATE` int(11) DEFAULT 1,
+  `BLOQUEADO` int(11) DEFAULT 0,
   `IP` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
--- Volcado de datos para la tabla `USER`
+-- Volcado de datos para la tabla `user`
 --
 
-INSERT INTO `USER` (`ID`, `USUARIO`, `PASSWORD`, `SALDO`, `RATE`, `BLOQUEADO`, `IP`) VALUES
-(1, 'dd77b701661c5b55', '12358132134', '0.0000', 1, 0, '190.207.11.113'),
-(2, 'b54d66a5fd158d3f', '12358132134', '0.0000', 1, 0, '186.94.247.219');
+INSERT INTO `user` (`ID`, `USUARIO`, `PASSWORD`, `SALDO`, `RATE`, `BLOQUEADO`, `IP`) VALUES
+(1, 'dd77b701661c5b55', '12358132134', 0.00000000, 1, 0, '::1');
 
 --
 -- Índices para tablas volcadas
 --
 
 --
--- Indices de la tabla `USER`
+-- Indices de la tabla `user`
 --
-ALTER TABLE `USER`
+ALTER TABLE `user`
   ADD PRIMARY KEY (`ID`);
 
 --
@@ -61,9 +59,9 @@ ALTER TABLE `USER`
 --
 
 --
--- AUTO_INCREMENT de la tabla `USER`
+-- AUTO_INCREMENT de la tabla `user`
 --
-ALTER TABLE `USER`
+ALTER TABLE `user`
   MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 COMMIT;
 
