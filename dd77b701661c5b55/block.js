@@ -492,8 +492,8 @@ function refreshDatos(){
       document.getElementById('priceMoneda').innerHTML = "<span style='margin-right:5px;color:white;'>"+datos.asset+"</span> "+datos.labelpricemoneda;
       document.getElementById('price').value = datos.price;
       document.getElementById('priceBtc').innerHTML = "<span style='margin-right:5px;color:white;'>BTC</span> "+datos.labelpricebitcoin;
-      document.getElementById('tendencia').innerHTML = "Dia "+datos.tendencia;
-      document.getElementById('totalTendencia').innerHTML = "Tendencia "+datos.totalTendencia;
+      document.getElementById('tendencia').innerHTML = `Dia ${datos.asset} ${datos.tendencia}`;
+      document.getElementById('totalTendencia').innerHTML = `Tendencia ${datos.asset} ${datos.totalTendencia}`;
       document.getElementById('mercado').innerHTML = "Mercado "+datos.mercado;
       document.getElementById('zona').innerHTML = "Promedio <span style='color:white;'> "+dollarUSLocale.format(priceFixed(datos.totalpromedio))+"</span>";
       document.getElementById('utc').innerHTML = "<span style=color:#858E9B>Hora Utc </span>"+datos.utc;
@@ -602,7 +602,7 @@ function sumarGanancia(){
 
 function clickTabComprar(){
   $("#tabComprar").css("display","block");
-  $("#tabButtonComprar").css("color","#4BC883");
+  $("#tabButtonComprar").css("color","#F6465D");
   $("#tabButtonComprar").css("border-top","2px solid #F0B90B");
   $("#tabButtonComprar").css("background","#1E2026");
   $("#tabVender").css("display","none");
@@ -618,7 +618,7 @@ function clickTabVender(){
   $("#tabButtonComprar").css("border-top","0");  
   $("#tabButtonComprar").css("background","#171A1E");
   $("#tabVender").css("display","block");
-  $("#tabButtonVender").css("color","#F6465D");
+  $("#tabButtonVender").css("color","#4BC883");
   $("#tabButtonVender").css("border-top","2px solid #F0B90B");
   $("#tabButtonVender").css("background","#1E2026");
 }

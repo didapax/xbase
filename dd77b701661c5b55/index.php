@@ -158,7 +158,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
   <div class="izquierda_asset" id="listasset"></div>
   <div id="derecha" class="derecha" style="">
     <div class=bar>
-      <button id="tabButtonComprar" class="bar tabButton" style="background:#1E2026;color:#4BC883;border-top:2px solid #F0B90B;" onclick=clickTabComprar()>Comprar</button>
+      <button id="tabButtonComprar" class="bar tabButton" style="background:#1E2026;color:#F6465D;border-top:2px solid #F0B90B;" onclick=clickTabComprar()>Comprar</button>
       <button id="tabButtonVender" class="bar tabButton" onclick=clickTabVender()>Vender</button>
     </div>
     <div id=tabComprar class=tabContainer>
@@ -171,7 +171,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
         <tr><td></td><td>.</td></tr>
       </table>
       <br>
-      <button class='appbtn' style="background:#4BC883;margin:0;width:100%;color:white;" type="button" onclick="agregar()">COMPRAR <span style="font-weight: bold;" id="cualmoneda"></span></button>
+      <button class='appbtn' style="background:#F6465D;margin:0;width:100%;color:white;" type="button" onclick="agregar()">COMPRAR <span style="font-weight: bold;" id="cualmoneda"></span></button>
     </div>
 
     <div class=tabContainer id=tabVender style=display:none;>
@@ -184,7 +184,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
         <tr><td></td><td>.</td></tr>
       </table>
       <br>   
-      <button title="Vender a Negativo" type=button cclass='appbtn' style="background:#F6465D;margin:0;width:100%;color:white;" onclick=negativo()>VENDER <span style="font-weight: bold;" id="cualmoneda2"></span></button>
+      <button title="Vender" type=button cclass='appbtn' style="background:#4BC883;margin:0;width:100%;color:white;" onclick=negativo()>VENDER <span style="font-weight: bold;" id="cualmoneda2"></span></button>
     </div>
   </div>  
 </div>
@@ -196,3 +196,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 <br><br>
 </body>
 </html>
+<!--
+color rojo: #F6465D
+color verde: #4BC883 
+-->

@@ -475,23 +475,18 @@ function nivelAnterior($moneda){
   return $nivel; 
 }
 
-function nivelCompra($moneda){
-  $asset = readDatosAsset("BTC");
-  $promedioUndante = row_sqlconector("SELECT (SUM(ABAJO) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
-  $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
-  $promedioFlotanteBtc = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='".$asset['MONEDA']."'")['PROMEDIO'];
-  $totalPromedio = ($promedioFlotante + $promedioUndante) /2;
-  $alerta = returnAlertas($totalPromedio,$moneda);
+function nivelCompra($moneda){  
+  $alerta = returnAlertas($moneda);
   $asset = "BUY";
-  $nivel="<div class=odometroalert style=--color1:#089981;--data1:-80deg;--color2:#089981;--data2:-220deg;--color3:#089981;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+  $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:-80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   if($alerta == "verde"){
-    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:-220deg;--color3:#089981;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
   if($alerta == "naranja"){
-    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:220deg;--color3:#089981;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
   if($alerta == "roja"){
-    $nivel="<div class=odometroalert style=--color1:#089981;--data1:80deg;--color2:#089981;--data2:220deg;--color3:#089981;--data3:360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
 
   return $nivel; 
@@ -705,10 +700,8 @@ function listAsset(){
     $cadena = "<table style=text-align:right;width:100%;><th></th><th></th>";
     while($row = mysqli_fetch_array($resultado)){
       $moneda = $row['MONEDA'];
-      $promedioUndante = row_sqlconector("SELECT (SUM(ABAJO) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
-      $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
-      $totalPromedio = ($promedioFlotante + $promedioUndante) /2;       
-      $alerta = returnAlertas($totalPromedio,$moneda);
+      $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];      
+      $alerta = returnAlertas($moneda);
       $color = "red";
       $colorAlerta="#171A1E";
       $asset = $row['ASSET'];
@@ -721,8 +714,8 @@ function listAsset(){
           $color = "#4BC883";
       }     
       
-      /*if($alerta=="verde") $colorAlerta="green";
-      if($alerta=="naranja") $colorAlerta="yellow";*/
+      if($alerta=="verde") $colorAlerta="red";
+      if($alerta=="naranja") $colorAlerta="yellow";
       if($alerta=="roja") $colorAlerta="green";
       $cadena = $cadena ."<tr><td><span onclick=moneyChangue({$elid}) style=cursor:pointer;color:{$color};>{$asset}</span></td><td><span style=color:{$color};font-weight:bold;>".formatPrice($price,$row['ASSET'],$row['PAR'])."</span></td><td><span class=bolita style=color:{$colorAlerta};>&#9679;</span></td></tr>";
     }
@@ -732,7 +725,7 @@ function listAsset(){
     return $cadena; 
 }
 
-function returnAlertas($totalPromedio,$moneda){
+function returnAlertas($moneda){
   $readPrice = readPrices($moneda);
   $precio = $readPrice['ACTUAL'];
   $priceArriba= $readPrice['ARRIBA'];
@@ -747,15 +740,15 @@ function returnAlertas($totalPromedio,$moneda){
   }
 
   if($porcenmax > 19 && $porcenmax < 30 && $sane==0){
-    $variable = "verde";
+    $variable = "verde"; //posibilidad de vender
   }
 
   if( $porcenmax > 9 && $porcenmax < 20 && $sane==0 ){
-    $variable = "naranja";
+    $variable = "naranja"; //el precio esta subiendo
   }
   
   if($porcenmax > -1 && $porcenmax < 10 && $sane==0){
-    $variable = "roja";
+    $variable = "roja"; //posibilidad de comprar
   }
 
   return $variable;  
@@ -862,7 +855,6 @@ function findEscalones(){
   return $cadena;
 }
 
-
 function findBinance(){
   $cadena = "<table style=width:100%;><th>Estatus</th><th>Moneda</th><th>Cant.</th><th>Orden Id</th><th>Tipo</th><th>Opciones</th>";
   $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
@@ -954,7 +946,7 @@ function refreshDatos(){
     'totalpromedio' => $totalPromedio,'xdisponible' => $xdisponible, 'grafico' => returnGrafica($moneda),
     'auto' => $auto,'bina' => $bina,'impuesto' => price($row2['IMPUESTO']), 'mercado' =>$mercado, 
     'id' => $row['ID'],'recordCount' => $recordCount,'colordisp' => $colorDisp,
-    'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($totalPromedio,$moneda),
+    'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($moneda),
     'verescalones' => findEscalones(),'verbinance' => findBinance(),'labelpricebitcoin' => $labelPriceBitcoin,
     'labelpricemoneda' => $labelPriceMoneda,'precio_venta' => $row2['AUTOSHELL'],'listasset' => listAsset(),
     'stop' => $row2['STOPLOSS'],'balance' => quantity($sumMoneda['m_balance'],$row['ASSET'],$row['PAR']),'nivelcompra' => nivelCompra($moneda) ); 
