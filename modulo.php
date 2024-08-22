@@ -944,7 +944,14 @@ function refreshDatos(){
     $sumMoneda = totalmoneda($moneda);
     $symbol = nivelAnterior($moneda);
     $mercado = totalTendencia($rowBtc['MONEDA']);
-        
+    $checkMesGrafico = true;
+    $checkAnoGrafico = false;
+
+    if($row2["GRAFICO"]==1){
+      $checkMesGrafico = false;
+      $checkAnoGrafico = true;
+    }
+    
     if($priceMoneda < $promedioFlotante){
         $color = "#F37A8B";
     }
@@ -975,8 +982,8 @@ function refreshDatos(){
     'disponible' => price($row2['DISPONIBLE']), 'escalones' => $row2['ESCALONES'],'invxcompra' => $row2['INVXCOMPRA'],
     'totalpromedio' => $totalPromedio,'xdisponible' => $xdisponible, 'grafico' => returnGrafica($moneda),
     'auto' => $auto,'bina' => $bina,'impuesto' => price($row2['IMPUESTO']), 'mercado' =>$mercado, 
-    'id' => $row['ID'],'recordCount' => $recordCount,'colordisp' => $colorDisp,
-    'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($moneda),
+    'id' => $row['ID'],'recordCount' => $recordCount,'colordisp' => $colorDisp,'checkMesGrafico'=>$checkMesGrafico,
+    'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($moneda),'checkAnoGrafico'=>$checkAnoGrafico,
     'verescalones' => findEscalones(),'verbinance' => findBinance(),'labelpricebitcoin' => $labelPriceBitcoin,
     'labelpricemoneda' => $labelPriceMoneda,'precio_venta' => $row2['AUTOSHELL'],'listasset' => listAsset(),
     'stop' => $row2['STOPLOSS'],'balance' => quantity($sumMoneda['m_balance'],$row['ASSET'],$row['PAR']),'nivelcompra' => nivelCompra($moneda) ); 

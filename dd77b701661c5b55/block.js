@@ -539,7 +539,9 @@ function refreshDatos(){
       let resultado = datos.balance * datos.price;
       document.getElementById('totalBalanceVenta').innerHTML = resultado.toFixed(2) +fiat;
       document.getElementById('cualmoneda').innerHTML = datos.asset;
-      document.getElementById('cualmoneda2').innerHTML = datos.asset;
+      document.getElementById('cualmoneda2').innerHTML = datos.asset; 
+      document.getElementById('xmes').checked = datos.checkMesGrafico;
+      document.getElementById('xano').checked = datos.checkAnoGrafico;
       
       if((document.getElementById('disponible').value *1) < (document.getElementById('invxcompra').value *1)){
         document.getElementById("btAgregar").value = "1"; 
