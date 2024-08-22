@@ -213,14 +213,13 @@ font-family: 'Bebas Neue', cursive;
 }
 
 .grafico{
-  margin: 0;
   height: 260px;
   display:inline-block;
   width:98%;
 }
 
 .chart table{
-  color: black;
+  background: #161A1E;
 }
 
 /* width */

@@ -17,12 +17,35 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
   <script src="block.js"></script>
   <link rel="stylesheet" href="./style.css">
   <script src="../SweetAlert/sweetalert2.all.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="../SweetAlert/sweetalert2.min.css" />       
-  <link href="c3.css" rel="stylesheet">
-  <script src="c3.js"></script>
-  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="../SweetAlert/sweetalert2.min.css" /> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css">
 
   <style>
+    .c3-axis-x text {
+            fill: white; /* Cambia 'blue' por el color que prefieras */
+            font-size: 12px; /* Ajusta el tamaño de la fuente si es necesario */
+        }
+
+        .c3-axis-y text {
+            fill: white; /* Cambia 'red' por el color que prefieras */
+            font-size: 12px; /* Ajusta el tamaño de la fuente si es necesario */
+        }    
+        .c3-legend-item text {
+            fill: white; /* Cambia 'blue' por el color que prefieras */
+        }    
+
+        .c3-tooltip {
+            background-color: #f9f9f9; /* Cambia el color de fondo del tooltip */
+            border: 1px solid #ccc; /* Cambia el color del borde del tooltip */
+        }
+
+        .c3-tooltip th {
+            color: blue; /* Cambia el color de la letra del encabezado del tooltip */
+        }
+
+        .c3-tooltip td {
+            color: red; /* Cambia el color de la letra del contenido del tooltip */
+        }        
   </style>
 
   <script>
@@ -95,7 +118,9 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">
     <label for="xano">ALL</label>
   </div>
-  <div class="grafico" id="chart" ></div>  
+  <div id="chart-container" class="grafico">
+    <div id="chart"></div>
+  </div>
 </div>
 
 <div class="div1">
@@ -192,6 +217,10 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
   <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('retiro').close()">X</a><br>
 </dialog>
 <br><br>
+   <!-- Incluir D3.js -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
+    <!-- Incluir C3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.js"></script>
 </body>
 </html>
 <!--

@@ -106,7 +106,7 @@ function formatPrice($valor, $asset, $par) {
   }
 }
 
-function  quantity($valor,$asset,$par){
+function quantity($valor,$asset,$par){
     // Verificar si $par es "USDT" o "USDC"
     if ($par == "USDT" || $par == "USDC") {
       // Seleccionar el formato basado en el valor de $asset
@@ -338,26 +338,37 @@ function readTrader($id){
   return row_sqlconector("select * from TRADER where ID=".$id);
 }
 
-function ifNotDayExists($tabla,$moneda){
-    $interval = row_sqlconector("SELECT DAY(NOW()) AS DIA, MONTH(NOW()) AS MES, YEAR(NOW()) AS ANO");
-    $fecha1 = "{$interval['ANO']}-{$interval['MES']}-{$interval['DIA']} 00:00";
-    $fecha2 = "{$interval['ANO']}-{$interval['MES']}-{$interval['DIA']} 23:59";
-    if (row_sqlconector("select COUNT(*) AS TOTAL from {$tabla} WHERE MONEDA='{$moneda}' AND FECHA BETWEEN '{$fecha1}' AND '{$fecha2}'")['TOTAL'] == 0)
-    return TRUE;
-    return FALSE;
+function ifNotDayExists($tabla, $moneda) {
+  $interval = row_sqlconector("SELECT CURDATE() AS HOY");
+  $fecha1 = "{$interval['HOY']} 00:00:00";
+  $fecha2 = "{$interval['HOY']} 23:59:59";
+  
+  $query = "SELECT COUNT(*) AS TOTAL FROM {$tabla} WHERE MONEDA = '{$moneda}' AND FECHA BETWEEN '{$fecha1}' AND '{$fecha2}'";
+  $result = row_sqlconector($query);
+  
+  return $result['TOTAL'] == 0;
 }
 
 function updatePrices($moneda,$valores){
   sqlconector("UPDATE PRICES SET {$valores} WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())");
 }
 
-function readPrices($moneda){
-  if(ifNotDayExists("PRICES",$moneda)){
-    if(strlen($moneda)>0){
-      sqlconector("INSERT INTO PRICES(MONEDA) VALUES('{$moneda}')");
-    }
+function readPrices($moneda) {
+  // Validar que la moneda no esté vacía
+  if (strlen($moneda) > 0) {
+      // Verificar si no existe un registro para el día actual
+      if (ifNotDayExists("PRICES", $moneda)) {
+          // Insertar un nuevo registro
+          sqlconector("INSERT INTO PRICES (MONEDA) VALUES ('{$moneda}')");
+      }
+      
+      // Obtener los precios del día actual
+      $query = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND DATE(FECHA) = CURDATE()";
+      return row_sqlconector($query);
   }
-  return row_sqlconector("select * from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())");
+  
+  // Retornar null si la moneda está vacía
+  return null;
 }
 
 function readFlotadorAnterior($moneda){
@@ -623,101 +634,121 @@ function totales($moneda){
   return array('cripto' => $total,'recupera' => $recupera,'color' => $color );
 }
 
-function refreshDataAuto(){
-  $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
-  if (!$conexion) {
-    echo "Refresh page, Failed to connect to Data...";
-    exit();
-  }else{
-    $api = new Binance\API(sqlApiKey(), sqlApiSecret());
-    $api->useServerTime();
-    $price = $api->prices();
-    $api->useServerTime();
-    $balances = $api->balances();
+function refreshDataAuto() {
+  try {
+      $dsn = "mysql:host={$GLOBALS['servidor']};dbname={$GLOBALS['database']};charset=utf8";
+      $conexion = new PDO($dsn, $GLOBALS['user'], $GLOBALS['password']);
+      $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    if(recordCount("ORDERBINANCE")>0){
-      $foraneo = mysqli_query( $conexion, "DELETE FROM ORDERBINANCE" );
-    }
-    
-    $consulta = "select * from DATOS";
-    $resultado = mysqli_query( $conexion, $consulta );
-    while($row = mysqli_fetch_array($resultado)){        
-      $asset = $row['ASSET'];    
-      $available_mon=$row['MONEDA'];
-      $available = $price[$available_mon];
-      $axie = readPrices($available_mon);
-      $priceArriba = formatPrice($axie['ARRIBA'],$row['ASSET'],$row['PAR']);
-      $priceAbajo = formatPrice($axie['ABAJO'],$row['ASSET'],$row['PAR']);
-      updatePrices($available_mon,"ACTUAL={$available}");
+      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+      $api->useServerTime();
+      $price = $api->prices();
+      $balances = $api->balances();
 
-      if( $priceArriba == 0){
-        updatePrices($available_mon,"ARRIBA={$available}");
-      }
-    
-      if( $priceAbajo == 0){
-        updatePrices($available_mon,"ABAJO={$available}");
-      }
-      
-      if( $priceArriba <  $available){
-        updatePrices($available_mon,"ARRIBA={$available}");
-      }
-       
-      if( $priceAbajo >  $available){
-        updatePrices($available_mon,"ABAJO={$available}");
+      if (recordCount("ORDERBINANCE") > 0) {
+          $conexion->exec("DELETE FROM ORDERBINANCE");
       }
 
-      if(row_sqlconector("select COUNT(*) AS TOTAL from TRADER where MONEDA='{$available_mon}'")['TOTAL'] > 0){
-        $api->useServerTime();
-        $openorders = $api->openOrders($available_mon);
-              
-        foreach ($openorders as &$order) {
-          $foraneo = mysqli_query( $conexion, "INSERT INTO ORDERBINANCE(MONEDA,ORDERID,TIPO,ESTATUS,PRECIO,CANTIDAD) VALUES('{$order['symbol']}','{$order['orderId']}','{$order['side']}','{$order['status']}',{$order['price']},{$order['origQty']})");
-        }
-        unset($order);   
+      $consulta = "SELECT * FROM DATOS";
+      $stmt = $conexion->query($consulta);
+
+      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+          $asset = $row['ASSET'];
+          $available_mon = $row['MONEDA'];
+          $available = $price[$available_mon];
+          $axie = readPrices($available_mon);
+          $priceArriba = formatPrice($axie['ARRIBA'], $row['ASSET'], $row['PAR']);
+          $priceAbajo = formatPrice($axie['ABAJO'], $row['ASSET'], $row['PAR']);
+          updatePrices($available_mon, "ACTUAL={$available}");
+
+          if ($priceArriba == 0) {
+              updatePrices($available_mon, "ARRIBA={$available}");
+          }
+
+          if ($priceAbajo == 0) {
+              updatePrices($available_mon, "ABAJO={$available}");
+          }
+
+          if ($priceArriba < $available) {
+              updatePrices($available_mon, "ARRIBA={$available}");
+          }
+
+          if ($priceAbajo > $available) {
+              updatePrices($available_mon, "ABAJO={$available}");
+          }
+
+          if (row_sqlconector("SELECT COUNT(*) AS TOTAL FROM TRADER WHERE MONEDA='{$available_mon}'")['TOTAL'] > 0) {
+              $openorders = $api->openOrders($available_mon);
+
+              $insertOrder = $conexion->prepare("INSERT INTO ORDERBINANCE (MONEDA, ORDERID, TIPO, ESTATUS, PRECIO, CANTIDAD) VALUES (:moneda, :orderid, :tipo, :estatus, :precio, :cantidad)");
+              foreach ($openorders as $order) {
+                  $insertOrder->execute([
+                      ':moneda' => $order['symbol'],
+                      ':orderid' => $order['orderId'],
+                      ':tipo' => $order['side'],
+                      ':estatus' => $order['status'],
+                      ':precio' => $order['price'],
+                      ':cantidad' => $order['origQty']
+                  ]);
+              }
+          }
+
+          $updateBalance = $conexion->prepare("UPDATE DATOS SET BALANCE_ASSET = :balance WHERE MONEDA = :moneda");
+          $updateBalance->execute([
+              ':balance' => $balances[$asset]['available'],
+              ':moneda' => $available_mon
+          ]);
       }
-      $foraneo = mysqli_query( $conexion, "UPDATE DATOS SET BALANCE_ASSET=".$balances[$asset]['available']." WHERE MONEDA='{$available_mon}'");
-    }
-    mysqli_close($conexion);
-    refreshDatos();    
+
+      refreshDatos();
+  } catch (PDOException $e) {
+      echo "Error: " . $e->getMessage();
+  } finally {
+      if (isset($conexion)) {
+          $conexion = null;
+      }
   }
 }
 
-function returnGrafica($moneda){
-  $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
+function returnGrafica($moneda) {
+  $datos = readDatosMoneda($moneda);
+  $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
   if (!$conexion) {
-    echo "Refresh page, Failed to connect to Data...";
-    exit();
-  }else{
-    $tiger = "";
-    $interval = 30;
-    if(recordCountInterval("PRICES",$moneda) > $interval){
-      $ofset = recordCountInterval("PRICES",$moneda) - $interval;
-      $tiger = "LIMIT {$ofset},{$interval}";
-    }
-    
-    if(readParametros()['GRAFICO'] == 0){
-      $consulta = "select * from PRICES WHERE MONEDA = '{$moneda}' ORDER BY FECHA ASC {$tiger}";
-    }else{
-      $consulta = "select * from PRICES WHERE MONEDA = '{$moneda}' ORDER BY FECHA ASC";
-    }
-    
-    $resultado = mysqli_query( $conexion, $consulta );
-    $grafica= array(array());
-    $grafica[0][0]="Min";
-    $grafica[1][0]="Max";
-    $i=1;
-    while($row = mysqli_fetch_array($resultado)){
-      $miVar = "".$row['ABAJO']."-".$row['ARRIBA'];
-      if($miVar != "0-0"){
-        $grafica[0][$i] = $row['ABAJO'];
-        $grafica[1][$i] = $row['ARRIBA'];
-        $i++;
-      }
-    }
+      echo "Refresh page, Failed to connect to Data...";
+      exit();
+  } else {
 
-    mysqli_close($conexion);
-    return $grafica;
-  }  
+      if (readParametros()['GRAFICO'] == 0) {
+          $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC LIMIT 30";
+      } else {
+          $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC";
+      }
+
+      $resultado = mysqli_query($conexion, $consulta);
+      $fechas = array();
+      $valoresMin = array();
+      $valoresMax = array();
+
+      while ($row = mysqli_fetch_array($resultado)) {          
+          if ($row['ABAJO'] > 0 && $row['ARRIBA'] > 0) {
+              $timestamp = strtotime($row['FECHA']);
+              $fechas[] = date("Y-m-d", $timestamp);
+              $valoresMin[] = formatPrice($row['ABAJO'], $datos['ASSET'], $datos['PAR']);
+              $valoresMax[] = formatPrice($row['ARRIBA'], $datos['ASSET'], $datos['PAR']);
+          }
+      }
+
+      mysqli_close($conexion);
+
+      // Estructura de datos para Chart.js
+      $grafica = array(
+          'fechas' => $fechas,
+          'valoresMin' => $valoresMin,
+          'valoresMax' => $valoresMax
+      );
+
+      return $grafica;
+  }
 }
 
 function listAsset(){
@@ -819,7 +850,7 @@ function findEscalones(){
         }
 
         if($row['NEGATIVO']==1){
-            $laventa = $row['CANTIDAD'] * $row['PRECIOVENTA'];
+          $laventa = $row['CANTIDAD'] * $row['PRECIOVENTA'];
           $real_ganancia = currency($laventa -($row['CANTIDAD'] * $precioMoneda) );
           if($real_ganancia > 0){
             $bk=  "#15342D";

@@ -321,8 +321,8 @@ function moneyChangue(valor){
     moneda: valor
   },function(data){
     document.getElementById('sugerirPrecioCompra').checked = true;
-    leerDatos();
     refreshDatos();
+    leerDatos();
     document.getElementById("preloader").style.display='none';
   });
 }
@@ -415,19 +415,18 @@ function  quantity(valor,simbolo,par){
   }
 }
 
-function leerDatos(){
-  $.get("block?getPriceBinance=",
-    function(data){      
-      datos= JSON.parse(data);
+function leerDatos() {
+  $.get("block?getPriceBinance=", function(data) {
+      datos = JSON.parse(data);
       
       document.getElementById('moneda').value = datos.moneda;
       document.getElementById('asset').value = datos.asset;
       document.getElementById('capital').value = priceFixed(datos.capital);
       document.getElementById('showCapital').value = priceFixed(datos.capital);
-      document.getElementById('escalones').value = (datos.escalones *1).toFixed(0);      
-      document.getElementById('impuesto').value = (datos.impuesto *1);
-      document.getElementById('local').checked = (datos.auto *1).toFixed(2);
-      document.getElementById('orderBinance').checked = (datos.bina *1);
+      document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
+      document.getElementById('impuesto').value = (datos.impuesto * 1);
+      document.getElementById('local').checked = (datos.auto * 1).toFixed(2);
+      document.getElementById('orderBinance').checked = (datos.bina * 1);
       document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);
       document.getElementById('precio_venta').value = datos.precio_venta;
       document.getElementById('stop').value = datos.stop;
@@ -437,38 +436,67 @@ function leerDatos(){
       $("#div2").html(datos.verbinance);
       fiat = datos.par;
       simbolo = datos.asset;
-      
-      chart = c3.generate({
-        data: {
-            columns: [
-                datos.grafico[0],
-                datos.grafico[1]
-            ],
-            colors: {
-              Min: '#EA465C',
-              Max: '#4DCB85'
-            },
-            types: {
-                Min: 'spline',
-                Max: 'spline'
-            }
-          },
-          point: {
-            show: false
-        },
-          bar: {
-              width: {
-                  ratio: 0.5 
+
+      // Crear el gráfico con C3.js
+      var chart = c3.generate({
+          bindto: '#chart', // Asegúrate de que el contenedor del gráfico esté definido en tu HTML
+          size: {
+            width: document.getElementById('chart-container').offsetWidth,
+            height: document.getElementById('chart-container').offsetHeight
+        },          
+          data: {
+              x: 'x',
+              columns: [
+                  ['x'].concat(datos.grafico.fechas), // Fechas
+                  ['Min'].concat(datos.grafico.valoresMin), // Valores Min
+                  ['Max'].concat(datos.grafico.valoresMax)  // Valores Max
+              ],
+              colors: {
+                  Min: '#EA465C',
+                  Max: '#4DCB85'
+              },
+              types: {
+                  Min: 'spline',
+                  Max: 'spline'
               }
           },
-          legend: {
+          axis: {
+              x: {
+                  type: 'timeseries',
+                  tick: {
+                      format: '%d-%m' // Formato de fecha
+                  }
+              },
+              y: {
+                  tick: {
+                      //format: d3.format('.8f')  Formato de número con 8 decimales
+                  }
+              }
+          },
+          point: {
               show: false
-          }
-        });
-        
-      chart = null;      
-      datos = null;
-    });
+          },
+          legend: {
+              show: true
+          },
+          onrendered: function() {
+            d3.selectAll("svg > .bgRect").remove();
+            d3.selectAll("svg").insert("rect", ":first-child")
+                .attr("class", "bgRect")
+                .attr("width", "100%")
+                .attr("height", "100%")
+                .attr("fill", "#161A1E"); // Cambia 'lightgray' por el color que prefieras
+        }          
+      });
+
+        // Redimensionar el gráfico cuando la ventana cambie de tamaño
+        window.addEventListener('resize', function() {
+          chart.resize({
+              width: document.getElementById('chart-container').offsetWidth,
+              height: document.getElementById('chart-container').offsetHeight
+          });
+      });
+  });
 }
 
 function refreshDatos(){
