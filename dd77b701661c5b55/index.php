@@ -104,9 +104,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <tr><td></td></tr>
     <tr><td>Alerta <select style="text-transform:uppercase;font-weight: bold;border:0;outline:0;color:#EAECEF; background:#171A1E;" id="colorAlerta">
       <option value="mute" selected label="Mute &#128263;">
-     <!-- <option value="verde" label="verde &#128266;">
-      <option value="naranja" label="naranja &#128266;"> -->
-      <option value="roja" label="Compra &#128266;">
+      <option value="un-mute" label="Alertas &#128266;">
     </select>
 </td></tr>
     <tr><td><label style="color:#EAECEF;font-weight: bold;"id="utc"></label></td></tr>

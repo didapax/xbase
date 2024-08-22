@@ -440,6 +440,7 @@ function nivel($moneda){
   $asset = "SELL"; 
   $min= 0;
   $max= 0;
+  $actual = $nprice['ACTUAL'];
 
   if($nprice['ARRIBA'] < readFlotadorAnterior($moneda)){
     $min = $nprice['ARRIBA'];
@@ -449,8 +450,76 @@ function nivel($moneda){
     $max = $nprice['ARRIBA'];
   }
 
-  $porcenmax = (porcenConjunto(price($min), price($max), $nprice['ACTUAL']) *3.6 )."deg";  
+  $porcenmax = (porcenConjunto($min,$max,$actual)*3.6)."deg";  
   $nivel = "<div class=odometros style=--data:{$porcenmax};><div id=grad2>{$asset}</div></div>";
+
+  return $nivel;
+}
+
+function nivelCompra($moneda){  
+  $alerta = returnAlertas($moneda);
+  $asset = "BUY";
+  $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:-80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+/*  if($alerta == "yellow"){
+    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+  }*/
+  if($alerta == "yellow"){
+    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+  }
+  if($alerta == "red"){
+    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+  }
+
+  return $nivel; 
+}
+
+function returnAlertas($moneda){
+  $readPrice = readPrices($moneda);
+  $precio = $readPrice['ACTUAL'];
+  $priceArriba= $readPrice['ARRIBA'];
+  $priceAbajo= $readPrice['ABAJO']; 
+  
+  $variable = "black"; //sin alerta
+  
+  $porcenmax = porcenConjunto($priceAbajo, $priceArriba, $precio);
+  $stop=0; 
+  if($priceAbajo < readMinAnterior($moneda)){
+    $stop=1; //stop de alerta de compra
+    $variable = "red";
+  }
+
+  //logica de las alerta de venta y sus niveles de posible compras de acuerdo a su posicion. 
+  if($porcenmax > 33 && $porcenmax < 89 && $stop==0){
+    $variable = "green"; //alerta de venta
+  }
+
+  if( $porcenmax > 12 && $porcenmax < 34 && $stop==0 ){
+    $variable = "orange"; //intension de subir
+  }
+  
+  if($porcenmax > 1 && $porcenmax < 13 && $stop==0){
+    $variable = "yellow"; //se puede comprar
+  }
+
+  return $variable;  
+}
+
+function nivelBtc(){
+  $asset =  readDatosAsset("BTC");
+  $nprice = readPrices($asset['MONEDA']);
+  $min= 0;
+  $max= 0;
+
+  if($nprice['ARRIBA'] < readFlotadorAnterior($asset['MONEDA'])){
+    $min = $nprice['ARRIBA'];
+    $max = readFlotadorAnterior($asset['MONEDA']);
+  }else{
+    $min = readFlotadorAnterior($asset['MONEDA']);
+    $max = $nprice['ARRIBA'];
+  }
+
+  $porcenmax = (porcenConjunto(price($min), price($max), $nprice['ACTUAL']) *3.6 )."deg";
+  $nivel = "<div class=odometrosBtc style=--data:{$porcenmax};><div id=grad2>BTC</div></div>";
 
   return $nivel;
 }
@@ -473,43 +542,6 @@ function nivelAnterior($moneda){
   $nivel = "<div class=odometros style=--data:{$porcenmax};><div id=grad2>{$asset}</div></div>";
 
   return $nivel; 
-}
-
-function nivelCompra($moneda){  
-  $alerta = returnAlertas($moneda);
-  $asset = "BUY";
-  $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:-80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
-  if($alerta == "verde"){
-    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
-  }
-  if($alerta == "naranja"){
-    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
-  }
-  if($alerta == "roja"){
-    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
-  }
-
-  return $nivel; 
-}
-
-function nivelBtc(){
-  $asset =  readDatosAsset("BTC");
-  $nprice = readPrices($asset['MONEDA']);
-  $min= 0;
-  $max= 0;
-
-  if($nprice['ARRIBA'] < readFlotadorAnterior($asset['MONEDA'])){
-    $min = $nprice['ARRIBA'];
-    $max = readFlotadorAnterior($asset['MONEDA']);
-  }else{
-    $min = readFlotadorAnterior($asset['MONEDA']);
-    $max = $nprice['ARRIBA'];
-  }
-
-  $porcenmax = (porcenConjunto(price($min), price($max), $nprice['ACTUAL']) *3.6 )."deg";
-  $nivel = "<div class=odometrosBtc style=--data:{$porcenmax};><div id=grad2>BTC</div></div>";
-
-  return $nivel;
 }
 
 function sqlApiKey(){
@@ -700,10 +732,9 @@ function listAsset(){
     $cadena = "<table style=text-align:right;width:100%;><th></th><th></th>";
     while($row = mysqli_fetch_array($resultado)){
       $moneda = $row['MONEDA'];
-      $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];      
-      $alerta = returnAlertas($moneda);
+      $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
       $color = "red";
-      $colorAlerta="#171A1E";
+      $colorAlerta = returnAlertas($moneda);
       $asset = $row['ASSET'];
       $elid = $row['ID'];
       $price = formatPrice(readPrices($moneda)['ACTUAL'],$row['ASSET'],$row['PAR']);
@@ -714,44 +745,12 @@ function listAsset(){
           $color = "#4BC883";
       }     
       
-      if($alerta=="verde") $colorAlerta="red";
-      if($alerta=="naranja") $colorAlerta="yellow";
-      if($alerta=="roja") $colorAlerta="green";
       $cadena = $cadena ."<tr><td><span onclick=moneyChangue({$elid}) style=cursor:pointer;color:{$color};>{$asset}</span></td><td><span style=color:{$color};font-weight:bold;>".formatPrice($price,$row['ASSET'],$row['PAR'])."</span></td><td><span class=bolita style=color:{$colorAlerta};>&#9679;</span></td></tr>";
     }
     $cadena = $cadena ."</table>";
   }
     mysqli_close($conexion);    
     return $cadena; 
-}
-
-function returnAlertas($moneda){
-  $readPrice = readPrices($moneda);
-  $precio = $readPrice['ACTUAL'];
-  $priceArriba= $readPrice['ARRIBA'];
-  $priceAbajo= $readPrice['ABAJO']; 
-  
-  $variable = "";
-  
-  $porcenmax = porcenConjunto($priceAbajo, $priceArriba, $precio);
-  $sane=0;
-  if($readPrice['ABAJO'] < readMinAnterior($moneda)){
-    $sane=1;
-  }
-
-  if($porcenmax > 19 && $porcenmax < 30 && $sane==0){
-    $variable = "verde"; //posibilidad de vender
-  }
-
-  if( $porcenmax > 9 && $porcenmax < 20 && $sane==0 ){
-    $variable = "naranja"; //el precio esta subiendo
-  }
-  
-  if($porcenmax > -1 && $porcenmax < 10 && $sane==0){
-    $variable = "roja"; //posibilidad de comprar
-  }
-
-  return $variable;  
 }
 
 function findEscalones(){

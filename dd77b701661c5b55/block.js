@@ -370,20 +370,15 @@ function bina(){
 }
 
 function alertas(data){
-    if(data === "verde"){
-        if(document.getElementById("colorAlerta").value=="verde"){
+  let muted = document.getElementById("colorAlerta").value;
+    if(data === "green" && muted == "un-mute"){
           jsNota(184.997);
-        }
     }
-    else if (data === "naranja") {
-        if(document.getElementById("colorAlerta").value=="naranja"){
+    else if (data === "orange" && muted == "un-mute") {
           jsNota(233.082);
-        }
     }
-    else if (data === "roja") {
-        if(document.getElementById("colorAlerta").value=="roja"){
+    else if (data === "red" && muted == "un-mute") {
           jsNota(329.628);
-        }
     }
 }
 
