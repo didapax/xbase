@@ -702,7 +702,9 @@ function refreshDataAuto() {
 
       refreshDatos();
   } catch (PDOException $e) {
-      echo "Error: " . $e->getMessage();
+      echo "Error en la conexión a la base de datos: " . $e->getMessage();
+  } catch (Exception $e) {
+      echo "Error en la conexión a la API de Binance: " . $e->getMessage();
   } finally {
       if (isset($conexion)) {
           $conexion = null;
