@@ -211,80 +211,93 @@ function readOrderCompraTrader($order){
 return row_sqlconector("select * from TRADER where ORDERID='{$order}'");
 }
 
-function sellOrder($order){
-  if(ifOrderExist($order)){
-    $row = readOrderCompraTrader($order);
-    $api = new Binance\API(sqlApiKey(), sqlApiSecret());
-    $moneda = $row['MONEDA'];
-    $api->useServerTime();
-    $openorder = $api->orderStatus($moneda, $order);
-    if($openorder['status'] == "FILLED"){
-      $bytes = random_bytes(5);
-      $referencia = bin2hex($bytes);
-      sqlconector("UPDATE TRADER SET ORDERVENTA='{$referencia}', LIQUIDAR=1 WHERE ID={$row['ID']}");
-      refreshDatos();
-    }
+function sellOrder($order) {
+  if (ifOrderExist($order)) {
+      $row = readOrderCompraTrader($order);
+      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+      $moneda = $row['MONEDA'];
+      $api->useServerTime();
+
+      try {
+          $openorder = $api->orderStatus($moneda, $order);
+      } catch (Exception $e) {
+          // Manejo de errores
+          error_log("Error al obtener el estado de la orden: " . $e->getMessage());
+          return;
+      }
+
+      if ($openorder['status'] === "FILLED") {
+          $bytes = random_bytes(5);
+          $referencia = bin2hex($bytes);
+          sqlconector("UPDATE TRADER SET ORDERVENTA='{$referencia}', LIQUIDAR=1 WHERE ID={$row['ID']}");
+          refreshDatos();
+      }
   }
 }
 
-function autoLiquida($id){
+function autoLiquida($id) {
+  // Validar el parámetro de entrada
+  if (!is_numeric($id)) {
+      error_log("ID inválido: " . $id);
+      return;
+  }
+
   $row = row_sqlconector("SELECT * FROM TRADER WHERE ID={$id}");
+  if (!$row) {
+      error_log("No se encontró el trader con ID: " . $id);
+      return;
+  }
+
   $param = readParametros();
   $moneda = $row['MONEDA'];
   $price = $row['PRECIOCOMPRA'];
   $datos = readDatosMoneda($moneda);
   $operacion = ($row['CANTIDAD'] - $param['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
-  $quantity = quantity($operacion,$datos['ASSET'],$datos['PAR']);
+  $quantity = quantity($operacion, $datos['ASSET'], $datos['PAR']);
 
-  if($row['TIPO'] == "BUY"){
-      $stopPrice = calcularMargenPerdida($price,$param['STOPLOSS']);      
-      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
-      //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE VENDE RAPIDAMENTE
-      if(readPrices($moneda)['ACTUAL'] <= $stopPrice){
-        $api->useServerTime();
-        $api->useServerTime();
-        $order = $api->marketSell($moneda, $quantity);
-        if(isset($order['orderId'])){
-          liquidar($id);
-        }
-      }    
-  }
-  else{
-      $stopPrice = calcularMargenGanancia($price,$param['STOPLOSS']);      
-      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
-      //AQUI VA LA LOGICA DEL STOPLOS QUE NO PIDE PERMISOS SINO QUE COMPRA RAPIDAMENTE
-      if(readPrices($moneda)['ACTUAL'] >= $stopPrice){
-        $api->useServerTime();
-        $api->useServerTime();
-        $order = $api->marketBuy($moneda, $quantity);
-        if(isset($order['orderId'])){
-          liquidar($id);
-        }
-      }    
-  }
+  $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+  $api->useServerTime();
 
-  //AQUI VA LA LOGICA SI LA VENTA O LA COMPRA ESTA AUTOMATICA O MANUAL
-  if($row['AUTOSELL']==1){
-    if($row['TIPO'] == "BUY"){
-        $autoSell = calcularMargenGanancia($price,$param['AUTOSHELL']);
-        if(readPrices($moneda)['ACTUAL'] > $autoSell){
-          $api->useServerTime();
-          $order = $api->marketSell($moneda, $quantity);
-          if(isset($order['orderId'])){
-              liquidar($id);
-          }            
+  try {
+      if ($row['TIPO'] == "BUY") {
+          $stopPrice = calcularMargenPerdida($price, $param['STOPLOSS']);
+          if (readPrices($moneda)['ACTUAL'] <= $stopPrice) {
+              $order = $api->marketSell($moneda, $quantity);
+              if (isset($order['orderId'])) {
+                  liquidar($id);
+              }
+          }
+      } else {
+          $stopPrice = calcularMargenGanancia($price, $param['STOPLOSS']);
+          if (readPrices($moneda)['ACTUAL'] >= $stopPrice) {
+              $order = $api->marketBuy($moneda, $quantity);
+              if (isset($order['orderId'])) {
+                  liquidar($id);
+              }
+          }
       }
-    }
-    else{
-        $autoSell = calcularMargenPerdida($price,$param['AUTOSHELL']);
-        if(readPrices($moneda)['ACTUAL'] < $autoSell){
-          $api->useServerTime();
-          $order = $api->marketBuy($moneda, $quantity);
-          if(isset($order['orderId'])){
-              liquidar($id);
-          }            
-        }
-    }
+
+      if ($row['AUTOSELL'] == 1) {
+          if ($row['TIPO'] == "BUY") {
+              $autoSell = calcularMargenGanancia($price, $param['AUTOSHELL']);
+              if (readPrices($moneda)['ACTUAL'] > $autoSell) {
+                  $order = $api->marketSell($moneda, $quantity);
+                  if (isset($order['orderId'])) {
+                      liquidar($id);
+                  }
+              }
+          } else {
+              $autoSell = calcularMargenPerdida($price, $param['AUTOSHELL']);
+              if (readPrices($moneda)['ACTUAL'] < $autoSell) {
+                  $order = $api->marketBuy($moneda, $quantity);
+                  if (isset($order['orderId'])) {
+                      liquidar($id);
+                  }
+              }
+          }
+      }
+  } catch (Exception $e) {
+      error_log("Error en la operación de auto liquidación: " . $e->getMessage());
   }
 }
 
@@ -729,13 +742,17 @@ function returnGrafica($moneda) {
       $fechas = array();
       $valoresMin = array();
       $valoresMax = array();
+      $valoresPromedio = array();
 
       while ($row = mysqli_fetch_array($resultado)) {          
           if ($row['ABAJO'] > 0 && $row['ARRIBA'] > 0) {
+              $minAnterior = readMinAnterior($row["MONEDA"]);
+              $promedio = ($minAnterior + $row["ACTUAL"]) /2;
               $timestamp = strtotime($row['FECHA']);
               $fechas[] = date("Y-m-d", $timestamp);
               $valoresMin[] = formatPrice($row['ABAJO'], $datos['ASSET'], $datos['PAR']);
               $valoresMax[] = formatPrice($row['ARRIBA'], $datos['ASSET'], $datos['PAR']);
+              $valoresPromedio[]= formatPrice($promedio, $datos['ASSET'], $datos['PAR']);
           }
       }
 
@@ -745,7 +762,8 @@ function returnGrafica($moneda) {
       $grafica = array(
           'fechas' => $fechas,
           'valoresMin' => $valoresMin,
-          'valoresMax' => $valoresMax
+          'valoresMax' => $valoresMax,
+          'valoresPromedio' => $valoresPromedio
       );
 
       return $grafica;
@@ -785,132 +803,132 @@ function listAsset(){
     return $cadena; 
 }
 
-function findEscalones(){
-  $didable_button="";
-  $didable_cancel_button="";
+function findEscalones() {
+  $didable_button = ""; 
+  $didable_cancel_button = ""; 
   $fecha = "";
-  $colorAlert = "transparent";
-  $colorRow = "transparent";
+  $colorAlert = "transparent";  
+  $colorRow = "transparent";  
   $miganancia = 0;  
-  $precioActual = 0;
+  $precioActual = 0;  
   $botones = "";
   $cadena = "<table style=width:100%;><th>Stop</th><th>Compra</th><th>Price</th><th>Wallet</th><th style=text-align:right;>Ganancia</th><th>Opciones</th>";  
-  if(recordCount("TRADER")>0){
-    $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
-    if (!$conexion) {
-      echo "Refresh page, Failed to connect to Data...";
-      exit();
-    }else{      
-      $consulta = "select * from TRADER ORDER BY ESCALON";
-      $resultado = mysqli_query( $conexion, $consulta );
+  
+  if (recordCount("TRADER") > 0) {
+      $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
+      
+      if (!$conexion) {
+          error_log("Failed to connect to database: " . mysqli_connect_error());
+          return "Refresh page, Failed to connect to Data...";
+      }
+
+      $consulta = "SELECT * FROM TRADER ORDER BY ESCALON";
+      $resultado = mysqli_query($conexion, $consulta);
+      
+      if (!$resultado) {
+          error_log("Error in query: " . mysqli_error($conexion));
+          mysqli_close($conexion);
+          return "Error retrieving data.";
+      }
+
       $puntos = readParametros()['STOPLOSS'];
-      while($row = mysqli_fetch_array($resultado)){
-        $colorAlert = "#CFCFD3";
-        $colorRow = "transparent";
-        $available = readPrices($row['MONEDA']);
-        $datos = readDatosMoneda($row['MONEDA']);
-        $precioActual = formatPrice($available['ACTUAL'],$datos['ASSET'],$datos['PAR']);
-        $precioMoneda = formatPrice($precioActual,$datos['ASSET'],$datos['PAR']);
-        $stopPrice = calcularMargenPerdida($row['PRECIOCOMPRA'],$puntos);
-        $precioAbajo = $available['ABAJO'];
-        $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) *3.6 )."deg";
+      
+      while ($row = mysqli_fetch_array($resultado)) {
+          $colorAlert = "#CFCFD3"; 
+          $colorRow = "transparent";
+          $available = readPrices($row['MONEDA']);  
+          $datos = readDatosMoneda($row['MONEDA']);
+          $precioActual = formatPrice($available['ACTUAL'], $datos['ASSET'], $datos['PAR']);
+          $precioMoneda = formatPrice($precioActual, $datos['ASSET'], $datos['PAR']);
+          $stopPrice = calcularMargenPerdida($row['PRECIOCOMPRA'], $puntos);
+          $precioAbajo = $available['ABAJO'];
+          $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) * 3.6) . "deg";
 
-        if($row['PRECIOCOMPRA'] > $precioActual){
-          $colorAlert = "#F37A8B";
-        }
-        else{
-          $colorAlert = "#4BC883";
-        }
+          $colorAlert = ($row['PRECIOCOMPRA'] > $precioActual) ? "#F37A8B" : "#4BC883";
 
-        if(readParametros()['BINANCE']==1){
-          if(strlen($row['ORDERVENTA'])>0){
-            $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
-            $didable_button="";
-            $didable_cancel_button = "disabled";
-            if($row['AUTOSELL']==1){
-                $didable_ckecked_button = "checked";
-            }
-            else {
-                $didable_ckecked_button = "";
-            }
+          if (readParametros()['BINANCE'] == 1) {
+              if (strlen($row['ORDERVENTA']) > 0) {
+                  $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
+                  $didable_button = "";
+                  $didable_cancel_button = "disabled";
+                  $didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
+              } else {
+                  $miganancia = 0;
+                  $colorAlert = "#CFCFD3";
+                  $didable_button = "disabled";
+                  $didable_cancel_button = "";
+              }
           }
-          else{
-            $miganancia = 0;
-            $colorAlert = "#CFCFD3";
-            $didable_button="disabled";
-            $didable_cancel_button = "";
-          }
-        }
 
-        if(readParametros()['LOCAL']==1){
-          if(strlen($row['ORDERID']) > 0){
-            sellOrder($row['ORDERID']);
+          if (readParametros()['LOCAL'] == 1) {
+              if (strlen($row['ORDERID']) > 0) {
+                  sellOrder($row['ORDERID']);
+              }
+              autoLiquida($row['ID']);
+              $miganancia = ($row['CANTIDAD'] * $precioActual) - $row['COMPRA'];
           }
-          autoLiquida($row['ID']);
-          $miganancia = ($row['CANTIDAD'] * $precioActual) - $row['COMPRA'];
-        }
 
-        if($row['NEGATIVO']==1){
-          $laventa = $row['CANTIDAD'] * $row['PRECIOVENTA'];
-          $real_ganancia = currency($laventa -($row['CANTIDAD'] * $precioMoneda) );
-          if($real_ganancia > 0){
-            $bk=  "#15342D";
-            $fg= "#4BC883";
-            $sy= "&#9650;";
-            $porcenMaxNeg = "360deg";
-          }else{
-            $bk=  "#372127";
-            $fg= "#F37A8B";
-            $sy= "&#9660;";
-            $porcenMaxNeg = "0deg";
-          }
-          $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>".quantity($row['CANTIDAD'],$datos['ASSET'],$datos['PAR'])." ".$datos['ASSET']."<span style=color:{$fg};> {$sy}</span></div>";
-          $botones = "<input title='Auto' type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell(".$row['ID'].")><button type=button class=escalbutton style=background:green;color:white; onclick=negativoBuy(".$row['ID'].")>Buy</button>";
-          $cadena = $cadena . "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>".formatPrice($row['PRECIOVENTA'],$datos['ASSET'],$datos['PAR'])."$</td><td>{$precioMoneda}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg}>{$real_ganancia}$</span></td><td style=text-align:right;>{$botones}</td></tr>";
-        }
-        else{
-          $precioCompra = formatPrice($row['PRECIOCOMPRA'],$datos['ASSET'],$datos['PAR']);
-          if($didable_cancel_button == "disabled"){
-            $botones= "<input type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell(".$row['ID'].")><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida(".$row['ID'].")>Sell</button>";              
-          }
-          else{
-            $botones= "<button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar(".$row['ID'].")>&#10006;</button><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida(".$row['ID'].")>Sell</button>";   
-          }
-          $cadena = $cadena . "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$precioCompra}$</td><td style=color:white;>{$precioMoneda}$</td><td style=text-align:right;>".totalmoneda($row['MONEDA'])['total']."</td><td style=text-align:right;><span style=font-weight:bold;>".number_format($miganancia,2,".",",")."</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
-        }        
+          if ($row['NEGATIVO'] == 1) {
+              $laventa = $row['CANTIDAD'] * $row['PRECIOVENTA'];
+              $real_ganancia = currency($laventa - ($row['CANTIDAD'] * $precioMoneda));
+              if ($real_ganancia > 0) {
+                  $bk = "#15342D"; 
+                  $fg = "#4BC883";
+                  $sy = "&#9650;"; 
+                  $porcenMaxNeg = "360deg";
+              } else {
+                  $bk = "#372127"; 
+                  $fg = "#F37A8B";
+                  $sy = "&#9660;"; 
+                  $porcenMaxNeg = "0deg";
+              }
+              $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>" . quantity($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']) . " " . $datos['ASSET'] . "<span style=color:{$fg};> {$sy}</span></div>";
+              $botones = "<input title=Auto type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})><button type=button class=escalbutton style=background:green;color:white; onclick=negativoBuy({$row['ID']})>Buy</button>";
+              $cadena .= "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>" . formatPrice($row['PRECIOVENTA'], $datos['ASSET'], $datos['PAR']) . "$</td><td>{$precioMoneda}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg};>{$real_ganancia}$</span></td><td style=text-align:right;>{$botones}</td></tr>";
+          } else {
+              $precioCompra = formatPrice($row['PRECIOCOMPRA'], $datos['ASSET'], $datos['PAR']);
+              if ($didable_cancel_button == "disabled") {
+                  $botones = "<input type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";              
+              } else {
+                  $botones = "<button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar({$row['ID']})>&#10006;</button><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";   
+              }
+              $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$precioCompra}$</td><td style=color:white;>{$precioMoneda}$</td><td style=text-align:right;>" . totalmoneda($row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
+          }        
       }
-      mysqli_close($conexion);      
-    }
-  } 
-  $cadena = $cadena."</table>";
-  return $cadena;
-}
 
-function findBinance(){
-  $cadena = "<table style=width:100%;><th>Estatus</th><th>Moneda</th><th>Cant.</th><th>Orden Id</th><th>Tipo</th><th>Opciones</th>";
-  $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
-  if (!$conexion) {
-    echo "Refresh page, Failed to connect to Data...";
-    exit();
-  }else{
-      $consulta = "select * from ORDERBINANCE";
-      $resultado = mysqli_query( $conexion, $consulta );
-      while($row = mysqli_fetch_array($resultado)){
-        $colorRow = "transparent";
-
-        if($row['TIPO'] == "SELL"){
-          $colorRow = "#F37A8B";
-        }
-        else{
-          $colorRow = "#4BC883";
-        }
-
-        $cadena = $cadena . "<tr style=color:{$colorRow};><td><span>".$row['ESTATUS']."</span></td><td><span>{$row['MONEDA']}</span></td><td><span>".price($row['CANTIDAD'])."</span></td><td><span>".$row['ORDERID']."</span></td><td><span>".$row['TIPO']."</span></td><td><button type=button class=escalbutton style=background:#EAB92B; onclick=cancelOrdenBinance(".$row['ORDERID'].")>&#10006;</button></td></tr>";
-      }
       mysqli_close($conexion);      
   }
 
-  $cadena = $cadena."</table>";
+  $cadena .= "</table>";
+  return $cadena;
+}
+
+function findBinance() {
+  $cadena = "<table style=width:100%;><th>Estatus</th><th>Moneda</th><th>Cant.</th><th>Orden Id</th><th>Tipo</th><th>Opciones</th>";
+  $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
+
+  if (!$conexion) {
+      error_log("Failed to connect to database: " . mysqli_connect_error());
+      return "Refresh page, Failed to connect to Data...";
+  }
+
+  $consulta = "SELECT * FROM ORDERBINANCE";
+  $resultado = mysqli_query($conexion, $consulta);
+
+  if (!$resultado) {
+      error_log("Error in query: " . mysqli_error($conexion));
+      mysqli_close($conexion);
+      return "Error retrieving data.";
+  }
+
+  while ($row = mysqli_fetch_array($resultado)) {
+      $colorRow = ($row['TIPO'] == "SELL") ? "#F37A8B" : "#4BC883";
+
+      $cadena .= "<tr style=color:{$colorRow};><td><span>{$row['ESTATUS']}</span></td><td><span>{$row['MONEDA']}</span></td><td><span>" . price($row['CANTIDAD']) . "</span></td><td><span>{$row['ORDERID']}</span></td><td><span>{$row['TIPO']}</span></td><td><button type=button class=escalbutton style=background:#EAB92B; onclick=cancelOrdenBinance({$row['ORDERID']})'>&#10006;</button></td></tr>";
+  }
+
+  mysqli_close($conexion);
+  $cadena .= "</table>";
   return $cadena;
 }
 

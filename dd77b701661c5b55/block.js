@@ -357,6 +357,10 @@ function xano(){
   });
 }
 
+function xgraf(){
+  leerDatos();
+}
+
 function bina(){
   var valor= 0;
   if(document.getElementById('orderBinance').checked === true){
@@ -449,15 +453,18 @@ function leerDatos() {
               columns: [
                   ['x'].concat(datos.grafico.fechas), // Fechas
                   ['Min'].concat(datos.grafico.valoresMin), // Valores Min
-                  ['Max'].concat(datos.grafico.valoresMax)  // Valores Max
+                  ['Max'].concat(datos.grafico.valoresMax),  // Valores Max
+                  ['Prm'].concat(datos.grafico.valoresPromedio)  // Valores Promedio
               ],
               colors: {
                   Min: '#EA465C',
-                  Max: '#4DCB85'
+                  Max: '#4DCB85',
+                  Prm: '#f6f646'
               },
               types: {
                   Min: 'spline',
-                  Max: 'spline'
+                  Max: 'spline',
+                  Prm: 'spline'
               }
           },
           axis: {

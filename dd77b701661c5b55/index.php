@@ -102,9 +102,14 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 
 <div style="padding:5px;">  
   <div class="price_entrada">
-    <label style="margin-left:34px;font-size:21px;font-weight:bold;" id="priceMoneda"></label>
-    <label title="Config" style="margin-left:20px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
-    <label style="margin-left:20px;font-weight:bold;font-size:21px;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').show()">&#9088;</label>
+    <label style="margin-left:13px;font-size:21px;font-weight:bold;" id="priceMoneda"></label>
+    <label title="Config" style="margin-left:13px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
+    <label style="margin-left:10px;font-size:18px;color:white;cursor:pointer;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').show()">&#10010;</label>
+    <input type="radio" id="xmes" name="fav_language" value="xmes" onclick="xmes()">
+    <label for="xmes">MES</label>
+    <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">
+    <label for="xano">ALL</label>
+    <label title="Actualizar" onclick="xgraf()"><span style='margin-left:8px;color:white;cursor:pointer;font-size:18px;'>&#9851;</span></label>    
   </div>
   <div class="price_entrada">
     <label style="display:none;" id="priceBtc"></label>    
@@ -112,12 +117,6 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 </div>
 
 <div class="chart">
-  <div style="margin-left:34px;font-size:11px;">
-    <input type="radio" id="xmes" name="fav_language" value="xmes" onclick="xmes()">
-    <label for="xmes">MES</label>
-    <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">
-    <label for="xano">ALL</label>
-  </div>
   <div id="chart-container" class="grafico">
     <div id="chart"></div>
   </div>
