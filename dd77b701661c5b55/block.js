@@ -378,12 +378,12 @@ function alertas(data){
     if(data === "green" && muted == "un-mute"){
           jsNota(184.997);
     }
-    else if (data === "orange" && muted == "un-mute") {
-          jsNota(233.082);
-    }
-    else if (data === "red" && muted == "un-mute") {
+    else if (data === "yellow" && muted == "un-mute") {
           jsNota(329.628);
     }
+    /*else if (data === "orange" && muted == "un-mute") {
+      jsNota(233.082);
+    }*/
 }
 
 function priceFixed(valor){
@@ -440,6 +440,8 @@ function leerDatos() {
       $("#div2").html(datos.verbinance);
       fiat = datos.par;
       simbolo = datos.asset;
+      
+      const graf = datos.grafico;
 
       // Crear el gráfico con C3.js
       var chart = c3.generate({
@@ -449,22 +451,20 @@ function leerDatos() {
             height: document.getElementById('chart-container').offsetHeight
         },          
           data: {
-              x: 'x',
-              columns: [
-                  ['x'].concat(datos.grafico.fechas), // Fechas
-                  ['Min'].concat(datos.grafico.valoresMin), // Valores Min
-                  ['Max'].concat(datos.grafico.valoresMax),  // Valores Max
-                  ['Prm'].concat(datos.grafico.valoresPromedio)  // Valores Promedio
-              ],
-              colors: {
-                  Min: '#EA465C',
-                  Max: '#4DCB85',
-                  Prm: '#f6f646'
-              },
+            json: graf,
+            keys: {
+              x: 'date',
+              value: ['high', 'low','prm'],
+            },
+            colors: {
+              low: '#EA465C',
+              high: '#4DCB85',
+              prm: '#f6f646'
+          },
               types: {
-                  Min: 'spline',
-                  Max: 'spline',
-                  Prm: 'spline'
+                  high: 'spline',
+                  low: 'spline',
+                  prm: 'spline'
               }
           },
           axis: {
@@ -481,7 +481,7 @@ function leerDatos() {
               }
           },
           point: {
-              show: false
+              show: false 
           },
           legend: {
               show: true

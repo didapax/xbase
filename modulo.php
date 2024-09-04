@@ -402,8 +402,8 @@ function readMinAnterior($moneda){
 }
 
 function readMinAnterior_Interval($moneda,$interval){
-  if(isset(row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL {$interval} DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'])){
-    return row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL {$interval} DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'];
+  if(isset(row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'])){
+    return row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'];
   }
   else{
     return row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'];
@@ -486,10 +486,10 @@ function nivelCompra($moneda){
 /*  if($alerta == "yellow"){
     $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }*/
-  if($alerta == "yellow"){
+  if($alerta == "red"){
     $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
-  if($alerta == "red"){
+  if($alerta == "yellow"){
     $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
 
@@ -504,23 +504,30 @@ function returnAlertas($moneda){
   
   $variable = "black"; //sin alerta
   
-  $porcenmax = porcenConjunto($priceAbajo, $priceArriba, $precio);
+  $vela_red_1 = $priceAbajo;
+  $vela_red_2 = readMinAnterior_Interval($moneda, 1);
+  $vela_red_3 = readMinAnterior_Interval($moneda, 2);
+  
+  $min_value = min($vela_red_1, $vela_red_2, $vela_red_3);
+
+  $porcenmax = porcenConjunto($vela_red_1, $priceArriba, $precio);
   $stop=0; 
-  if($priceAbajo < readMinAnterior($moneda)){
+
+  if($priceAbajo < $min_value){
     $stop=1; //stop de alerta de compra
     $variable = "red";
   }
 
   //logica de las alerta de venta y sus niveles de posible compras de acuerdo a su posicion. 
-  if($porcenmax > 33 && $porcenmax < 89 && $stop==0){
+  if($porcenmax > 55 && $porcenmax < 89 && $stop==0){
     $variable = "green"; //alerta de venta
   }
 
-  if( $porcenmax > 12 && $porcenmax < 34 && $stop==0 ){
+  if( $porcenmax > 21 && $porcenmax < 55 && $stop==0 ){
     $variable = "orange"; //intension de subir
   }
   
-  if($porcenmax > 1 && $porcenmax < 13 && $stop==0){
+  if($porcenmax > 1 && $porcenmax < 21 && $stop==0){
     $variable = "yellow"; //se puede comprar
   }
 
@@ -730,7 +737,8 @@ function returnGrafica($moneda) {
   if (!$conexion) {
       echo "Refresh page, Failed to connect to Data...";
       exit();
-  } else {
+  } 
+  else {
 
       if (readParametros()['GRAFICO'] == 0) {
           $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC LIMIT 30";
@@ -739,34 +747,23 @@ function returnGrafica($moneda) {
       }
 
       $resultado = mysqli_query($conexion, $consulta);
-      $fechas = array();
-      $valoresMin = array();
-      $valoresMax = array();
-      $valoresPromedio = array();
+      $obj = array();
 
       while ($row = mysqli_fetch_array($resultado)) {          
           if ($row['ABAJO'] > 0 && $row['ARRIBA'] > 0) {
               $minAnterior = readMinAnterior($row["MONEDA"]);
               $promedio = ($minAnterior + $row["ACTUAL"]) /2;
               $timestamp = strtotime($row['FECHA']);
-              $fechas[] = date("Y-m-d", $timestamp);
-              $valoresMin[] = formatPrice($row['ABAJO'], $datos['ASSET'], $datos['PAR']);
-              $valoresMax[] = formatPrice($row['ARRIBA'], $datos['ASSET'], $datos['PAR']);
-              $valoresPromedio[]= formatPrice($promedio, $datos['ASSET'], $datos['PAR']);
+              $obj[] = array(
+                'date' => date("Y-m-d", $timestamp), 
+                'high'=> formatPrice($row['ARRIBA'], $datos['ASSET'], $datos['PAR']),
+                'low' => formatPrice($row['ABAJO'], $datos['ASSET'], $datos['PAR']),
+                'prm' => formatPrice($promedio, $datos['ASSET'], $datos['PAR']));              
           }
       }
 
       mysqli_close($conexion);
-
-      // Estructura de datos para Chart.js
-      $grafica = array(
-          'fechas' => $fechas,
-          'valoresMin' => $valoresMin,
-          'valoresMax' => $valoresMax,
-          'valoresPromedio' => $valoresPromedio
-      );
-
-      return $grafica;
+      return $obj ;
   }
 }
 
