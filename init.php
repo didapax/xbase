@@ -1,8 +1,11 @@
 <?php
+
+session_start(); // Iniciar la sesión
+
 $servidor = "localhost";
 $user = "root";
 $password = "";
-$database = "fortunar_dd77b701661c5b55";
+$database = "fortunar_".$_SESSION['usuario'];
 $data = "fortunar_xbase";
 
 date_default_timezone_set("UTC");

@@ -1,5 +1,33 @@
 <?php
-require "../modulo.php";
+
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+header('Allow: GET, POST, OPTIONS, PUT, DELETE');
+//header('Content-Type: application/json');
+header("Content-Security-Policy: default-src 'self'; script-src 'self' https://apis.google.com");
+header("X-Content-Type-Options: nosniff");
+header("X-Frame-Options: DENY");
+header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+
+require "modulo.php";
+
+if(isset($_GET['cerrarSesion'])){
+// Destruir todas las variables de sesión
+$_SESSION = array();
+
+// Si se desea destruir la sesión completamente, también se debe destruir la cookie de sesión
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(session_name(), '', time() - 42000,
+        $params["path"], $params["domain"],
+        $params["secure"], $params["httponly"]
+    );
+}
+
+// Finalmente, destruir la sesión
+session_destroy();
+}
 
 if( isset($_POST['crear']) ){
   $bytes = random_bytes(8);

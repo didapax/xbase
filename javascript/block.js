@@ -20,7 +20,7 @@ function jsNota(frecuencia){
 
 function Guardar(){
   document.getElementById("preloader").style.display='block';
-  $.post("block",{
+  $.post("../block",{
     guardar: "",
     invxcompra: (document.getElementById('invxcompra').value *1).toFixed(2),
     moneda: document.getElementById('moneda').value,
@@ -52,7 +52,7 @@ function escalon(){
   document.getElementById('cantidadComprada').value = cantidadComprada;
   document.getElementById('piso').innerHTML = `<span style=font-weight:bold;color:white;>${cantidadComprada}<span style=font-weight:bold;color:gray;>${simbolo}</span></span>`;
 
-  $.get("block?getpante=&nprice="+document.getElementById('precioCompra').value,
+  $.get("../block?getpante=&nprice="+document.getElementById('precioCompra').value,
   function(data){ 
     datos= JSON.parse(data);
     document.getElementById('stoploss').innerHTML = `<span style=font-weight:bold;color:white;>${datos.pante}<span style=font-weight:bold;color:gray;>${fiat}</span></span>`;
@@ -84,7 +84,7 @@ function agregar(){
         }).then((result) => {
             if (result.isConfirmed) {
               if(document.getElementById("btAgregar").value === "0"){
-                $.post("block",{
+                $.post("../block",{
                   agregar:"" ,
                   tipo: valor,
                   moneda: document.getElementById('moneda').value,
@@ -129,7 +129,7 @@ function agregar(){
 }
 
 function crear(){
-  $.post("block",{
+  $.post("../block",{
     crear: ""
   },function(data){
     $("#apikey").html("ApiKey: " + data);
@@ -147,7 +147,7 @@ function perdida(id){
     cancelButtonText: "No estoy seguro"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("block",{
+          $.post("../block",{
             perdida:id
           },function(data){
             leerDatos();
@@ -167,7 +167,7 @@ function deletePar(){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("block",{
+          $.post("../block",{
             deletepar: document.getElementById('moneda').value
           },function(data){
             window.location.href="../index";
@@ -195,7 +195,7 @@ function negativo(){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("block",{              
+          $.post("../block",{              
             negativo: 1,
             tipo: valor,
             cantidad: cantidad,
@@ -219,7 +219,7 @@ function negativoBuy(id){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("block",{
+          $.post("../block",{
             negativoBuy: 0,
             negativo: id
         },function(data){
@@ -243,7 +243,7 @@ function borrar(id){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("block",{
+          $.post("../block",{
             borrar: id
           },function(data){
             leerDatos();
@@ -263,7 +263,7 @@ function autosell(id){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("block",{
+          $.post("../block",{
             autosell: id
           },function(data){
             refreshDatos();
@@ -292,7 +292,7 @@ function Reset(){
       cancelButtonText: "Cancelar"
       }).then((result) => {
           if (result.isConfirmed) {
-            $.post("block",{
+            $.post("../block",{
               reset:"",
               moneda: monedaValue.toUpperCase(),
               asset: assetValue.toUpperCase(),
@@ -316,7 +316,7 @@ function Reset(){
 
 function moneyChangue(valor){
   document.getElementById("preloader").style.display='block';
-  $.post("block",{ 
+  $.post("../block",{ 
     changue:"",    
     moneda: valor
   },function(data){
@@ -332,7 +332,7 @@ function local(){
   if(document.getElementById('local').checked === true){
     valor = 1;
   }
-  $.post("block",{
+  $.post("../block",{
     local: valor
   },function(data){
     leerDatos();
@@ -341,7 +341,7 @@ function local(){
 
 function xmes(){
   var valor= 0;
-  $.post("block",{
+  $.post("../block",{
     xgraf: valor
   },function(data){
     leerDatos();
@@ -350,7 +350,7 @@ function xmes(){
 
 function xano(){
   var valor= 1;
-  $.post("block",{
+  $.post("../block",{
     xgraf: valor
   },function(data){
     leerDatos();
@@ -366,7 +366,7 @@ function bina(){
   if(document.getElementById('orderBinance').checked === true){
     valor = 1;
   }
-  $.post("block",{
+  $.post("../block",{
     bina: valor
   },function(data){
     leerDatos();
@@ -420,7 +420,7 @@ function  quantity(valor,simbolo,par){
 }
 
 function leerDatos() {
-  $.get("block?getPriceBinance=", function(data) {
+  $.get("../block?getPriceBinance=", function(data) {
       datos = JSON.parse(data);
       
       document.getElementById('moneda').value = datos.moneda;
@@ -508,7 +508,7 @@ function leerDatos() {
 
 function refreshDatos(){
   if(navigator.onLine){
-    $.get("block?getPriceBinance&auto=", function(data){
+    $.get("../block?getPriceBinance&auto=", function(data){
       datos= JSON.parse(data);
 
       if(document.getElementById('sugerirPrecioCompra').checked === true){
@@ -598,13 +598,13 @@ function toggleMute(){
 }
 
 function resetPerdidas(){ 
-  $.get("block.php?resetPerdidas",function(data){
+  $.get("../block?resetPerdidas",function(data){
     leerDatos();
   })
 }
 
 function resetGanancias(){
-  $.get("block.php?resetGanancias",function(data){
+  $.get("../block?resetGanancias",function(data){
     document.getElementById("ganancias").value = "0.00";
     leerDatos();
   })
@@ -670,4 +670,10 @@ function clickTabBinance(){
   $("#tabButtonOpera").css("border-top","0");
   $("#tabBinance").css("display","block");
   $("#tabButtonBinance").css("color","#F0B90B");
-} 
+}
+
+function cerrar_sesion(){
+  $.get("../block?cerrarSesion",function(data){
+    window.location.href="../index";
+  })  
+}

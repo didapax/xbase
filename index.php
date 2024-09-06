@@ -9,6 +9,7 @@ if(isset($_POST['accep'])){
     $_POST['password']==row_sqlconector2("SELECT USUARIO,PASSWORD FROM USER WHERE USUARIO='{$_POST['api']}'")['PASSWORD']){
       $ipreal = getRealIpAddr();
       sqlconector2("UPDATE USER SET IP='{$ipreal}' WHERE USUARIO='{$_POST['api']}'");
+      $_SESSION['usuario'] = $_POST['api']; // Guardar el nombre del usuario en la sesión
       header("location: ./".$_POST['api']."/index?user={$_POST['api']}");
     }
     //$_SESSION['user'] = $_POST['session'];
@@ -89,8 +90,8 @@ sqlconector2("CREATE TABLE IF NOT EXISTS USER (
   <form class="form" action="index" method="post" autocomplete="off">
     <div >
       <h2>XBase</h2>
-      ApiKey <input autocomplete="off" type="text" id="api" name="api" placeholder="Input your ApiKey" onchange="document.getElementById('accep').disabled=false">
-      Passws. <input style="margin-top: 5px;" autocomplete="off" type="text" id="password" name="password" placeholder="Input your Password" onchange="document.getElementById('accep').disabled=false">
+      Token Api <input autocomplete="off" type="text" id="api" name="api" placeholder="Input your Token" onchange="document.getElementById('accep').disabled=false">
+      Passwords <input style="margin-top: 5px;" autocomplete="off" type="text" id="password" name="password" placeholder="Input your Password" onchange="document.getElementById('accep').disabled=false">
       <br>
       <input type="submit" id="accep" name="accep" disabled value="Next go" onclick="">
     </div>

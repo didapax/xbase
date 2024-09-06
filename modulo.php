@@ -3,6 +3,8 @@ require "init.php";
 require "php-binance-api.php";
 date_default_timezone_set("UTC");
 
+//session_start(); // Iniciar la sesión
+
 function getRealIpAddr(){
   $ipaddress = '';
   if (getenv('HTTP_CLIENT_IP'))
@@ -479,17 +481,34 @@ function nivel($moneda){
   return $nivel;
 }
 
+function nivelPorcentual_Venta($moneda){
+  $nprice = readPrices($moneda);
+  $min= 0;
+  $max= 0;
+  $actual = $nprice['ACTUAL'];
+
+  if($nprice['ARRIBA'] < readFlotadorAnterior($moneda)){
+    $min = $nprice['ARRIBA'];
+    $max = readFlotadorAnterior($moneda);
+  }else{
+    $min = readFlotadorAnterior($moneda);
+    $max = $nprice['ARRIBA'];
+  }
+
+  return porcenConjunto($min,$max,$actual);
+}
+
 function nivelCompra($moneda){  
   $alerta = returnAlertas($moneda);
   $asset = "BUY";
   $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:-80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
-/*  if($alerta == "yellow"){
+  if($alerta == "orange"){
     $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
-  }*/
-  if($alerta == "red"){
-    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
   if($alerta == "yellow"){
+    $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
+  }
+  if($alerta == "red"){
     $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:80deg;--color2:#F6465D;--data2:220deg;--color3:#F6465D;--data3:360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
   }
 
@@ -513,20 +532,28 @@ function returnAlertas($moneda){
   $porcenmax = porcenConjunto($vela_red_1, $priceArriba, $precio);
   $stop=0; 
 
+  //Nivel mas Bajo Alerta Roja
   if($priceAbajo < $min_value){
     $stop=1; //stop de alerta de compra
     $variable = "red";
   }
 
-  //logica de las alerta de venta y sus niveles de posible compras de acuerdo a su posicion. 
-  if($porcenmax > 55 && $porcenmax < 89 && $stop==0){
+  //Nivel mas alto de venta  Alerta Verde
+  if (nivelPorcentual_Venta($moneda)>90){
     $variable = "green"; //alerta de venta
   }
 
+  //Nivel alto que Indicaria Posible alza
+  if($porcenmax > 55 && $porcenmax < 89 && $stop==0){
+    $variable = "olive"; //alerta de venta
+  }
+
+  //Nivel Medio que indica podria ir al alza
   if( $porcenmax > 21 && $porcenmax < 55 && $stop==0 ){
     $variable = "orange"; //intension de subir
   }
   
+  //Nivel de Fondo entre la baja y el alza
   if($porcenmax > 1 && $porcenmax < 21 && $stop==0){
     $variable = "yellow"; //se puede comprar
   }

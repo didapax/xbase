@@ -1,8 +1,15 @@
 <?php
-include "block.php";
+include "../modulo.php";
+
+if (!isset($_SESSION['usuario'])) {
+  // Si no hay sesión iniciada, redirigir al login
+  header("Location: ../index");
+  exit();
+}
 
 if(getRealIpAddr() != getSession($_GET['user'])['IP']){
-  header("Location:../index.php");
+  exit();
+  echo "No se puede Iniciar sesion en dos Ip distintas...";
 }
 
 ?>
@@ -14,10 +21,10 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
   <meta name="viewport" content="width=device-width initial-scale=1.0 maximum-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
   <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
-  <script src="block.js"></script>
-  <link rel="stylesheet" href="./style.css">
-  <script src="../SweetAlert/sweetalert2.all.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="../SweetAlert/sweetalert2.min.css" /> 
+  <script src="../javascript/block.js"></script>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="../css/SweetAlert/sweetalert2.all.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="../css/SweetAlert/sweetalert2.min.css" /> 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css">
 
   <style>
@@ -97,7 +104,9 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <span>Perdida %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
     <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Xampp</label>
     <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Server</label>   
+    <br>
     <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>
+    <button type="button" onclick="cerrar_sesion()">Cerrar Sesion</button>
   </dialog>  
 
 <div style="padding:5px;">  
