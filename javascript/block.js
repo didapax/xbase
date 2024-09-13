@@ -19,9 +19,11 @@ function jsNota(frecuencia){
 }
 
 function Guardar(){
+  const usuario = document.getElementById('usuario').value;
   document.getElementById("preloader").style.display='block';
-  $.post("../block",{
+  $.post("block",{
     guardar: "",
+    usuario: usuario,
     invxcompra: (document.getElementById('invxcompra').value *1).toFixed(2),
     moneda: document.getElementById('moneda').value,
     asset: document.getElementById('asset').value,
@@ -43,7 +45,7 @@ function calculo(){
   document.getElementById('invxcompra').value = (document.getElementById('capital').value / document.getElementById('escalones').value).toFixed(0);
 }
 
-function escalon(){
+function escalon(usuario){
   let cantidad = document.getElementById('invxcompra').value*1;
   let precio = document.getElementById('precioCompra').value*1;
   let total = cantidad / precio;
@@ -52,7 +54,7 @@ function escalon(){
   document.getElementById('cantidadComprada').value = cantidadComprada;
   document.getElementById('piso').innerHTML = `<span style=font-weight:bold;color:white;>${cantidadComprada}<span style=font-weight:bold;color:gray;>${simbolo}</span></span>`;
 
-  $.get("../block?getpante=&nprice="+document.getElementById('precioCompra').value,
+  $.get("block?getpante=&usuario="+usuario+"&nprice="+document.getElementById('precioCompra').value,
   function(data){ 
     datos= JSON.parse(data);
     document.getElementById('stoploss').innerHTML = `<span style=font-weight:bold;color:white;>${datos.pante}<span style=font-weight:bold;color:gray;>${fiat}</span></span>`;
@@ -62,6 +64,7 @@ function escalon(){
 function agregar(){
     if(navigator.onLine){
       let valor= "Limit";
+      const usuario = document.getElementById('usuario').value;
       let t_precio = ""+priceFixed(document.getElementById('precioCompra').value);
       let simbol = document.getElementById('asset').value;
       let cantidad = document.getElementById('cantidadComprada').value;
@@ -84,9 +87,10 @@ function agregar(){
         }).then((result) => {
             if (result.isConfirmed) {
               if(document.getElementById("btAgregar").value === "0"){
-                $.post("../block",{
+                $.post("block",{
                   agregar:"" ,
                   tipo: valor,
+                  usuario: usuario,
                   moneda: document.getElementById('moneda').value,
                   compra: document.getElementById('invxcompra').value,
                   cantidad: document.getElementById('cantidadComprada').value,
@@ -129,7 +133,7 @@ function agregar(){
 }
 
 function crear(){
-  $.post("../block",{
+  $.post("block",{
     crear: ""
   },function(data){
     $("#apikey").html("ApiKey: " + data);
@@ -137,6 +141,7 @@ function crear(){
 }
 
 function perdida(id){
+  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Estas Seguro de Vender.!",
@@ -147,8 +152,9 @@ function perdida(id){
     cancelButtonText: "No estoy seguro"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("../block",{
-            perdida:id
+          $.post("block",{
+            perdida:id,
+            usuario: usuario
           },function(data){
             leerDatos();
           });        
@@ -157,6 +163,7 @@ function perdida(id){
 }
 
 function deletePar(){
+  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Estas Seguro de Eliminar a "+document.getElementById('moneda').value+"...?",
@@ -167,8 +174,9 @@ function deletePar(){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("../block",{
-            deletepar: document.getElementById('moneda').value
+          $.post("block",{
+            deletepar: document.getElementById('moneda').value,
+            usuario: usuario
           },function(data){
             window.location.href="../index";
           });
@@ -178,6 +186,7 @@ function deletePar(){
 
 function negativo(){
   let valor= "Limit";
+  const usuario = document.getElementById('usuario').value;
   let precio = document.getElementById('precioCompra2').value *1;
   let moneda = document.getElementById('moneda').value;
   let cantidad = document.getElementById('balance').value*1;
@@ -195,8 +204,9 @@ function negativo(){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("../block",{              
+          $.post("block",{              
             negativo: 1,
+            usuario: usuario,
             tipo: valor,
             cantidad: cantidad,
             precio: precio,
@@ -209,6 +219,7 @@ function negativo(){
 }
 
 function negativoBuy(id){
+  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'Retirar',
     text: "Estas Seguro de Liquidar tu posicion..?",
@@ -219,8 +230,9 @@ function negativoBuy(id){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("../block",{
+          $.post("block",{
             negativoBuy: 0,
+            usuario: usuario,
             negativo: id
         },function(data){
             if(data.includes("error")){
@@ -233,6 +245,7 @@ function negativoBuy(id){
 }
 
 function borrar(id){
+  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Estas Seguro de Eliminar el escalon con sus Ordenes.?",
@@ -243,8 +256,9 @@ function borrar(id){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("../block",{
-            borrar: id
+          $.post("block",{
+            borrar: id,
+            usuario: usuario
           },function(data){
             leerDatos();
           });
@@ -253,6 +267,7 @@ function borrar(id){
 }
 
 function autosell(id){
+  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Confirma que quieres activar el Auto Sell.? se vendera a precio de mercado",
@@ -263,8 +278,9 @@ function autosell(id){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
-          $.post("../block",{
-            autosell: id
+          $.post("block",{
+            autosell: id,
+            usuario: usuario
           },function(data){
             refreshDatos();
           });
@@ -273,6 +289,7 @@ function autosell(id){
 }
 
 function Reset(){
+  const usuario = document.getElementById('usuario').value;
   let moneda = document.getElementById('newMoneda');
   let asset = document.getElementById('newAssetSimbol');
   let par = document.getElementById('newEstableCoin');
@@ -292,8 +309,9 @@ function Reset(){
       cancelButtonText: "Cancelar"
       }).then((result) => {
           if (result.isConfirmed) {
-            $.post("../block",{
+            $.post("block",{
               reset:"",
+              usuario: usuario,
               moneda: monedaValue.toUpperCase(),
               asset: assetValue.toUpperCase(),
               par: parValue.toUpperCase()
@@ -315,9 +333,11 @@ function Reset(){
 }
 
 function moneyChangue(valor){
+  const usuario = document.getElementById('usuario').value;
   document.getElementById("preloader").style.display='block';
-  $.post("../block",{ 
-    changue:"",    
+  $.post("block",{ 
+    changue:"",   
+    usuario: usuario, 
     moneda: valor
   },function(data){
     document.getElementById('sugerirPrecioCompra').checked = true;
@@ -328,30 +348,36 @@ function moneyChangue(valor){
 }
 
 function local(){
+  const usuario = document.getElementById('usuario').value;
   var valor= 0;
   if(document.getElementById('local').checked === true){
     valor = 1;
   }
-  $.post("../block",{
-    local: valor
+  $.post("block",{
+    local: valor,
+    usuario: usuario
   },function(data){
     leerDatos();
   });
 }
 
 function xmes(){
+  const usuario = document.getElementById('usuario').value;
   var valor= 0;
-  $.post("../block",{
-    xgraf: valor
+  $.post("block",{
+    xgraf: valor,
+    usuario: usuario
   },function(data){
     leerDatos();
   });
 }
 
 function xano(){
+  const usuario = document.getElementById('usuario').value;
   var valor= 1;
-  $.post("../block",{
-    xgraf: valor
+  $.post("block",{
+    xgraf: valor,
+    usuario: usuario
   },function(data){
     leerDatos();
   });
@@ -362,12 +388,14 @@ function xgraf(){
 }
 
 function bina(){
+  const usuario = document.getElementById('usuario').value;
   var valor= 0;
   if(document.getElementById('orderBinance').checked === true){
     valor = 1;
   }
-  $.post("../block",{
-    bina: valor
+  $.post("block",{
+    bina: valor,
+    usuario: usuario
   },function(data){
     leerDatos();
   });
@@ -420,7 +448,8 @@ function  quantity(valor,simbolo,par){
 }
 
 function leerDatos() {
-  $.get("../block?getPriceBinance=", function(data) {
+  const usuario = document.getElementById('usuario').value;
+  $.get("block?getPriceBinance=&usuario="+usuario, function(data) {
       datos = JSON.parse(data);
       
       document.getElementById('moneda').value = datos.moneda;
@@ -507,8 +536,9 @@ function leerDatos() {
 }
 
 function refreshDatos(){
+  const usuario = document.getElementById('usuario').value;
   if(navigator.onLine){
-    $.get("../block?getPriceBinance&auto=", function(data){
+    $.get("block?getPriceBinance&auto=&usuario="+usuario, function(data){
       datos= JSON.parse(data);
 
       if(document.getElementById('sugerirPrecioCompra').checked === true){
@@ -571,7 +601,7 @@ function refreshDatos(){
 
     document.getElementById('techo').innerHTML = "Ganancia ≈ 0.00";
     document.getElementById('piso').innerHTML = "0.00";
-    escalon();    
+    escalon(usuario);    
   }
 }
 
@@ -598,13 +628,15 @@ function toggleMute(){
 }
 
 function resetPerdidas(){ 
-  $.get("../block?resetPerdidas",function(data){
+  const usuario = document.getElementById('usuario').value;
+  $.get("block?resetPerdidas&usuario="+usuario,function(data){
     leerDatos();
   })
 }
 
 function resetGanancias(){
-  $.get("../block?resetGanancias",function(data){
+  const usuario = document.getElementById('usuario').value;
+  $.get("block?resetGanancias&usuario="+usuario,function(data){
     document.getElementById("ganancias").value = "0.00";
     leerDatos();
   })
@@ -672,8 +704,8 @@ function clickTabBinance(){
   $("#tabButtonBinance").css("color","#F0B90B");
 }
 
-function cerrar_sesion(){
-  $.get("../block?cerrarSesion",function(data){
-    window.location.href="../index";
+function cerrar_sesion(){  
+  $.get("block?cerrarSesion",function(data){
+    window.location.href="index";
   })  
 }

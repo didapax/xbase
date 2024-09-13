@@ -45,8 +45,8 @@ function latinFecha($fecha){
   return date_format($date,"d/M h:ia");
 }
 
-function readDatos(){
- return row_sqlconector("select * from DATOS WHERE ACTIVO=1");
+function readDatos($usuario){
+ return row_sqlconector("select * from DATOSUSUARIOS WHERE USUARIO='$usuario' AND ACTIVO=1");
 }
 
 function readDatosMoneda($moneda){
@@ -61,8 +61,8 @@ function readDatosAsset($asset){
   return row_sqlconector("select * from DATOS WHERE ASSET='{$asset}'");
 }
 
-function readParametros(){
-  return row_sqlconector("select * from PARAMETROS");
+function readParametros($usuario){
+  return row_sqlconector("select * from PARAMETROS WHERE USUARIO='$usuario'");
 }
 
 function redo($valor){
@@ -161,23 +161,27 @@ function recordCount($table){
   return row_sqlconector("SELECT Count(*) as SUMA FROM ".$table)['SUMA'];
 }
 
+function recordCountUser($usuario, $table){
+  return row_sqlconector("SELECT Count(*) as SUMA FROM $table WHERE USUARIO='$usuario'")['SUMA'];
+}
+
 function recordCountInterval($table,$moneda){
   return row_sqlconector("SELECT Count(*) as SUMA FROM {$table} WHERE MONEDA ='{$moneda}'")['SUMA'];
 }
 
-function reordenarEscalones(){
+function reordenarEscalones($usuario){
   $i=1;
   $precioPante="";
-  if(recordCount("TRADER")>0){
+  if(recordCountUser($usuario,"TRADER")>0){
     $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
     if (!$conexion) {
       echo "Refresh page, Failed to connect to Data...";
       exit();
     }else{
-      $consulta = "select * from TRADER ORDER BY FECHA";
+      $consulta = "select * from TRADER WHERE USUARIO='$usuario' ORDER BY FECHA";
       $resultado = mysqli_query( $conexion, $consulta );
       while($row = mysqli_fetch_array($resultado)){
-        sqlconector("UPDATE TRADER SET ESCALON={$i} WHERE ID={$row['ID']}");
+        sqlconector("UPDATE TRADER SET ESCALON={$i} WHERE ID={$row['ID']} AND USUARIO='$usuario'");
         $i++;        
       }
       mysqli_close($conexion);
@@ -209,6 +213,12 @@ return TRUE;
 return FALSE;
 }
 
+function ifMonedaUserExist($usuario,$moneda) {
+  if(row_sqlconector("select COUNT(*) AS TOTAL from DATOSUSUARIOS where USUARIO='$usuario' AND MONEDA='{$moneda}'")['TOTAL']==1 )
+  return TRUE;
+  return FALSE;
+}
+
 function readOrderCompraTrader($order){
 return row_sqlconector("select * from TRADER where ORDERID='{$order}'");
 }
@@ -216,7 +226,7 @@ return row_sqlconector("select * from TRADER where ORDERID='{$order}'");
 function sellOrder($order) {
   if (ifOrderExist($order)) {
       $row = readOrderCompraTrader($order);
-      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+      $api = new Binance\API(sqlApiKey($row['USUARIO']), sqlApiSecret($row['USUARIO']));
       $moneda = $row['MONEDA'];
       $api->useServerTime();
 
@@ -232,7 +242,7 @@ function sellOrder($order) {
           $bytes = random_bytes(5);
           $referencia = bin2hex($bytes);
           sqlconector("UPDATE TRADER SET ORDERVENTA='{$referencia}', LIQUIDAR=1 WHERE ID={$row['ID']}");
-          refreshDatos();
+          refreshDatosMon($moneda);
       }
   }
 }
@@ -250,14 +260,14 @@ function autoLiquida($id) {
       return;
   }
 
-  $param = readParametros();
+  $param = readParametros($row['USUARIO']);
   $moneda = $row['MONEDA'];
   $price = $row['PRECIOCOMPRA'];
   $datos = readDatosMoneda($moneda);
   $operacion = ($row['CANTIDAD'] - $param['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
   $quantity = quantity($operacion, $datos['ASSET'], $datos['PAR']);
 
-  $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+  $api = new Binance\API(sqlApiKey($row['USUARIO']), sqlApiSecret($row['USUARIO']));
   $api->useServerTime();
 
   try {
@@ -303,11 +313,11 @@ function autoLiquida($id) {
   }
 }
 
-function liquidar($id){  
+function liquidar($id){
   $row = row_sqlconector("SELECT * FROM TRADER WHERE ID={$id}");
   $asset = readDatosMoneda($row['MONEDA']);
   if($row['TIPO'] == "BUY"){
-    $datos= readParametros();
+    $datos= readParametros($row['USUARIO']);
     $moneda = $row['MONEDA'];
     $precioVenta = readPrices($moneda)['ACTUAL'];
     $compra = $row['COMPRA'];
@@ -335,18 +345,18 @@ function liquidar($id){
       $capital = $datos['CAPITAL'] + $ajuste;
     }
     
-    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida},CAPITAL={$capital}");
-    sqlconector("UPDATE DATOS SET ULTIMAVENTA={$precioVenta} WHERE MONEDA='{$moneda}'");
+    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida},CAPITAL={$capital} WHERE USUARIO='".$row['USUARIO']."'");
+    sqlconector("UPDATE DATOS SET ULTIMAVENTA={$precioVenta} WHERE MONEDA='{$moneda}' WHERE USUARIO='".$row['USUARIO']."'");
     sqlconector("DELETE FROM TRADER WHERE ID={$id}");
   
-    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
-    sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion));
+    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE USUARIO='".$row['USUARIO']."'")['SUMA'];
+    sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion)." WHERE USUARIO='".$row['USUARIO']."'");
   
     $invxcompra = $capital / $datos['ESCALONES'];
-    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra}");
+    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra} WHERE USUARIO='".$row['USUARIO']."'");
   }
-  reordenarEscalones();
-  refreshDatos();
+  reordenarEscalones($row['USUARIO']);
+  refreshDatosMon($moneda);
 }
 
 function readTrader($id){
@@ -367,6 +377,10 @@ function updatePrices($moneda,$valores){
   sqlconector("UPDATE PRICES SET {$valores} WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())");
 }
 
+function updatePricesClose($moneda,$valores){
+  sqlconector("UPDATE PRICES SET {$valores} WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP() - INTERVAL 1 DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())");
+}
+
 function readPrices($moneda) {
   // Validar que la moneda no esté vacía
   if (strlen($moneda) > 0) {
@@ -374,6 +388,11 @@ function readPrices($moneda) {
       if (ifNotDayExists("PRICES", $moneda)) {
           // Insertar un nuevo registro
           sqlconector("INSERT INTO PRICES (MONEDA) VALUES ('{$moneda}')");
+
+          //La logica para el precio de cierre y apertura.
+          $open = readPriceIntervar($moneda,1)['ACTUAL'];
+          updatePrices($moneda,"OPEN={$open}");
+          updatePricesClose($moneda,"CLOSE={$open}");
       }
       
       // Obtener los precios del día actual
@@ -384,6 +403,12 @@ function readPrices($moneda) {
   // Retornar null si la moneda está vacía
   return null;
 }
+
+function readPriceIntervar($moneda,$num_day){
+  $query = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND DATE(FECHA) = CURDATE() - INTERVAL $num_day DAY";
+  return row_sqlconector($query);
+}
+
 
 function readFlotadorAnterior($moneda){
   if(isset(row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL 1 DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'])){
@@ -601,12 +626,20 @@ function nivelAnterior($moneda){
   return $nivel; 
 }
 
-function sqlApiKey(){
-  return readParametros()['APIKEY'];
+function sqlApiKey($usuario){
+  return row_sqlconector("SELECT APIKEY FROM PARAMETROS WHERE USUARIO='$usuario'")['APIKEY'];
 }
 
-function sqlApiSecret(){
-  return readParametros()['SECRET'];
+function sqlApiSecret($usuario){
+  return row_sqlconector("SELECT SECRET FROM PARAMETROS WHERE USUARIO='$usuario'")['SECRET'];
+}
+
+function sqlApiKeyAdmin(){  
+  return row_sqlconector("SELECT APIKEY FROM PARAMETROS WHERE USUARIO='".$GLOBALS['tokenadmin']."'")['APIKEY'];
+}
+
+function sqlApiSecretAdmin(){
+  return row_sqlconector("SELECT SECRET FROM PARAMETROS WHERE USUARIO='".$GLOBALS['tokenadmin']."'")['SECRET'];
 }
 
 function totalmoneda($moneda){
@@ -662,12 +695,12 @@ function totalmoneda($moneda){
   return array('total' => $t_moneda,'t_balance' => $t_balance,'m_balance' => $m_balance,'fiat' => currency($totalFiat));
 }
 
-function totales($moneda){
+function totales($usuario,$moneda){
   $price = readPrices($moneda)['ACTUAL'];
-  $total = number_format(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA'],2,".","");
- 
-  $capital = number_format(readParametros()['CAPITAL'],2,".","");
-  $disponible = number_format(readParametros()['DISPONIBLE'],2,".","");
+  $total = number_format(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE USUARIO='$usuario' AND MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA'],2,".","");
+
+  $capital = number_format(readParametros($usuario)['CAPITAL'],2,".","");
+  $disponible = number_format(readParametros($usuario)['DISPONIBLE'],2,".","");
   $recupera = 0;
   $color = "#4DCB85";
   for($i = 0.1; $i <= 100; $i++){
@@ -680,20 +713,75 @@ function totales($moneda){
   return array('cripto' => $total,'recupera' => $recupera,'color' => $color );
 }
 
-function refreshDataAuto() {
+function refreshDataAuto($usuario) {
   try {
       $dsn = "mysql:host={$GLOBALS['servidor']};dbname={$GLOBALS['database']};charset=utf8";
       $conexion = new PDO($dsn, $GLOBALS['user'], $GLOBALS['password']);
       $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-      $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+      $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
+      $api->useServerTime();
+      $balances = $api->balances();
+
+      if (recordCountUser($usuario,"ORDERBINANCE") > 0) {
+          $conexion->exec("DELETE FROM ORDERBINANCE WHERE USUARIO='$usuario'");
+      }
+
+      $consulta = "SELECT * FROM DATOSUSUARIOS WHERE USUARIO='$usuario'";
+      $stmt = $conexion->query($consulta);
+
+      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+          $asset = $row['ASSET'];
+          $available_mon = $row['MONEDA'];
+          $axie = readPrices($available_mon);
+
+          if (row_sqlconector("SELECT COUNT(*) AS TOTAL FROM TRADER WHERE USUARIO='$usuario' AND  MONEDA='{$available_mon}'")['TOTAL'] > 0) {
+              $openorders = $api->openOrders($available_mon);
+
+              $insertOrder = $conexion->prepare("INSERT INTO ORDERBINANCE (USUARIO, MONEDA, ORDERID, TIPO, ESTATUS, PRECIO, CANTIDAD) VALUES (:usuario, :moneda, :orderid, :tipo, :estatus, :precio, :cantidad)");
+              foreach ($openorders as $order) {
+                  $insertOrder->execute([
+                      ':usuario' => $usuario,
+                      ':moneda' => $order['symbol'],
+                      ':orderid' => $order['orderId'],
+                      ':tipo' => $order['side'],
+                      ':estatus' => $order['status'],
+                      ':precio' => $order['price'],
+                      ':cantidad' => $order['origQty']
+                  ]);
+              }
+          }
+
+          $updateBalance = $conexion->prepare("UPDATE DATOSUSUARIOS SET BALANCE_ASSET = :balance WHERE USUARIO=:usuario AND MONEDA = :moneda");
+          $updateBalance->execute([
+              ':usuario' => $usuario,
+              ':balance' => $balances[$asset]['available'],
+              ':moneda' => $available_mon
+          ]);
+      }
+
+      refreshDatos($usuario);
+  } catch (PDOException $e) {
+      echo "Error en la conexión a la base de datos: " . $e->getMessage();
+  } catch (Exception $e) {
+      echo "Error en la conexión a la API de Binance: " . $e->getMessage();
+  } finally {
+      if (isset($conexion)) {
+          $conexion = null;
+      }
+  }
+}
+
+function refreshDataThor() {
+  try {
+      $dsn = "mysql:host={$GLOBALS['servidor']};dbname={$GLOBALS['database']};charset=utf8";
+      $conexion = new PDO($dsn, $GLOBALS['user'], $GLOBALS['password']);
+      $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+      $api = new Binance\API(sqlApiKeyAdmin(), sqlApiSecretAdmin());
       $api->useServerTime();
       $price = $api->prices();
       $balances = $api->balances();
-
-      if (recordCount("ORDERBINANCE") > 0) {
-          $conexion->exec("DELETE FROM ORDERBINANCE");
-      }
 
       $consulta = "SELECT * FROM DATOS";
       $stmt = $conexion->query($consulta);
@@ -723,30 +811,8 @@ function refreshDataAuto() {
               updatePrices($available_mon, "ABAJO={$available}");
           }
 
-          if (row_sqlconector("SELECT COUNT(*) AS TOTAL FROM TRADER WHERE MONEDA='{$available_mon}'")['TOTAL'] > 0) {
-              $openorders = $api->openOrders($available_mon);
-
-              $insertOrder = $conexion->prepare("INSERT INTO ORDERBINANCE (MONEDA, ORDERID, TIPO, ESTATUS, PRECIO, CANTIDAD) VALUES (:moneda, :orderid, :tipo, :estatus, :precio, :cantidad)");
-              foreach ($openorders as $order) {
-                  $insertOrder->execute([
-                      ':moneda' => $order['symbol'],
-                      ':orderid' => $order['orderId'],
-                      ':tipo' => $order['side'],
-                      ':estatus' => $order['status'],
-                      ':precio' => $order['price'],
-                      ':cantidad' => $order['origQty']
-                  ]);
-              }
-          }
-
-          $updateBalance = $conexion->prepare("UPDATE DATOS SET BALANCE_ASSET = :balance WHERE MONEDA = :moneda");
-          $updateBalance->execute([
-              ':balance' => $balances[$asset]['available'],
-              ':moneda' => $available_mon
-          ]);
+          refreshDatosMon($available_mon);
       }
-
-      refreshDatos();
   } catch (PDOException $e) {
       echo "Error en la conexión a la base de datos: " . $e->getMessage();
   } catch (Exception $e) {
@@ -758,7 +824,7 @@ function refreshDataAuto() {
   }
 }
 
-function returnGrafica($moneda) {
+function returnGrafica($usuario,$moneda) {
   $datos = readDatosMoneda($moneda);
   $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
   if (!$conexion) {
@@ -766,8 +832,9 @@ function returnGrafica($moneda) {
       exit();
   } 
   else {
+      $mensual = readParametros($usuario)['GRAFICO'];
 
-      if (readParametros()['GRAFICO'] == 0) {
+      if ($mensual == 0) {
           $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC LIMIT 30";
       } else {
           $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC";
@@ -794,14 +861,14 @@ function returnGrafica($moneda) {
   }
 }
 
-function listAsset(){
+function listAsset($usuario){
   $cadena="";
   $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
   if (!$conexion) {
     echo "Refresh page, Failed to connect to Data...";
     exit();
   }else{
-    $consulta = "select * from DATOS";
+    $consulta = "select * from DATOSUSUARIOS WHERE USUARIO='$usuario'";
     $resultado = mysqli_query( $conexion, $consulta );
     $cadena = "<table style=text-align:right;width:100%;><th></th><th></th>";
     while($row = mysqli_fetch_array($resultado)){
@@ -827,7 +894,7 @@ function listAsset(){
     return $cadena; 
 }
 
-function findEscalones() {
+function findEscalones($usuario) {
   $didable_button = ""; 
   $didable_cancel_button = ""; 
   $fecha = "";
@@ -838,7 +905,7 @@ function findEscalones() {
   $botones = "";
   $cadena = "<table style=width:100%;><th>Stop</th><th>Compra</th><th>Price</th><th>Wallet</th><th style=text-align:right;>Ganancia</th><th>Opciones</th>";  
   
-  if (recordCount("TRADER") > 0) {
+  if (recordCountUser($usuario,"TRADER") > 0) {
       $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
       
       if (!$conexion) {
@@ -846,18 +913,17 @@ function findEscalones() {
           return "Refresh page, Failed to connect to Data...";
       }
 
-      $consulta = "SELECT * FROM TRADER ORDER BY ESCALON";
+      $consulta = "SELECT * FROM TRADER WHERE USUARIO='$usuario' ORDER BY ESCALON";
       $resultado = mysqli_query($conexion, $consulta);
       
       if (!$resultado) {
           error_log("Error in query: " . mysqli_error($conexion));
           mysqli_close($conexion);
           return "Error retrieving data.";
-      }
-
-      $puntos = readParametros()['STOPLOSS'];
+      }      
       
       while ($row = mysqli_fetch_array($resultado)) {
+          $puntos = readParametros($usuario)['STOPLOSS'];
           $colorAlert = "#CFCFD3"; 
           $colorRow = "transparent";
           $available = readPrices($row['MONEDA']);  
@@ -869,29 +935,20 @@ function findEscalones() {
           $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) * 3.6) . "deg";
 
           $colorAlert = ($row['PRECIOCOMPRA'] > $precioActual) ? "#F37A8B" : "#4BC883";
-
-          if (readParametros()['BINANCE'] == 1) {
-              if (strlen($row['ORDERVENTA']) > 0) {
-                  $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
-                  $didable_button = "";
-                  $didable_cancel_button = "disabled";
-                  $didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
-              } else {
-                  $miganancia = 0;
-                  $colorAlert = "#CFCFD3";
-                  $didable_button = "disabled";
-                  $didable_cancel_button = "";
-              }
+          
+          if (strlen($row['ORDERVENTA']) > 0) {
+            $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
+            $didable_button = "";
+            $didable_cancel_button = "disabled";
+            $didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
           }
-
-          if (readParametros()['LOCAL'] == 1) {
-              if (strlen($row['ORDERID']) > 0) {
-                  sellOrder($row['ORDERID']);
-              }
-              autoLiquida($row['ID']);
-              $miganancia = ($row['CANTIDAD'] * $precioActual) - $row['COMPRA'];
+          else {
+            $miganancia = 0;
+            $colorAlert = "#CFCFD3";
+            $didable_button = "disabled";
+            $didable_cancel_button = "";
           }
-
+          
           if ($row['NEGATIVO'] == 1) {
               $laventa = $row['CANTIDAD'] * $row['PRECIOVENTA'];
               $real_ganancia = currency($laventa - ($row['CANTIDAD'] * $precioMoneda));
@@ -927,7 +984,7 @@ function findEscalones() {
   return $cadena;
 }
 
-function findBinance() {
+function findBinance($usuario) {
   $cadena = "<table style=width:100%;><th>Estatus</th><th>Moneda</th><th>Cant.</th><th>Orden Id</th><th>Tipo</th><th>Opciones</th>";
   $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
 
@@ -936,7 +993,7 @@ function findBinance() {
       return "Refresh page, Failed to connect to Data...";
   }
 
-  $consulta = "SELECT * FROM ORDERBINANCE";
+  $consulta = "SELECT * FROM ORDERBINANCE WHERE USUARIO='$usuario'";
   $resultado = mysqli_query($conexion, $consulta);
 
   if (!$resultado) {
@@ -956,9 +1013,9 @@ function findBinance() {
   return $cadena;
 }
 
-function refreshDatos(){
-  $row = readDatos();
-  $row2 = readParametros();
+function refreshDatos($usuario){
+  $row = readDatos($usuario);
+  $row2 = readParametros($usuario);
   $rowBtc = readDatosAsset("BTC");
   $moneda=$row['MONEDA'];
   $auto = $row2['LOCAL'];
@@ -1016,22 +1073,175 @@ function refreshDatos(){
       $colorbtc = "#4BC883";
     }  
     
-    $obj = array('balance_asset'=>$row['BALANCE_ASSET'],'par'=>$row['PAR'],'asset' => $row['ASSET'], 'ultimaventa' => quantity($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 'price' => $priceMoneda,'btc' => $bitcoin, 
-    'colorbtc' => $colorbtc, 'symbol' => $symbol, 'moneda' => $moneda,'tendencia' => dayTendencia($moneda),'color' => $color,
-    'maxdia' => $priceArriba,'mindia' => $priceAbajo, 'totalTendencia' => totalTendencia($moneda),
-    'utc' => date('g:i A'),'techo' => $promedioFlotante,'piso' => $promedioUndante,'totalmoneda' => $sumMoneda['total'], 
-    'ant' => readFlotadorAnterior($moneda),'nivel' => nivel($moneda),'nivelbtc' => nivelBtc(),
-    'porcenmax' => $porcenmax,'ganancia' => price($row2['GANANCIA']),'perdida' => price($row2['PERDIDA']),'capital' => price($row2['CAPITAL']),
-    'disponible' => price($row2['DISPONIBLE']), 'escalones' => $row2['ESCALONES'],'invxcompra' => $row2['INVXCOMPRA'],
-    'totalpromedio' => $totalPromedio,'xdisponible' => $xdisponible, 'grafico' => returnGrafica($moneda),
-    'auto' => $auto,'bina' => $bina,'impuesto' => price($row2['IMPUESTO']), 'mercado' =>$mercado, 
-    'id' => $row['ID'],'recordCount' => $recordCount,'colordisp' => $colorDisp,'checkMesGrafico'=>$checkMesGrafico,
-    'recupera' => totales($moneda)['recupera'],'alert' =>returnAlertas($moneda),'checkAnoGrafico'=>$checkAnoGrafico,
-    'verescalones' => findEscalones(),'verbinance' => findBinance(),'labelpricebitcoin' => $labelPriceBitcoin,
-    'labelpricemoneda' => $labelPriceMoneda,'precio_venta' => $row2['AUTOSHELL'],'listasset' => listAsset(),
-    'stop' => $row2['STOPLOSS'],'balance' => quantity($sumMoneda['m_balance'],$row['ASSET'],$row['PAR']),'nivelcompra' => nivelCompra($moneda) ); 
+    $obj = array(
+      'balance_asset'=>$row['BALANCE_ASSET'],
+      'par'=>$row['PAR'],
+      'asset' => $row['ASSET'], 
+      'ultimaventa' => quantity($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 
+      'price' => $priceMoneda,'btc' => $bitcoin,
+      'colorbtc' => $colorbtc, 
+      'symbol' => $symbol, 
+      'moneda' => $moneda,
+      'tendencia' => dayTendencia($moneda),
+      'color' => $color,
+      'maxdia' => $priceArriba,
+      'mindia' => $priceAbajo,
+      'totalTendencia' => totalTendencia($moneda),
+      'utc' => date('g:i A'),
+      'techo' => $promedioFlotante,
+      'piso' => $promedioUndante,
+      'totalmoneda' => $sumMoneda['total'], 
+      'ant' => readFlotadorAnterior($moneda),
+      'nivel' => nivel($moneda),
+      'nivelbtc' => nivelBtc(),
+      'porcenmax' => $porcenmax,
+      'ganancia' => price($row2['GANANCIA']),
+      'perdida' => price($row2['PERDIDA']),
+      'capital' => price($row2['CAPITAL']),
+      'disponible' => price($row2['DISPONIBLE']),
+      'escalones' => $row2['ESCALONES'],
+      'invxcompra' => $row2['INVXCOMPRA'],
+      'totalpromedio' => $totalPromedio,
+      'xdisponible' => $xdisponible,
+      'grafico' => returnGrafica($usuario,$moneda),
+      'auto' => $auto,'bina' => $bina,
+      'impuesto' => price($row2['IMPUESTO']),
+      'mercado' =>$mercado, 
+      'id' => $row['ID'],
+      'recordCount' => $recordCount,
+      'colordisp' => $colorDisp,
+      'checkMesGrafico'=>$checkMesGrafico,
+      'recupera' => totales($usuario,$moneda)['recupera'],
+      'alert' =>returnAlertas($moneda),
+      'checkAnoGrafico'=>$checkAnoGrafico,
+      'verescalones' => findEscalones($usuario),
+      'verbinance' => findBinance($usuario),
+      'labelpricebitcoin' => $labelPriceBitcoin,
+      'labelpricemoneda' => $labelPriceMoneda,
+      'precio_venta' => $row2['AUTOSHELL'],
+      'listasset' => listAsset($usuario),
+      'stop' => $row2['STOPLOSS'],
+      'balance' => quantity($sumMoneda['m_balance'],$row['ASSET'],$row['PAR']),
+      'nivelcompra' => nivelCompra($moneda) ); 
 
-    sqlconector("UPDATE PARAMETROS SET DATOS='".json_encode($obj)."'");
-  }  
+    sqlconector("UPDATE PARAMETROS SET DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
+  }
+}
+
+function refreshDatosMon($mon){
+  $usuario= $GLOBALS['tokenadmin'];
+  $row = readDatosMoneda($mon);  
+  $row2 = readParametros($usuario);
+  $rowBtc = readDatosAsset("BTC");
+  $moneda=$row['MONEDA'];
+  $auto = $row2['LOCAL'];
+  if(strlen($moneda) > 0){
+    $readPrice = readPrices($moneda);
+    $bitcoin = formatPrice(readPrices($rowBtc['MONEDA'])['ACTUAL'],$rowBtc['ASSET'],$rowBtc['PAR']);
+    $priceMoneda = formatPrice($readPrice['ACTUAL'],$row['ASSET'],$row['PAR']);
+    $priceArriba= formatPrice($readPrice['ARRIBA'],$row['ASSET'],$row['PAR']);
+    $priceAbajo= formatPrice($readPrice['ABAJO'],$row['ASSET'],$row['PAR']);
+    $labelPriceMoneda = formatPrice($priceMoneda,$row['ASSET'],$row['PAR']);
+    $labelPriceBitcoin = formatPrice($bitcoin,$rowBtc['ASSET'],$rowBtc['PAR']);
+    $color = "red";
+    $colorbtc = "red";
+    $colorDisp = "red";
+    $symbol = "&#9660;";
+    $promedioUndante = row_sqlconector("SELECT (SUM(ABAJO) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
+    $promedioFlotante = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='{$moneda}'")['PROMEDIO'];
+    $promedioFlotanteBtc = row_sqlconector("SELECT (SUM(ARRIBA) / COUNT(*)) AS PROMEDIO FROM  PRICES WHERE MONEDA='".$rowBtc['MONEDA']."'")['PROMEDIO'];
+    $totalPromedio = ($promedioFlotante + $promedioUndante) /2;  
+    $porcenmax = porcenConjunto($priceAbajo, $priceArriba, $priceMoneda)."%";  
+    $capital = price($row2['CAPITAL']);
+    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
+    $xdisponible =   price($capital - $inversion);
+    $bina = $row2['BINANCE'];
+    $recordCount = recordCountUser($usuario,"TRADER");
+    $sumMoneda = totalmoneda($moneda);
+    $symbol = nivelAnterior($moneda);
+    $mercado = totalTendencia($rowBtc['MONEDA']);
+    $checkMesGrafico = true;
+    $checkAnoGrafico = false;
+
+    if($row2["GRAFICO"]==1){
+      $checkMesGrafico = false;
+      $checkAnoGrafico = true;
+    }
+    
+    if($priceMoneda < $promedioFlotante){
+        $color = "#F37A8B";
+    }
+    else{
+        $color = "#4BC883";
+    }
+
+    if($row2['DISPONIBLE'] < $row2['INVXCOMPRA']){
+      $colorDisp = "#F37A8B";
+    }
+    else{
+      $colorDisp = "#4BC883";
+    }    
+  
+    if($bitcoin < $promedioFlotanteBtc){
+      $colorbtc = "#F37A8B";
+    }
+    else{
+      $colorbtc = "#4BC883";
+    }  
+    
+    $obj = array(
+      'balance_asset'=>$row['BALANCE_ASSET'],
+      'par'=>$row['PAR'],
+      'asset' => $row['ASSET'], 
+      'ultimaventa' => quantity($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 
+      'price' => $priceMoneda,'btc' => $bitcoin, 
+      'colorbtc' => $colorbtc, 
+      'symbol' => $symbol, 
+      'moneda' => $moneda,
+      'tendencia' => dayTendencia($moneda),
+      'color' => $color,
+      'maxdia' => $priceArriba,
+      'mindia' => $priceAbajo, 
+      'totalTendencia' => totalTendencia($moneda),
+      'utc' => date('g:i A'),
+      'techo' => $promedioFlotante,
+      'piso' => $promedioUndante,
+      'totalmoneda' => $sumMoneda['total'], 
+      'ant' => readFlotadorAnterior($moneda),
+      'nivel' => nivel($moneda),
+      'nivelbtc' => nivelBtc(),
+      'porcenmax' => $porcenmax,
+      'ganancia' => price($row2['GANANCIA']),
+      'perdida' => price($row2['PERDIDA']),
+      'capital' => price($row2['CAPITAL']),
+      'disponible' => price($row2['DISPONIBLE']),
+      'escalones' => $row2['ESCALONES'],
+      'invxcompra' => $row2['INVXCOMPRA'],
+      'totalpromedio' => $totalPromedio,
+      'xdisponible' => $xdisponible, 
+      'grafico' => returnGrafica($usuario,$moneda),
+      'auto' => $auto,
+      'bina' => $bina,
+      'impuesto' => price($row2['IMPUESTO']), 
+      'mercado' =>$mercado, 
+      'id' => $row['ID'],
+      'recordCount' => $recordCount,
+      'colordisp' => $colorDisp,
+      'checkMesGrafico'=>$checkMesGrafico,
+      'recupera' => totales($usuario,$moneda)['recupera'],
+      'alert' =>returnAlertas($moneda),
+      'checkAnoGrafico'=>$checkAnoGrafico,
+      'verescalones' => findEscalones($usuario),
+      'verbinance' => findBinance($usuario),
+      'labelpricebitcoin' => $labelPriceBitcoin,
+      'labelpricemoneda' => $labelPriceMoneda,
+      'precio_venta' => $row2['AUTOSHELL'],
+      'listasset' => listAsset($usuario),
+      'stop' => $row2['STOPLOSS'],
+      'balance' => quantity($sumMoneda['m_balance'],$row['ASSET'],$row['PAR']),
+      'nivelcompra' => nivelCompra($moneda)); 
+
+    sqlconector("UPDATE DATOS SET DATOS='".json_encode($obj)."' WHERE MONEDA='$moneda'");
+  }
 }
 ?>

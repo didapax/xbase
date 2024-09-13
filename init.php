@@ -2,70 +2,58 @@
 
 session_start(); // Iniciar la sesión
 
-$servidor = "localhost";
-$user = "root";
-$password = "";
-$database = "fortunar_".$_SESSION['usuario'];
-$data = "fortunar_xbase";
+//$GLOBALS['database']$database = "fortunar_".$_SESSION['usuario'];
+$GLOBALS['servidor'] = "localhost";
+$GLOBALS['user'] = "root";
+$GLOBALS['password'] = "";
+$GLOBALS['database'] = "fortunar_xbase";
+$GLOBALS['data'] = "fortunar_xbase";
+$GLOBALS['tokenadmin'] = "dd77b701661c5b55";
 
 date_default_timezone_set("UTC");
 
-function createDataBase(){
-  $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"]);
-  @mysqli_query($conexion, "CREATE DATABASE IF NOT EXISTS ".$GLOBALS["data"]);
-  mysqli_close($conexion);
-}
-
-function sqlconector2($consulta) {
-  $conexion = @mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["data"]);
-  if (!$conexion) {
-    echo "Refresh page, Failed to connect to Data: " . mysqli_connect_error();
-    exit();
-  }else{
-    $resultado = mysqli_query( $conexion, $consulta );
-    mysqli_close($conexion);
-  }
-}
-
-function row_sqlconector2($consulta) {
- $row=0;
- $conexion = @mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["data"]);
- if (!$conexion) {
-   echo "Refresh page, Failed to connect to Data: " . mysqli_connect_error();
-   exit();
- }else{
-   if($resultado = mysqli_query( $conexion, $consulta )){
-     $row = mysqli_fetch_array($resultado);
-   }
-   mysqli_close($conexion);
- }
- return $row;
-}
-
 function sqlconector($consulta) {
-   $conexion = @mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
-   if (!$conexion) {
-     echo "Refresh page, Failed to connect to Data: " . mysqli_connect_error();
-     exit();
-   }else{
-     $resultado = mysqli_query( $conexion, $consulta );
-     mysqli_close($conexion);
-   }
+  $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
+  if (!$conexion) {
+    die("Failed to connect to Data: " . mysqli_connect_error());
+  }
+  mysqli_set_charset($conexion, "utf8mb4");
+  $resultado = mysqli_query($conexion, $consulta);
+  
+  if (!$resultado) {
+      die("Error in query: " . mysqli_error($conexion));
+  }
+  
+  mysqli_close($conexion);
+  return $resultado;
 }
 
 function row_sqlconector($consulta) {
-	$row=0;
+  $row = array();
 	$conexion = @mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["database"]);
   if (!$conexion) {
     echo "Refresh page, Failed to connect to Data: " . mysqli_connect_error();
     exit();
   }else{
-    if($resultado = mysqli_query( $conexion, $consulta )){
-  		$row = mysqli_fetch_array($resultado);
+    mysqli_set_charset($conexion, "utf8mb4");
+    $resultado = mysqli_query($conexion, $consulta);
+    if($resultado){
+  		$row = mysqli_fetch_assoc($resultado);
   	}
   	mysqli_close($conexion);
   }
 	return $row;
+}
+
+function array_sqlconector($consulta){
+  $obj= array();
+  $resultado = sqlconector($consulta);
+  if($resultado){
+    while($row = mysqli_fetch_assoc($resultado)){
+      $obj[]=$row;
+    }
+  }
+  return $obj;
 }
 
 if( isset($_GET['install']) ){
@@ -74,8 +62,19 @@ if( isset($_GET['install']) ){
   @mysqli_query($conexion, "CREATE DATABASE IF NOT EXISTS ".$GLOBALS["database"]);
   mysqli_close($conexion);
 
+  sqlconector("CREATE TABLE IF NOT EXISTS USER (
+    ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    USUARIO VARCHAR(255),
+    PASSWORD VARCHAR(255),
+    IP VARCHAR(255),
+    SALDO DECIMAL(16,4) NOT NULL DEFAULT 0.00,
+    RATE INT DEFAULT 1,
+    BLOQUEADO INT DEFAULT 0
+  )");
+
   sqlconector("CREATE TABLE IF NOT EXISTS TRADER (
     ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    USUARIO VARCHAR(255),
     FECHA TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     TIPO VARCHAR(15) NOT NULL DEFAULT 'BUY',
     MONEDA VARCHAR(10),
@@ -107,11 +106,13 @@ if( isset($_GET['install']) ){
     PRECIO_VENTA DECIMAL(16,8) NOT NULL DEFAULT 0.00,
     PANTE DECIMAL(16,8) NOT NULL DEFAULT 0.00,
     ACTIVO INT DEFAULT 0,
-	ULTIMAVENTA decimal(16,5) NOT NULL DEFAULT '0.00000'
+	  ULTIMAVENTA decimal(16,5) NOT NULL DEFAULT '0.00000',
+    DATOS JSON,
   )");
 
 sqlconector("CREATE TABLE IF NOT EXISTS PARAMETROS (
   ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  USUARIO VARCHAR(255),
   CAPITAL DECIMAL(16,8) NOT NULL DEFAULT 0.00,
   ESCALONES INT DEFAULT 4,
   INVXCOMPRA DECIMAL(16,8) NOT NULL DEFAULT 0.00,
@@ -140,11 +141,12 @@ sqlconector("CREATE TABLE IF NOT EXISTS PRICES (
   ALCISTA INT DEFAULT 0,
   VERDE INT DEFAULT 0,
   NARANJA INT DEFAULT 0,
-  ROJO INT DEFAULT 0  
+  ROJO INT DEFAULT 0
 )");
 
 sqlconector("CREATE TABLE ORDERBINANCE (
   ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  USUARIO VARCHAR(255),
   MONEDA VARCHAR(10),
   ORDERID VARCHAR(255),
   TIPO VARCHAR(14),

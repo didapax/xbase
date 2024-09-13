@@ -29,43 +29,50 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 }
 
-if( isset($_POST['crear']) ){
+if( isset($_GET['crear-token']) ){
   $bytes = random_bytes(8);
 	$referencia = bin2hex($bytes);
   echo $referencia;
 }
 
 if(isset($_POST['reset'])){
-  if(!ifMonedaExist($_POST['moneda'])){
-    sqlconector("UPDATE DATOS SET ACTIVO=0");
-    sqlconector("INSERT INTO DATOS(MONEDA,ASSET,PAR,ACTIVO) VALUES('{$_POST['moneda']}','{$_POST['asset']}','{$_POST['par']}',1)");
+  $usuario = $_POST['usuario'];
+  if(!ifMonedaUserExist($usuario,$_POST['moneda'])){
+    sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=0 WHERE USUARIO='$usuario'");
+    sqlconector("INSERT INTO DATOSUSUARIOS(USUARIO,MONEDA,ASSET,PAR,ACTIVO) VALUES('$usuario','{$_POST['moneda']}','{$_POST['asset']}','{$_POST['par']}',1)");
   }
-  refreshDatos();
+  refreshDatos($usuario);
 }
 
 if(isset($_POST['changue'])){
-  sqlconector("UPDATE DATOS SET ACTIVO=0");
-  sqlconector("UPDATE DATOS SET ACTIVO=1 WHERE ID={$_POST['moneda']}");
-  refreshDatos();
+  $usuario = $_POST['usuario'];
+  sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=0 WHERE USUARIO='$usuario'");
+  sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=1 WHERE USUARIO='$usuario' AND ID={$_POST['moneda']}");
+  refreshDatos($usuario);
 }
 
 if(isset($_POST['autosell'])){
-    $estatus =0;
-    if(readTrader($_POST['autosell'])['AUTOSELL']==0){
-        $estatus =1;
-    }
-  sqlconector("UPDATE TRADER SET AUTOSELL={$estatus} WHERE ID={$_POST['autosell']}");
-  refreshDatos();
+  $usuario = $_POST['usuario'];
+  $estatus =0;
+  if(readTrader($_POST['autosell'])['AUTOSELL']==0){
+    $estatus =1;
+  }
+  sqlconector("UPDATE TRADER SET AUTOSELL={$estatus} WHERE USUARIO='$usuario' AND ID={$_POST['autosell']}");
+  refreshDatos($usuario);
 }
 
 if(isset($_POST['deletepar'])){
-  sqlconector("DELETE FROM DATOS WHERE MONEDA='{$_POST['deletepar']}'");
-  sqlconector("DELETE FROM PRICES WHERE MONEDA='{$_POST['deletepar']}'");
-  sqlconector("UPDATE DATOS SET ACTIVO=0");
-  sqlconector("UPDATE DATOS SET ACTIVO=1 WHERE MONEDA='BTCUSDT'");
+  $usuario = $_POST['usuario'];
+  if($_POST['deletepar'] != "BTCUSDT"){
+    sqlconector("DELETE FROM DATOSUSUARIOS WHERE USUARIO='$usuario' AND MONEDA='{$_POST['deletepar']}'");
+    //sqlconector("DELETE FROM PRICES WHERE MONEDA='{$_POST['deletepar']}'");
+    sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=0 WHERE USUARIO='$usuario'");
+    sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=1 WHERE USUARIO='$usuario' AND MONEDA='BTCUSDT'");
+  }
 }
 
 if(isset($_POST['guardar'])){
+  $usuario = $_POST['usuario'];
   $moneda =  strtoupper($_POST['moneda']);
   $asset =  strtoupper($_POST['asset']);
   $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
@@ -75,11 +82,11 @@ if(isset($_POST['guardar'])){
   $autoshell = $_POST['precio_venta'];
   $par = $_POST['par'];
 
-  sqlconector("UPDATE DATOS SET
+  sqlconector("UPDATE DATOSUSUARIOS SET
     MONEDA='{$moneda}',
     ASSET='{$asset}',
     PAR='{$par}'
-     WHERE MONEDA ='{$moneda}'");  
+     WHERE USUARIO='$usuario' AND MONEDA ='{$moneda}'");
 
   sqlconector("UPDATE PARAMETROS SET
   CAPITAL={$_POST['capital']},
@@ -88,25 +95,27 @@ if(isset($_POST['guardar'])){
   AUTOSHELL={$autoshell},
   INVXCOMPRA={$invxcompra},
   DISPONIBLE={$disponible},
-  IMPUESTO={$_POST['impuesto']}
-  "); 
-  refreshDatos();
+  IMPUESTO={$_POST['impuesto']} WHERE USUARIO='$usuario'"); 
+  refreshDatos($usuario);
 }
 
 if(isset($_GET['resetPerdidas'])){
-  sqlconector("UPDATE PARAMETROS SET PERDIDA=0");
+  $usuario = $_GET['usuario'];  
+  sqlconector("UPDATE PARAMETROS SET PERDIDA=0 WHERE USUARIO='$usuario'");
 }
 
 if(isset($_GET['resetGanancias'])){
-  sqlconector("UPDATE PARAMETROS SET GANANCIA=0, PERDIDA=0");
+  $usuario = $_GET['usuario'];
+  sqlconector("UPDATE PARAMETROS SET GANANCIA=0, PERDIDA=0 WHERE USUARIO='$usuario'");
 }
 
 if(isset($_POST['borrar'])){
+  $usuario = $_POST['usuario'];
   $trader = readTrader($_POST['borrar']);
   $moneda = $trader['MONEDA'];
   if(strlen($trader['ORDERID']) > 0 &&
   strlen($trader['ORDERVENTA']) == 0){
-    $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+    $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
     $api->useServerTime();
     $openorder = $api->orderStatus($moneda, readTrader($_POST['borrar'])['ORDERID']);
     if($openorder['status'] == "NEW"){
@@ -116,45 +125,47 @@ if(isset($_POST['borrar'])){
   }
 
   $devolucion = $trader['COMPRA'];
-  $disponible = readParametros()['DISPONIBLE'];
-  sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($disponible + $devolucion));
+  $disponible = readParametros($usuario)['DISPONIBLE'];
+  sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($disponible + $devolucion)." WHERE USUARIO='$usuario'" );
 
   sqlconector("DELETE FROM TRADER WHERE ID={$_POST['borrar']}");
 
-  reordenarEscalones();  
-  refreshDatos();
+  reordenarEscalones($usuario);  
+  refreshDatos($usuario);
 }
 
-if(isset($_POST['negativoBuy'])){ 
+if(isset($_POST['negativoBuy'])){
+  $usuario = $_POST['usuario'];
   $trader = readTrader($_POST['negativo']);
-  $datos = readParametros();
+  $datos = readParametros($usuario);
   $pagar = $trader['CANTIDAD'];
   $asset = readDatosMoneda($trader['MONEDA']);
   $quantity = quantity($pagar,$asset['ASSET'],$asset['PAR']);
   
-    $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+    $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
     $api->useServerTime();
     $binance = $api->marketBuy($trader['MONEDA'], $quantity);
   
     sqlconector("DELETE FROM TRADER WHERE ID={$_POST['negativo']}");
   
     $invxcompra = $datos['CAPITAL'] / $datos['ESCALONES'];
-    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra}");
+    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra} WHERE USUARIO='$usuario'");
   
-    reordenarEscalones();
-    refreshDatos();
+    reordenarEscalones($usuario);
+    refreshDatos($usuario);
 
 }
 
 if(isset($_POST['negativo'])){
-    $cantidad = $_POST['cantidad'];
-    $moneda = $_POST['moneda'];
-    $ganancia = 0;
-    $datos= readParametros();
-    $escalon = recordCount("TRADER") +1;
-    $asset = readDatosMoneda($moneda);
+  $usuario = $_POST['usuario'];
+  $cantidad = $_POST['cantidad'];
+  $moneda = $_POST['moneda'];
+  $ganancia = 0;
+  $datos= readParametros($usuario);
+  $escalon = recordCountUser($usuario,"TRADER") +1;
+  $asset = readDatosMoneda($moneda);
 
-    $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+  $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
     $api->useServerTime();
     $operacion = ($cantidad - $datos['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
     $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);
@@ -169,9 +180,10 @@ if(isset($_POST['negativo'])){
 
     $ganancia = $datos['GANANCIA'] + ($cantidad * readPrices($moneda)['ACTUAL']);
     $laventa = $quantity * formatPrice(readPrices($moneda)['ACTUAL'],$asset['ASSET'],$asset['PAR']);
-    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia}");
+    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia} WHERE USUARIO='$usuario'");
 
-    sqlconector("INSERT INTO TRADER(MONEDA,TIPO,CANTIDAD,PRECIOVENTA,GANANCIA,NEGATIVO,ESCALON) VALUES(
+    sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,TIPO,CANTIDAD,PRECIOVENTA,GANANCIA,NEGATIVO,ESCALON) VALUES(
+      '$usuario',
       '$moneda',
       'SELL',
       $cantidad,
@@ -180,47 +192,52 @@ if(isset($_POST['negativo'])){
       1,
       $escalon)");
 
-    reordenarEscalones();
-    refreshDatos();
+    reordenarEscalones($usuario);
+    refreshDatos($usuario);
 } 
 
 if(isset($_POST['perdida'])){
-    $datos = readParametros();
-    $trader = readTrader($_POST['perdida']);
-    $moneda = $trader['MONEDA'];
-    $asset = readDatosMoneda($moneda);
-    $operacion = ($trader['CANTIDAD'] - $datos['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
-    $escalon = recordCount("TRADER") +1;
-    $api = new Binance\API(sqlApiKey(), sqlApiSecret());
-    $api->useServerTime();
-    $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);
-    $api->useServerTime();
-    $order = $api->marketSell($moneda, $quantity);
+  $usuario = $_POST['usuario'];
+  $datos = readParametros($usuario);
+  $trader = readTrader($_POST['perdida']);
+  $moneda = $trader['MONEDA'];
+  $asset = readDatosMoneda($moneda);
+  $operacion = ($trader['CANTIDAD'] - $datos['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
+  $escalon = recordCountUser($usuario,"TRADER") +1;
+  $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
+  $api->useServerTime();
+  $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);
+  $api->useServerTime();
+  $order = $api->marketSell($moneda, $quantity);
 
-    liquidar($_POST['perdida']);
+  liquidar($_POST['perdida']);
 } 
 
 if(isset($_POST['local'])){
-  sqlconector("UPDATE PARAMETROS SET LOCAL ={$_POST['local']}");
+  $usuario = $_POST['usuario'];
+  sqlconector("UPDATE PARAMETROS SET LOCAL ={$_POST['local']} WHERE USUARIO='$usuario'");
 }
 
 if(isset($_POST['xgraf'])){
-  sqlconector("UPDATE PARAMETROS SET GRAFICO ={$_POST['xgraf']}");
+  $usuario = $_POST['usuario'];
+  sqlconector("UPDATE PARAMETROS SET GRAFICO ={$_POST['xgraf']} WHERE USUARIO='$usuario'");
 }
 
 if(isset($_POST['bina'])){
-  sqlconector("UPDATE PARAMETROS SET BINANCE ={$_POST['bina']}");
+  $usuario = $_POST['usuario'];
+  sqlconector("UPDATE PARAMETROS SET BINANCE ={$_POST['bina']} WHERE USUARIO='$usuario'");
 }
 
 if(isset($_POST['agregar'])){
+  $usuario = $_POST['usuario'];
   $moneda = $_POST['moneda'];
   $asset = readDatosMoneda($moneda);
-  $datos = readParametros(); 
+  $datos = readParametros($usuario); 
   $quantity = quantity($_POST['cantidad'],$asset['ASSET'],$asset['PAR']);
   $price = formatPrice($_POST['preciocompra'],$asset['ASSET'],$asset['PAR']);
-  $escalon = recordCount("TRADER") +1;
+  $escalon = recordCountUser($usuario,"TRADER") +1;
 
-  $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+  $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
   $api->useServerTime();
   if($_POST['tipo']=="Limit"){
     $binance = $api->buy($moneda, $quantity, $price);
@@ -229,7 +246,8 @@ if(isset($_POST['agregar'])){
     $price = formatPrice(readPrices($moneda)['ACTUAL'],$asset['ASSET'],$asset['PAR']);
   }    
   if(isset($binance['orderId'])){
-    sqlconector("INSERT INTO TRADER(MONEDA,ORDERID,COMPRA,CANTIDAD,PRECIOCOMPRA,ESCALON) VALUES(
+    sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,COMPRA,CANTIDAD,PRECIOCOMPRA,ESCALON) VALUES(
+      '$usuario',
       '{$moneda}',
       '{$binance['orderId']}',
       {$_POST['compra']},
@@ -242,17 +260,18 @@ if(isset($_POST['agregar'])){
   }
 
   $capital = $datos['CAPITAL'];
-  $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
-  sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion));
+  $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE USUARIO='$usuario'")['SUMA'];
+  sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion)." WHERE USUARIO='$usuario'");
 
-  refreshDatos();
+  refreshDatos($usuario);
 }
 
-if(isset($_GET['getpante'])){ 
-  $row = readDatos(); 
+if(isset($_GET['getpante'])){
+  $usuario = $_GET['usuario'];
+  $row = readDatos($_GET['usuario']); 
   $moneda=$row['MONEDA'];
   $precio = $_GET['nprice'];
-  $puntos = readParametros()['STOPLOSS'];
+  $puntos = readParametros($usuario)['STOPLOSS'];
   $pante = price(calcularMargenPerdida($precio,$puntos)); 
   $obj = array('pante' => $pante,'moneda' => $moneda,'puntos' => $puntos); 
   
@@ -261,22 +280,22 @@ if(isset($_GET['getpante'])){
 
 if(isset($_GET['getPriceBinance'])){ 
   if( isset($_GET['auto']) ){
-    if(readParametros()['LOCAL']==1){
-      refreshDataAuto();
+    if(readParametros($_GET['usuario'])['LOCAL']==1){
+      refreshDataAuto($_GET['usuario']);
     }
   }
     
-  echo readParametros()['DATOS']; 
+  echo readParametros($_GET['usuario'])['DATOS']; 
 }
 
 if( isset($_GET['binancex']) ){
-  $api = new Binance\API(sqlApiKey(), sqlApiSecret());
+  $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
       $api->useServerTime();
       $balances = $api->balances();
       echo "BNB owned: ".$balances['BNB']['available']."\n";
       echo "Estimated Value: ".$api->btc_value." BTC\n";
 
-      $openorders = $api->openOrders("HNTUSDT");
+      $openorders = $api->openOrders("BTCUSDT");
       print_r($openorders);
 }
 

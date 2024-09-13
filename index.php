@@ -1,30 +1,25 @@
 <?php
 //session_start();
 include "modulo.php";
-createDataBase();
+
+if (isset($_SESSION['usuario'])) {
+  // Si hay sesión iniciada, redirigir a xbase
+  header("Location: xbase?user={$_SESSION['usuario']}");
+  exit();
+}
 
 if(isset($_POST['accep'])){
-  if(isset(row_sqlconector2("SELECT USUARIO FROM USER WHERE USUARIO='{$_POST['api']}'")['USUARIO'])){
-    if($_POST['api']==row_sqlconector2("SELECT USUARIO FROM USER WHERE USUARIO='{$_POST['api']}'")['USUARIO'] &&
-    $_POST['password']==row_sqlconector2("SELECT USUARIO,PASSWORD FROM USER WHERE USUARIO='{$_POST['api']}'")['PASSWORD']){
+  if(isset(row_sqlconector("SELECT USUARIO FROM USER WHERE USUARIO='{$_POST['api']}'")['USUARIO'])){
+    if($_POST['api']==row_sqlconector("SELECT USUARIO FROM USER WHERE USUARIO='{$_POST['api']}'")['USUARIO'] &&
+    $_POST['password']==row_sqlconector("SELECT USUARIO,PASSWORD FROM USER WHERE USUARIO='{$_POST['api']}'")['PASSWORD']){
       $ipreal = getRealIpAddr();
-      sqlconector2("UPDATE USER SET IP='{$ipreal}' WHERE USUARIO='{$_POST['api']}'");
+      sqlconector("UPDATE USER SET IP='{$ipreal}' WHERE USUARIO='{$_POST['api']}'");
       $_SESSION['usuario'] = $_POST['api']; // Guardar el nombre del usuario en la sesión
-      header("location: ./".$_POST['api']."/index?user={$_POST['api']}");
+      header("location: xbase?user={$_POST['api']}");
     }
     //$_SESSION['user'] = $_POST['session'];
   }
 }
-
-sqlconector2("CREATE TABLE IF NOT EXISTS USER (
-  ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  USUARIO VARCHAR(255),
-  PASSWORD VARCHAR(255),
-  IP VARCHAR(255),
-  SALDO DECIMAL(16,4) NOT NULL DEFAULT 0.00,
-  RATE INT DEFAULT 1,
-  BLOQUEADO INT DEFAULT 0
-)");
 
 ?>
 <!DOCTYPE html>
@@ -91,7 +86,7 @@ sqlconector2("CREATE TABLE IF NOT EXISTS USER (
     <div >
       <h2>XBase</h2>
       Token Api <input autocomplete="off" type="text" id="api" name="api" placeholder="Input your Token" onchange="document.getElementById('accep').disabled=false">
-      Passwords <input style="margin-top: 5px;" autocomplete="off" type="text" id="password" name="password" placeholder="Input your Password" onchange="document.getElementById('accep').disabled=false">
+      Passwords <input style="margin-top: 5px;" autocomplete="off" type="password" id="password" name="password" placeholder="Input your Password" onchange="document.getElementById('accep').disabled=false">
       <br>
       <input type="submit" id="accep" name="accep" disabled value="Next go" onclick="">
     </div>

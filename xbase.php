@@ -1,9 +1,9 @@
 <?php
-include "../modulo.php";
+include "modulo.php";
 
 if (!isset($_SESSION['usuario'])) {
   // Si no hay sesión iniciada, redirigir al login
-  header("Location: ../index");
+  header("Location: index.php");
   exit();
 }
 
@@ -17,14 +17,14 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 <html style="overflow-x:hidden;overflow-y:auto;">
 <head>
   <title>Help Trader</title>
-  <link rel="shortcut icon" href="../favicon.png">
+  <link rel="shortcut icon" href="favicon.png">
   <meta name="viewport" content="width=device-width initial-scale=1.0 maximum-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
   <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
-  <script src="../javascript/block.js"></script>
-  <link rel="stylesheet" href="../css/style.css">
-  <script src="../css/SweetAlert/sweetalert2.all.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="../css/SweetAlert/sweetalert2.min.css" /> 
+  <script src="javascript/block.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="css/SweetAlert/sweetalert2.all.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/SweetAlert/sweetalert2.min.css" /> 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css">
 
   <style>
@@ -77,6 +77,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
 <input type="hidden" id="cantidadComprada" value='0' >
 <input type="hidden" id="price" value='0' >
 <input type="hidden" id="perdidas" value="0">
+<input type="hidden" id="usuario" value="<?php if(isset($_SESSION['usuario'])) echo $_SESSION['usuario']; ?>">
 <span style=display:none; id="techo"></span>
 
 <dialog class="dialog_retiro" id="newAsset" close>
@@ -109,7 +110,7 @@ if(getRealIpAddr() != getSession($_GET['user'])['IP']){
     <button type="button" onclick="cerrar_sesion()">Cerrar Sesion</button>
   </dialog>  
 
-<div style="padding:5px;">  
+<div style="padding:5px;"> 
   <div class="price_entrada">
     <label style="margin-left:13px;font-size:21px;font-weight:bold;" id="priceMoneda"></label>
     <label title="Config" style="margin-left:13px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
