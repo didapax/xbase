@@ -9,6 +9,7 @@ $GLOBALS['password'] = "";
 $GLOBALS['database'] = "fortunar_xbase";
 $GLOBALS['data'] = "fortunar_xbase";
 $GLOBALS['tokenadmin'] = "dd77b701661c5b55";
+$GLOBALS['encryptionKey'] = "dd77b701661c5b55";
 
 date_default_timezone_set("UTC");
 

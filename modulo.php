@@ -208,15 +208,49 @@ function ifOrderExist($order) {
 }
 
 function ifMonedaExist($moneda) {
-if(row_sqlconector("select COUNT(*) AS TOTAL from DATOS where MONEDA='{$moneda}'")['TOTAL']==1 )
-return TRUE;
-return FALSE;
+  if(row_sqlconector("select COUNT(*) AS TOTAL from DATOS where MONEDA='{$moneda}'")['TOTAL']==1 )
+  return TRUE;
+  return FALSE;
 }
 
-function ifMonedaUserExist($usuario,$moneda) {
+function ifMonedaUserExist($moneda,$usuario) {
   if(row_sqlconector("select COUNT(*) AS TOTAL from DATOSUSUARIOS where USUARIO='$usuario' AND MONEDA='{$moneda}'")['TOTAL']==1 )
   return TRUE;
   return FALSE;
+}
+
+function ifUsuarioExist($usuario) {
+  if(row_sqlconector("select COUNT(*) AS TOTAL from USER where USUARIO='$usuario'")['TOTAL']==1 )
+  return TRUE;
+  return FALSE;
+}
+
+function ifDatColum($token, $tabla, $colum) {
+  // Consulta SQL para verificar si el campo especificado no está vacío o nulo
+  $query = "SELECT COUNT(*) AS TOTAL FROM $tabla WHERE USUARIO = '{$token}' AND $colum IS NOT NULL AND $colum != ''";
+  
+  // Ejecutar la consulta y obtener el resultado
+  $result = row_sqlconector($query);
+  
+  // Verificar si el total es mayor que 0
+  
+  if ($result['TOTAL'] > 0) {
+      return TRUE;
+  }
+  return FALSE;
+}
+
+function encryptApiKey($apiKey, $encryptionKey) {
+  $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+  $encrypted = openssl_encrypt($apiKey, 'aes-256-cbc', $encryptionKey, 0, $iv);
+  return base64_encode($iv . $encrypted);
+}
+
+function decryptApiKey($encryptedApiKey, $encryptionKey) {
+  $data = base64_decode($encryptedApiKey);
+  $iv = substr($data, 0, openssl_cipher_iv_length('aes-256-cbc'));
+  $encrypted = substr($data, openssl_cipher_iv_length('aes-256-cbc'));
+  return openssl_decrypt($encrypted, 'aes-256-cbc', $encryptionKey, 0, $iv);
 }
 
 function readOrderCompraTrader($order){
@@ -627,19 +661,27 @@ function nivelAnterior($moneda){
 }
 
 function sqlApiKey($usuario){
-  return row_sqlconector("SELECT APIKEY FROM PARAMETROS WHERE USUARIO='$usuario'")['APIKEY'];
+  $encryptedApiKey = row_sqlconector("SELECT APIKEY FROM PARAMETROS WHERE USUARIO='$usuario'")['APIKEY'];
+  $decryptedApiKey = decryptApiKey($encryptedApiKey, $GLOBALS['encryptionKey']);
+  return $decryptedApiKey;
 }
 
 function sqlApiSecret($usuario){
-  return row_sqlconector("SELECT SECRET FROM PARAMETROS WHERE USUARIO='$usuario'")['SECRET'];
+  $encryptedSecret = row_sqlconector("SELECT SECRET FROM PARAMETROS WHERE USUARIO='$usuario'")['SECRET'];
+  $decryptedSecret = decryptApiKey($encryptedSecret, $GLOBALS['encryptionKey']);
+  return $decryptedSecret;
 }
 
-function sqlApiKeyAdmin(){  
-  return row_sqlconector("SELECT APIKEY FROM PARAMETROS WHERE USUARIO='".$GLOBALS['tokenadmin']."'")['APIKEY'];
+function sqlApiKeyAdmin(){
+  $encryptedApiKey = row_sqlconector("SELECT APIKEY FROM PARAMETROS WHERE USUARIO='".$GLOBALS['tokenadmin']."'")['APIKEY'];
+  $decryptedApiKey = decryptApiKey($encryptedApiKey, $GLOBALS['encryptionKey']);
+  return $decryptedApiKey;
 }
 
 function sqlApiSecretAdmin(){
-  return row_sqlconector("SELECT SECRET FROM PARAMETROS WHERE USUARIO='".$GLOBALS['tokenadmin']."'")['SECRET'];
+  $encryptedSecret = row_sqlconector("SELECT SECRET FROM PARAMETROS WHERE USUARIO='".$GLOBALS['tokenadmin']."'")['SECRET'];
+  $decryptedSecret = decryptApiKey($encryptedSecret, $GLOBALS['encryptionKey']);
+  return $decryptedSecret;
 }
 
 function totalmoneda($moneda){

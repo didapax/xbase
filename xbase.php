@@ -3,13 +3,13 @@ include "modulo.php";
 
 if (!isset($_SESSION['usuario'])) {
   // Si no hay sesión iniciada, redirigir al login
-  header("Location: index.php");
+  header("Location: index?token=");
   exit();
 }
 
-if(getRealIpAddr() != getSession($_GET['user'])['IP']){
-  exit();
+if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   echo "No se puede Iniciar sesion en dos Ip distintas...";
+  exit();  
 }
 
 ?>

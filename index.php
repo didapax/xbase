@@ -2,22 +2,35 @@
 //session_start();
 include "modulo.php";
 
+$token = "";
 if (isset($_SESSION['usuario'])) {
   // Si hay sesión iniciada, redirigir a xbase
-  header("Location: xbase?user={$_SESSION['usuario']}");
-  exit();
+  header("Location: xbase?token={$_SESSION['usuario']}");
 }
 
+
 if(isset($_POST['accep'])){
-  if(isset(row_sqlconector("SELECT USUARIO FROM USER WHERE USUARIO='{$_POST['api']}'")['USUARIO'])){
-    if($_POST['api']==row_sqlconector("SELECT USUARIO FROM USER WHERE USUARIO='{$_POST['api']}'")['USUARIO'] &&
-    $_POST['password']==row_sqlconector("SELECT USUARIO,PASSWORD FROM USER WHERE USUARIO='{$_POST['api']}'")['PASSWORD']){
+  $tokenVerifi =  $_POST['api'];
+  $passwordVerifi = $_POST['password'];
+  $hashPassword = row_sqlconector("SELECT USUARIO,PASSWORD FROM USER WHERE USUARIO='$tokenVerifi'")['PASSWORD'];
+
+  if(ifUsuarioExist($tokenVerifi)){
+    if(password_verify($passwordVerifi, $hashPassword)){
       $ipreal = getRealIpAddr();
-      sqlconector("UPDATE USER SET IP='{$ipreal}' WHERE USUARIO='{$_POST['api']}'");
-      $_SESSION['usuario'] = $_POST['api']; // Guardar el nombre del usuario en la sesión
-      header("location: xbase?user={$_POST['api']}");
+      sqlconector("UPDATE USER SET IP='{$ipreal}' WHERE USUARIO='$tokenVerifi'");
+      $_SESSION['usuario'] = $tokenVerifi; // Guardar el nombre del usuario en la sesión
+      header("location: xbase?token=$tokenVerifi");    
     }
-    //$_SESSION['user'] = $_POST['session'];
+  }
+}
+
+if(isset($_GET['token'])){
+  $token = $_GET['token'];
+  //solo te redidirige si el usuario es valido
+  if(ifUsuarioExist($token)){ 
+    if(!ifDatColum($token,"USER", "PASSWORD")){
+      header("location: newuser?token=$token");
+    }
   }
 }
 
@@ -71,21 +84,14 @@ if(isset($_POST['accep'])){
   }
   </style>
   <script>
-  function next(){
-    $.post("index.php",{
-      session: document.getElementById("api").value,
-      password: document.getElementById("password").value
-    },function(data){
-      /*window.location.href="./"+document.getElementById("api").value+"/index";*/
-    });
-  }
+
   </script>
 </head>
 <body>
   <form class="form" action="index" method="post" autocomplete="off">
     <div >
       <h2>XBase</h2>
-      Token Api <input autocomplete="off" type="text" id="api" name="api" placeholder="Input your Token" onchange="document.getElementById('accep').disabled=false">
+      Token Api <input value="<?php echo $token; ?>" autocomplete="off" type="text" id="api" name="api" placeholder="Input your Token" onchange="document.getElementById('accep').disabled=false">
       Passwords <input style="margin-top: 5px;" autocomplete="off" type="password" id="password" name="password" placeholder="Input your Password" onchange="document.getElementById('accep').disabled=false">
       <br>
       <input type="submit" id="accep" name="accep" disabled value="Next go" onclick="">

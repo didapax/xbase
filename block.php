@@ -30,9 +30,20 @@ session_destroy();
 }
 
 if( isset($_GET['crear-token']) ){
-  $bytes = random_bytes(8);
-	$referencia = bin2hex($bytes);
-  echo $referencia;
+  $llave=$_GET['llave'];
+  if($llave == "dd77b701661c5b55"){
+    $bytes = random_bytes(8);
+    $referencia = bin2hex($bytes);
+    if(!ifUsuarioExist($referencia)){
+      sqlconector("INSERT INTO USER (USUARIO) VALUES('$referencia')");
+      sqlconector("INSERT INTO DATOSUSUARIOS (USUARIO,ACTIVO) VALUES('$referencia',1)");
+      sqlconector("INSERT INTO PARAMETROS (USUARIO) VALUES('$referencia')");
+      echo "Usuario creado con exito el token asignado es: $referencia";
+    }
+  }
+  else{
+    exit();
+  }
 }
 
 if(isset($_POST['reset'])){
