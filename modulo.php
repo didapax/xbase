@@ -202,21 +202,24 @@ function calcularMargenPerdida($precioActual, $margen) {
 }
 
 function ifOrderExist($order) {
-  if(row_sqlconector("select COUNT(*) AS TOTAL from TRADER where ORDERID='{$order}' AND LIQUIDAR=0")['TOTAL']==1 )
-  return TRUE;
-  return FALSE;
+  $consulta = "select COUNT(*) AS TOTAL from TRADER where ORDERID='{$order}' AND LIQUIDAR=0";
+  $resultado = row_sqlconector($consulta);
+  
+  return $resultado['TOTAL'] == 1;  
 }
 
 function ifMonedaExist($moneda) {
-  if(row_sqlconector("select COUNT(*) AS TOTAL from DATOS where MONEDA='{$moneda}'")['TOTAL']==1 )
-  return TRUE;
-  return FALSE;
+  $consulta = "SELECT COUNT(*) AS TOTAL FROM DATOS WHERE MONEDA = '$moneda'";
+  $resultado = row_sqlconector($consulta);
+  
+  return $resultado['TOTAL'] == 1;
 }
 
-function ifMonedaUserExist($moneda,$usuario) {
-  if(row_sqlconector("select COUNT(*) AS TOTAL from DATOSUSUARIOS where USUARIO='$usuario' AND MONEDA='{$moneda}'")['TOTAL']==1 )
-  return TRUE;
-  return FALSE;
+function ifMonedaUserExist($moneda, $usuario) {
+  $consulta = "SELECT COUNT(*) AS TOTAL FROM DATOSUSUARIOS WHERE USUARIO = '$usuario' AND MONEDA = '$moneda'";
+  $resultado = row_sqlconector($consulta);
+  
+  return $resultado['TOTAL'] == 1;
 }
 
 function ifUsuarioExist($usuario) {
@@ -757,6 +760,7 @@ function totales($usuario,$moneda){
 
 function refreshDataAuto($usuario) {
   try {
+      $estableCoin = readParametros($usuario)['ESTABLECOIN'];
       $dsn = "mysql:host={$GLOBALS['servidor']};dbname={$GLOBALS['database']};charset=utf8";
       $conexion = new PDO($dsn, $GLOBALS['user'], $GLOBALS['password']);
       $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -800,6 +804,12 @@ function refreshDataAuto($usuario) {
               ':balance' => $balances[$asset]['available'],
               ':moneda' => $available_mon
           ]);
+
+          $updateEstableCoin = $conexion->prepare("UPDATE PARAMETROS SET CAPITAL = :balanceUsd WHERE USUARIO=:usuario");
+          $updateEstableCoin->execute([
+            ':usuario' => $usuario,
+            ':balanceUsd' => $balances[$estableCoin]['available']
+        ]);
       }
 
       refreshDatos($usuario);

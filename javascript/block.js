@@ -5,6 +5,7 @@ let dollarUSLocale = Intl.NumberFormat('en-IN');
 let datos;
 let fiat;
 let simbolo;
+let listMonedas = [];
 
 function jsNota(frecuencia){
         const context= new AudioContext();
@@ -36,8 +37,7 @@ function Guardar(){
     stop: document.getElementById('stop').value
   },function(data){
     document.getElementById('config').close();
-    leerDatos();
-    document.getElementById("preloader").style.display='none';
+    window.location.href="xbase?token="+usuario;
   });
 }
 
@@ -174,11 +174,12 @@ function deletePar(){
     cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
+          document.getElementById("preloader").style.display='block';
           $.post("block",{
             deletepar: document.getElementById('moneda').value,
             usuario: usuario
-          },function(data){
-            window.location.href="../index";
+          },function(data){            
+            window.location.href="xbase?token="+usuario;
           });
         }
     });
@@ -309,6 +310,7 @@ function Reset(){
       cancelButtonText: "Cancelar"
       }).then((result) => {
           if (result.isConfirmed) {
+            document.getElementById("preloader").style.display='block';
             $.post("block",{
               reset:"",
               usuario: usuario,
@@ -316,7 +318,7 @@ function Reset(){
               asset: assetValue.toUpperCase(),
               par: parValue.toUpperCase()
             },function(data){
-              window.location.href="../index";
+              window.location.href="xbase?token="+usuario;
             });
           }
         });
@@ -341,9 +343,7 @@ function moneyChangue(valor){
     moneda: valor
   },function(data){
     document.getElementById('sugerirPrecioCompra').checked = true;
-    refreshDatos();
-    leerDatos();
-    document.getElementById("preloader").style.display='none';
+    window.location.href="xbase?token="+usuario;
   });
 }
 
@@ -549,7 +549,7 @@ function refreshDatos(){
         document.getElementById('precioCompra2').value = datos.price;
       }      
       document.title = datos.asset+" "+datos.labelpricemoneda; 
-      document.getElementById('priceMoneda').innerHTML = "<span style='margin-right:5px;color:white;'>"+datos.asset+"</span> "+datos.labelpricemoneda;
+      document.getElementById('priceMoneda').innerHTML = "<span style='margin-right:5px;color:white;'>"+datos.asset+"/"+datos.par+"</span> "+datos.labelpricemoneda;
       document.getElementById('price').value = datos.price;
       document.getElementById('priceBtc').innerHTML = "<span style='margin-right:5px;color:white;'>BTC</span> "+datos.labelpricebitcoin;
       document.getElementById('tendencia').innerHTML = `Dia ${datos.asset} ${datos.tendencia}`;
@@ -608,7 +608,9 @@ function refreshDatos(){
 function inicio(){
     leerDatos();
     refreshDatos();
+    recuperarMonedas();
     const myVar = setInterval(myTimer, 2000);
+    document.getElementById("preloader").style.display='none';
 }
 
 function myTimer() {
@@ -709,3 +711,45 @@ function cerrar_sesion(){
     window.location.href="index";
   })  
 }
+
+function selMonedas(){
+  let optionMoneda = document.getElementById("monedas").value;
+  const monedaEncontrada = listMonedas.find(itemMoneda => itemMoneda.ID === optionMoneda);
+  if (optionMoneda) {
+    document.getElementById("newMoneda").value = monedaEncontrada.MONEDA;
+    document.getElementById("newAssetSimbol").value = monedaEncontrada.ASSET;
+    document.getElementById("newEstableCoin").value = monedaEncontrada.PAR;
+  }
+}
+
+function mostrarMonedas() {
+  let fila = "<option value='' selected>selecciona una...</option>";
+  const selectMoneda = document.getElementById("monedas");
+  selectMoneda.innerHTML = fila;
+
+  listMonedas.forEach((producto) => {
+      let option = document.createElement("option");
+      option.value = producto.ID;
+      option.textContent = producto.MONEDA;
+      selectMoneda.appendChild(option);
+  });
+}
+
+function recuperarMonedas() {
+  fetch("block?list_assets=")
+      .then(response => {
+          if (!response.ok) {
+              throw new Error("Error en la solicitud: " + response.status);
+          }
+          return response.json(); // Parsear la respuesta como JSON
+      })
+      .then(data => {
+          listMonedas = data;    
+          mostrarMonedas();
+          console.log("Monedas:", data);
+      })
+      .catch(error => {
+          console.error("Error en la solicitud:", error);
+      });
+  
+  }

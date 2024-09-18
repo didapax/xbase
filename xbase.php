@@ -56,6 +56,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   </style>
 
   <script>
+    
   </script>
 </head>
 <body onload="inicio()"> 
@@ -84,9 +85,11 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Nueva Criptomoneda</div>
   <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('newAsset').close()">X</a><br>
   <hr>  
-  <span>Moneda Par </span><input style="width:100px;" title="Example: HNTUSDT, HNTUSDC" type="text" maxlength="10" id="newMoneda" value=""><br>
-  <span>Asset </span><input style="width:100px;" title="Asset is: HNT, BNB, BTC" type="text" maxlength="10" id="newAssetSimbol" value=""><br>  
-  <span>Estable Coin </span><input style="width:100px;" title="USDT, USDC" type="text" maxlength="10" id="newEstableCoin" value=""><br>
+  <span>Moneda Par </span>
+  <select id="monedas" onchange="selMonedas()"></select>
+  <input style="width:100px;"  type="hidden" maxlength="10" id="newMoneda" value=""><br>
+  <span>Asset </span><input readonly style="width:100px;" title="Asset is: HNT, BNB, BTC" type="text" maxlength="10" id="newAssetSimbol" value=""><br>  
+  <span>Estable Coin </span><input readonly style="width:100px;" title="USDT, USDC" type="text" maxlength="10" id="newEstableCoin" value=""><br>
   <button style="margin-left: 55px;background:transparent;" type="button" onclick="Reset()"><span style='font-size:24px;'>&#9088;</span>Insertar</button>  
 </dialog>
 
@@ -94,11 +97,11 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Configuracion</div>
     <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('config').close()">X</a><br>
     <hr>
-    <span>Moneda Par </span><input readonly style="width:100px;"  type="text" maxlength="10" id="moneda" value=""><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:default;" onclick="deletePar()">Delete</span><br>
-    <span>Asset </span><input style="width:100px;"  type="text" maxlength="10" id="asset" value=""><br>
-    <span>Estable Coin </span><input style="width:100px;"  type="text" maxlength="10" id="estableCoin" value=""><br>
-    <span>Balance </span><input style="width:100px;" type="number" step="0.01" id="newBalance" value="0" ><br>
-    <span>Capital </span><input style="width:100px;" type="number" step="0.01" id="capital" value="0" onkeyup="calculo()" onchange="calculo()"> Usd<br>    
+    <span>Moneda Par </span><input readonly style="width:100px;"  type="text" maxlength="10" id="moneda" value=""><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:pointer;" onclick="deletePar()">Delete</span><br>
+    <span>Asset </span><input readonly style="width:100px;"  type="text" maxlength="10" id="asset" value=""><br>
+    <span>Estable Coin </span><input readonly style="width:100px;"  type="text" maxlength="10" id="estableCoin" value=""><br>
+    <span>Balance </span><input readonly style="width:100px;" type="number" step="0.01" id="newBalance" value="0" ><br>
+    <span>Capital </span><input readonly style="width:100px;" type="number" step="0.01" id="capital" value="0" onkeyup="calculo()" onchange="calculo()"> Usd<br>    
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
     <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>
     <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
@@ -106,13 +109,13 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Xampp</label>
     <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Server</label>   
     <br>
-    <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>
     <button type="button" onclick="cerrar_sesion()">Cerrar Sesion</button>
+    <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>    
   </dialog>  
 
 <div style="padding:5px;"> 
   <div class="price_entrada">
-    <label style="margin-left:13px;font-size:21px;font-weight:bold;" id="priceMoneda"></label>
+    <label style="margin-left:13px;font-size:18px;font-weight:bold;" id="priceMoneda"></label>
     <label title="Config" style="margin-left:13px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
     <label style="margin-left:10px;font-size:18px;color:white;cursor:pointer;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').show()">&#10010;</label>
     <input type="radio" id="xmes" name="fav_language" value="xmes" onclick="xmes()">
@@ -230,7 +233,14 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
     <!-- Incluir C3.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.js"></script>
-</body>
+<div style="width: 100%;padding: 3px; text-align: center;">  
+  <span class="bolita" style="color:red;">&#9679; </span>En Baja
+  <span class="bolita" style="color:yellow;">&#9679; </span>Comprar
+  <span class="bolita" style="color:orange;">&#9679; </span>Puede Subir
+  <span class="bolita" style="color:olive;">&#9679; </span>Alerta Venta
+  <span class="bolita" style="color:green;">&#9679; </span>Vende
+</div>
+  </body>
 </html>
 <!--
 color rojo: #F6465D

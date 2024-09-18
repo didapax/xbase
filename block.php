@@ -46,12 +46,40 @@ if( isset($_GET['crear-token']) ){
   }
 }
 
-if(isset($_POST['reset'])){
+
+if(isset($_GET['list_assets'])){
+  echo json_encode (array_sqlconector("SELECT * FROM DATOS"));
+}
+
+if (isset($_POST['reset'])) {
   $usuario = $_POST['usuario'];
-  if(!ifMonedaUserExist($usuario,$_POST['moneda'])){
-    sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=0 WHERE USUARIO='$usuario'");
-    sqlconector("INSERT INTO DATOSUSUARIOS(USUARIO,MONEDA,ASSET,PAR,ACTIVO) VALUES('$usuario','{$_POST['moneda']}','{$_POST['asset']}','{$_POST['par']}',1)");
+  $moneda = $_POST['moneda'];
+  $asset = $_POST['asset'];
+  $par = $_POST['par'];
+
+  if (!ifMonedaUserExist($moneda, $usuario)) {
+      // Usar consultas preparadas para evitar inyecciones SQL
+      $updateQuery = "UPDATE DATOSUSUARIOS SET ACTIVO = 0 WHERE USUARIO = ?";
+      $insertQuery = "INSERT INTO DATOSUSUARIOS (USUARIO, MONEDA, ASSET, PAR, ACTIVO) VALUES (?, ?, ?, ?, 1)";
+
+      $conexion = @mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
+      if (!$conexion) {
+          throw new Exception("Failed to connect to Data: " . mysqli_connect_error());
+      }
+
+      // Preparar y ejecutar la consulta de actualización
+      $stmt = $conexion->prepare($updateQuery);
+      $stmt->bind_param("s", $usuario);
+      $stmt->execute();
+
+      // Preparar y ejecutar la consulta de inserción
+      $stmt = $conexion->prepare($insertQuery);
+      $stmt->bind_param("ssss", $usuario, $moneda, $asset, $par);
+      $stmt->execute();
+
+      mysqli_close($conexion);
   }
+
   refreshDatos($usuario);
 }
 
@@ -76,7 +104,6 @@ if(isset($_POST['deletepar'])){
   $usuario = $_POST['usuario'];
   if($_POST['deletepar'] != "BTCUSDT"){
     sqlconector("DELETE FROM DATOSUSUARIOS WHERE USUARIO='$usuario' AND MONEDA='{$_POST['deletepar']}'");
-    //sqlconector("DELETE FROM PRICES WHERE MONEDA='{$_POST['deletepar']}'");
     sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=0 WHERE USUARIO='$usuario'");
     sqlconector("UPDATE DATOSUSUARIOS SET ACTIVO=1 WHERE USUARIO='$usuario' AND MONEDA='BTCUSDT'");
   }
