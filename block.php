@@ -251,7 +251,7 @@ if(isset($_POST['perdida'])){
   liquidar($_POST['perdida']);
 } 
 
-if(isset($_POST['local'])){
+if(isset($_POST['local'])){ 
   $usuario = $_POST['usuario'];
   sqlconector("UPDATE PARAMETROS SET LOCAL ={$_POST['local']} WHERE USUARIO='$usuario'");
 }
@@ -316,13 +316,10 @@ if(isset($_GET['getpante'])){
   echo json_encode($obj);   
 }
 
-if(isset($_GET['getPriceBinance'])){ 
+if(isset($_GET['getPriceBinance'])){
   if( isset($_GET['auto']) ){
-    if(readParametros($_GET['usuario'])['LOCAL']==1){
       refreshDataAuto($_GET['usuario']);
-    }
   }
-    
   echo readParametros($_GET['usuario'])['DATOS']; 
 }
 

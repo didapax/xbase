@@ -117,7 +117,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <div class="price_entrada">
     <label style="margin-left:13px;font-size:18px;font-weight:bold;" id="priceMoneda"></label>
     <label title="Config" style="margin-left:13px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
-    <label style="margin-left:10px;font-size:18px;color:white;cursor:pointer;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').show()">&#10010;</label>
+    <label style="margin-left:10px;font-size:18px;color:white;cursor:pointer;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').showModal()">&#10010;</label>
     <input type="radio" id="xmes" name="fav_language" value="xmes" onclick="xmes()">
     <label for="xmes">MES</label>
     <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">

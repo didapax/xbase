@@ -458,8 +458,8 @@ function leerDatos() {
       document.getElementById('showCapital').value = priceFixed(datos.capital);
       document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
       document.getElementById('impuesto').value = (datos.impuesto * 1);
-      document.getElementById('local').checked = (datos.auto * 1).toFixed(2);
-      document.getElementById('orderBinance').checked = (datos.bina * 1);
+      document.getElementById('local').checked = datos.auto *1;
+      document.getElementById('orderBinance').checked = datos.bina *1;
       document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);
       document.getElementById('precio_venta').value = datos.precio_venta;
       document.getElementById('stop').value = datos.stop;
@@ -645,7 +645,7 @@ function resetGanancias(){
 }
 
 function showConfig(){
-  document.getElementById('config').show();
+  document.getElementById('config').showModal();
 }
 
 function sumarGanancia(){
