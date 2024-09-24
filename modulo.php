@@ -401,21 +401,19 @@ function readTrader($id){
 }
 
 function ifNotDayExists($tabla, $moneda) {
-  $interval = row_sqlconector("SELECT CURDATE() AS HOY");
-  $fecha = $interval['HOY'];
-  
-  $query = "SELECT COUNT(*) AS TOTAL FROM {$tabla} WHERE MONEDA = '{$moneda}' AND DATE(FECHA) = '{$fecha}'";
-  $result = row_sqlconector($query);
+  $query = "SELECT COUNT(*) AS TOTAL FROM {$tabla} WHERE MONEDA = :moneda AND DATE(FECHA) = CURDATE()";
+  $params = ['moneda' => $moneda];
+  $result = new_row_sqlconector($query, $params);
   
   return $result['TOTAL'] == 0;
 }
 
 function updatePrices($moneda,$valores){
-  sqlconector("UPDATE PRICES SET {$valores} WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())");
+  sqlconector("UPDATE PRICES SET {$valores} WHERE MONEDA='{$moneda}' AND DATE(FECHA) = CURDATE()");
 }
 
 function updatePricesClose($moneda,$valores){
-  sqlconector("UPDATE PRICES SET {$valores} WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP() - INTERVAL 1 DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())");
+  sqlconector("UPDATE PRICES SET {$valores} WHERE MONEDA='{$moneda}' AND DATE(FECHA) = CURDATE() - INTERVAL 1 DAY");
 }
 
 function readPrices($moneda) {
@@ -429,7 +427,9 @@ function readPrices($moneda) {
           //La logica para el precio de cierre y apertura.
           $open = readPriceIntervar($moneda,1)['ACTUAL'];
           updatePrices($moneda,"OPEN={$open}");
-          updatePricesClose($moneda,"CLOSE={$open}");
+          /*updatePricesClose($moneda,"CLOSE={$open}");
+            cierra en refreshData.... con updatePrices indicando el precio actual en la columna CLOSE
+          */
       }
       
       // Obtener los precios del día actual
@@ -442,7 +442,7 @@ function readPrices($moneda) {
 }
 
 function readPriceIntervar($moneda,$num_day){
-  $query = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND DATE(FECHA) = CURDATE() - INTERVAL $num_day DAY";
+  $query = "SELECT * FROM PRICES WHERE MONEDA = '$moneda' AND DATE(FECHA) = CURDATE() - INTERVAL $num_day DAY";
   return row_sqlconector($query);
 }
 
@@ -845,8 +845,9 @@ function refreshDataThor() {
           $axie = readPrices($available_mon);
           $priceArriba = formatPrice($axie['ARRIBA'], $row['ASSET'], $row['PAR']);
           $priceAbajo = formatPrice($axie['ABAJO'], $row['ASSET'], $row['PAR']);
+          
           updatePrices($available_mon, "ACTUAL={$available}");
-
+          updatePrices($available_mon, "CLOSE={$available}");
           if ($priceArriba == 0) {
               updatePrices($available_mon, "ARRIBA={$available}");
           }
@@ -884,13 +885,7 @@ function returnGrafica($usuario,$moneda) {
       exit();
   } 
   else {
-      $mensual = readParametros($usuario)['GRAFICO'];
-
-      if ($mensual == 0) {
-          $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC LIMIT 30";
-      } else {
-          $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC";
-      }
+      $consulta = "SELECT * FROM PRICES WHERE MONEDA = '{$moneda}' AND YEAR(FECHA) = YEAR(CURDATE()) ORDER BY FECHA DESC LIMIT 30";
 
       $resultado = mysqli_query($conexion, $consulta);
       $obj = array();
@@ -902,8 +897,10 @@ function returnGrafica($usuario,$moneda) {
               $timestamp = strtotime($row['FECHA']);
               $obj[] = array(
                 'date' => date("Y-m-d", $timestamp), 
+                'open' => formatPrice($row['OPEN'], $datos['ASSET'], $datos['PAR']), 
                 'high'=> formatPrice($row['ARRIBA'], $datos['ASSET'], $datos['PAR']),
                 'low' => formatPrice($row['ABAJO'], $datos['ASSET'], $datos['PAR']),
+                'close' => formatPrice($row['CLOSE'], $datos['ASSET'], $datos['PAR']),
                 'prm' => formatPrice($promedio, $datos['ASSET'], $datos['PAR']));              
           }
       }
@@ -1126,6 +1123,7 @@ function refreshDatos($usuario){
     }  
     
     $obj = array(
+      'tipografico' => readParametros($usuario)['GRAFICO'],
       'balance_asset'=>$row['BALANCE_ASSET'],
       'par'=>$row['PAR'],
       'asset' => $row['ASSET'], 

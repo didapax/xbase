@@ -447,6 +447,106 @@ function  quantity(valor,simbolo,par){
   }
 }
 
+function graficoLineal(graf){
+  var chart = c3.generate({
+    bindto: '#chart', // Asegúrate de que el contenedor del gráfico esté definido en tu HTML
+    size: {
+      width: document.getElementById('chart-container').offsetWidth,
+      height: document.getElementById('chart-container').offsetHeight
+  },          
+    data: {
+      json: graf,
+      keys: {
+        x: 'date',
+        value: ['high', 'low','prm'],
+      },
+      colors: {
+        low: '#EA465C',
+        high: '#4DCB85',
+        prm: '#f6f646'
+    },
+        types: {
+            high: 'spline',
+            low: 'spline',
+            prm: 'spline'
+        }
+    },
+    axis: {
+        x: {
+            type: 'timeseries',
+            tick: {
+                format: '%m-%d' // Formato de fecha
+            }
+        },
+        y: {
+            tick: {
+                //format: d3.format('.8f')  Formato de número con 8 decimales
+            }
+        }
+    },
+    point: {
+        show: false 
+    },
+    legend: {
+        show: true
+    },
+    onrendered: function() {
+      d3.selectAll("svg > .bgRect").remove();
+      d3.selectAll("svg").insert("rect", ":first-child")
+          .attr("class", "bgRect")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("fill", "#161A1E"); // Cambia 'lightgray' por el color que prefieras
+  }          
+});
+
+  // Redimensionar el gráfico cuando la ventana cambie de tamaño
+  window.addEventListener('resize', function() {
+    chart.resize({
+        width: document.getElementById('chart-container').offsetWidth,
+        height: document.getElementById('chart-container').offsetHeight
+    });
+});
+}
+
+function graficoVelas(graf) {
+  var dates = graf.map(item => item.date);
+  var opens = graf.map(item => item.open);
+  var highs = graf.map(item => item.high);
+  var lows = graf.map(item => item.low);
+  var closes = graf.map(item => item.close);
+
+  var data = [{
+      x: dates,
+      close: closes,
+      decreasing: {line: {color: 'red'}},
+      high: highs,
+      increasing: {line: {color: 'green'}},
+      low: lows,
+      open: opens,
+      type: 'candlestick',
+      xaxis: 'x',
+      yaxis: 'y'
+  }];
+
+  var layout = {
+      dragmode: 'zoom',
+      showlegend: false,
+      xaxis: {
+          rangeslider: {
+              visible: false
+          }
+      },
+      responsive: true // Hacer el gráfico responsivo
+  };
+
+  Plotly.newPlot('chart', data, layout);
+  
+  window.addEventListener('resize', function() {
+    Plotly.Plots.resize(document.getElementById('chart'));
+});
+}
+
 function leerDatos() {
   const usuario = document.getElementById('usuario').value;
   $.get("block?getPriceBinance=&usuario="+usuario, function(data) {
@@ -471,67 +571,15 @@ function leerDatos() {
       simbolo = datos.asset;
       
       const graf = datos.grafico;
-
+      
       // Crear el gráfico con C3.js
-      var chart = c3.generate({
-          bindto: '#chart', // Asegúrate de que el contenedor del gráfico esté definido en tu HTML
-          size: {
-            width: document.getElementById('chart-container').offsetWidth,
-            height: document.getElementById('chart-container').offsetHeight
-        },          
-          data: {
-            json: graf,
-            keys: {
-              x: 'date',
-              value: ['high', 'low','prm'],
-            },
-            colors: {
-              low: '#EA465C',
-              high: '#4DCB85',
-              prm: '#f6f646'
-          },
-              types: {
-                  high: 'spline',
-                  low: 'spline',
-                  prm: 'spline'
-              }
-          },
-          axis: {
-              x: {
-                  type: 'timeseries',
-                  tick: {
-                      format: '%d-%m' // Formato de fecha
-                  }
-              },
-              y: {
-                  tick: {
-                      //format: d3.format('.8f')  Formato de número con 8 decimales
-                  }
-              }
-          },
-          point: {
-              show: false 
-          },
-          legend: {
-              show: true
-          },
-          onrendered: function() {
-            d3.selectAll("svg > .bgRect").remove();
-            d3.selectAll("svg").insert("rect", ":first-child")
-                .attr("class", "bgRect")
-                .attr("width", "100%")
-                .attr("height", "100%")
-                .attr("fill", "#161A1E"); // Cambia 'lightgray' por el color que prefieras
-        }          
-      });
-
-        // Redimensionar el gráfico cuando la ventana cambie de tamaño
-        window.addEventListener('resize', function() {
-          chart.resize({
-              width: document.getElementById('chart-container').offsetWidth,
-              height: document.getElementById('chart-container').offsetHeight
-          });
-      });
+      if(datos.tipografico *1 == 0){
+        graficoLineal(graf);
+      }
+      else{
+        graficoVelas(graf);
+      }
+      
   });
 }
 

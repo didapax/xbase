@@ -26,7 +26,12 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <script src="css/SweetAlert/sweetalert2.all.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/SweetAlert/sweetalert2.min.css" /> 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css">
+   <!-- Incluir D3.js -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
+    <!-- Incluir C3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.js"></script>  
 
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
     .c3-axis-x text {
             fill: white; /* Cambia 'blue' por el color que prefieras */
@@ -52,7 +57,16 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 
         .c3-tooltip td {
             color: red; /* Cambia el color de la letra del contenido del tooltip */
-        }        
+        }     
+        
+        .c3-candlestick-up {
+            fill: green;
+            stroke: green;
+        }
+        .c3-candlestick-down {
+            fill: red;
+            stroke: red;
+        }      
   </style>
 
   <script>
@@ -119,9 +133,9 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <label title="Config" style="margin-left:13px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
     <label style="margin-left:10px;font-size:18px;color:white;cursor:pointer;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').showModal()">&#10010;</label>
     <input type="radio" id="xmes" name="fav_language" value="xmes" onclick="xmes()">
-    <label for="xmes">MES</label>
+    <label for="xmes">Lineal</label>
     <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">
-    <label for="xano">ALL</label>
+    <label for="xano">Velas</label>
     <label title="Actualizar" onclick="xgraf()"><span style='margin-left:8px;color:white;cursor:pointer;font-size:18px;'>&#9851;</span></label>    
   </div>
   <div class="price_entrada">
@@ -131,7 +145,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 
 <div class="chart">
   <div id="chart-container" class="grafico">
-    <div id="chart"></div>
+    <div id="chart" style="width: 100%; height: 330px;"></div>
   </div>
 </div>
 
@@ -229,10 +243,6 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('retiro').close()">X</a><br>
 </dialog>
 <br><br>
-   <!-- Incluir D3.js -->
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
-    <!-- Incluir C3.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.js"></script>
 <div style="width: 100%;padding: 3px; text-align: center;">  
   <span class="bolita" style="color:red;">&#9679; </span>En Baja
   <span class="bolita" style="color:yellow;">&#9679; </span>Comprar

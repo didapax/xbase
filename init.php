@@ -13,6 +13,48 @@ $GLOBALS['encryptionKey'] = "dd77b701661c5b55";
 
 date_default_timezone_set("UTC");
 
+function new_sqlconector($consulta, $params = []) {
+  try {
+    $pdo = new PDO('mysql:host=' . $GLOBALS["servidor"] . ';dbname=' . $GLOBALS["database"], $GLOBALS["user"], $GLOBALS["password"]);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec("SET NAMES 'utf8mb4'");
+    
+    $stmt = $pdo->prepare($consulta);
+    $stmt->execute($params);
+    
+    return $stmt;
+  } catch (PDOException $e) {
+    die("Error in query: " . $e->getMessage());
+  }
+}
+
+function new_row_sqlconector($consulta, $params = []) {
+  try {
+    $pdo = new PDO('mysql:host=' . $GLOBALS["servidor"] . ';dbname=' . $GLOBALS["database"], $GLOBALS["user"], $GLOBALS["password"]);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec("SET NAMES 'utf8mb4'");
+    
+    $stmt = $pdo->prepare($consulta);
+    $stmt->execute($params);
+    
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    return $row;
+  } catch (PDOException $e) {
+    echo "Error in query: " . $e->getMessage();
+    exit();
+  }
+}
+
+function new_array_sqlconector($consulta, $params = []) {
+  $obj = [];
+  $stmt = sqlconector($consulta, $params);
+  if ($stmt) {
+    $obj = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+  return $obj;
+}
+
 function sqlconector($consulta) {
   $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
   if (!$conexion) {
