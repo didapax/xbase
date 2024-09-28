@@ -316,11 +316,11 @@ if(isset($_GET['getpante'])){
   echo json_encode($obj);   
 }
 
-if(isset($_GET['getPriceBinance'])){
+if(isset($_GET['getPriceBinance'])){ 
   if( isset($_GET['auto']) ){
       refreshDataAuto($_GET['usuario']);
   }
-  echo readParametros($_GET['usuario'])['DATOS']; 
+  echo readParametros($_GET['usuario'])['DATOS'];
 }
 
 if( isset($_GET['binancex']) ){

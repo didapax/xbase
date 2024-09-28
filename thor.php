@@ -14,8 +14,9 @@ function buscarEscalones() {
             while ($row = $resultado->fetch_assoc()) {
                 if (strlen($row['ORDERID']) > 0) {
                     sellOrder($row['ORDERID']);
-                }
-                autoLiquida($row['ID']);
+                    autoLiquida($row['ID']);
+                    echo "\norder: ".$row['ORDERID'] ;
+                }                
             }
         }
     } catch (Exception $e) {
@@ -27,7 +28,7 @@ function buscarEscalones() {
     }
 }
 
-function refresh() {
+/*function refresh() {
     $tiempo = 10;
     $limit = 1;
     $dormir = 2;
@@ -44,7 +45,9 @@ function refresh() {
     } finally {
 
     }
-}
+}*/
 
-refresh();
+//refresh();
+refreshDataThor();
+buscarEscalones();
 ?>

@@ -418,32 +418,38 @@ function priceFixed(valor){
   return valor;
 }
 
+function toFixedWithoutRounding(num, decimals) {
+  const factor = Math.pow(10, decimals);
+  return Math.floor(num * factor) / factor;
+}
+
 function  quantity(valor,simbolo,par){
   if(par === "USDT" || par === "USDC"){
     switch (simbolo) {
       case "BTC":
-          return (valor *1).toFixed(5);
+        return toFixedWithoutRounding((valor *1), 5);
       case "ETH":
-      case "PAXG":        
-          return (valor *1).toFixed(4);
+      case "PAXG":
+        return toFixedWithoutRounding((valor *1), 4);
       case "BNB":
       case "LTC":
-          return (valor *1).toFixed(3);
+        return toFixedWithoutRounding((valor *1), 3);
       case "MATIC":
       case "TRX":
       case "RUNE":        
       case "ADA":
       case "NEAR":
       case "INJ":
-          return (valor *1).toFixed(1);
+        return toFixedWithoutRounding((valor *1), 1);
       case "DOGE":
       case "SHIB":
-          return (valor *1).toFixed(0);
+        return toFixedWithoutRounding((valor *1), 0);
       default:
-        return (valor *1).toFixed(2);
+        return toFixedWithoutRounding((valor *1), 2);
     }
   }else{
-    return (valor *1).toFixed(2);
+    return toFixedWithoutRounding((valor *1), 2);
+    //return (valor *1).toFixed(2);
   }
 }
 
@@ -458,16 +464,16 @@ function graficoLineal(graf){
       json: graf,
       keys: {
         x: 'date',
-        value: ['high', 'low','prm'],
+        value: ['open', 'close','prm'],
       },
       colors: {
-        low: '#EA465C',
-        high: '#4DCB85',
+        close: '#EA465C',
+        open: '#4DCB85',
         prm: '#f6f646'
     },
         types: {
-            high: 'spline',
-            low: 'spline',
+            open: 'spline',
+            close: 'spline',
             prm: 'spline'
         }
     },
