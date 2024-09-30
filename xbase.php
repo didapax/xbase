@@ -92,6 +92,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 <input type="hidden" id="cantidadComprada" value='0' >
 <input type="hidden" id="price" value='0' >
 <input type="hidden" id="perdidas" value="0">
+<input type="hidden" id="disponible" value="0">
 <input type="hidden" id="usuario" value="<?php if(isset($_SESSION['usuario'])) echo $_SESSION['usuario']; ?>">
 <span style=display:none; id="techo"></span>
 
@@ -171,7 +172,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
       <tr><td></td><td></td></tr>
       <tr><td><span style="font-weight:bold;cursor:pointer;font-size:16px;color:white;display:none;" title="Suma la Ganancia al Capital" onclick="sumarGanancia()">&#8721;</span><span> Capital</span></td><td><input style="background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="showCapital" value="0.00" readonly></td></tr>
       <tr><td><span style=""><span title="Reset Ganancias" style="cursor:pointer;font-size:24px; background:transparent;color:white;" onclick="resetGanancias()">&#8630;</span>Ganancias</span></td><td><input style="background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="ganancias" value="0.00" readonly ></td></tr>
-      <tr><td><span style="">Disp </span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="disponible" value="0.00" readonly ></td></tr>
+      <tr><td><span style="">Perdidas </span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="showPerdidas" value="0.00"  ></td></tr>
       <tr><td><span style="">Inv x Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="invxcompra" value="0.00" readonly ></td></tr>
       <tr><td><span style="">Ult. Venta</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="ultimaventa" value="0.00" readonly ></td></tr>
     </table>
@@ -212,10 +213,10 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     </div>
     <div id=tabComprar class=tabContainer>
       <table style=width:100%;text-align:right;>
-        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="0" id="precioCompra" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001"></td></tr>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" readonly type="number" value="0" id="precioCompra" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001"></td></tr>
         <tr><td>Cantidad</td><td><span style="" id="piso"></span></td></tr>
         <tr><td>StopLoss</td><td><span style="" id="stoploss"></span></td></tr>
-        <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input type="checkbox" id="sugerirPrecioCompra" checked></td></tr>        
+        <tr><td></td><td><label for="sugerirPrecioCompra">Market</label><input style="display:none;" type="checkbox" id="sugerirPrecioCompra" checked></td></tr>        
         <tr><td></td><td>.</td></tr>
         <tr><td></td><td>.</td></tr>
       </table>
@@ -225,10 +226,10 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 
     <div class=tabContainer id=tabVender style=display:none;>
       <table style=width:100%;text-align:right;>
-        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" type="number" value="0" id="precioCompra2" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001" ></td></tr>
+        <tr><td>Precio</td><td> <input style="width:100px;margin:0;padding:0px;background:#2A2E34; color:white;font-weight:bold;padding:3px;" readonly type="number" value="0" id="precioCompra2" style="width: 80px;" onkeyup="escalon()" onchange="escalon()" step="0.00000001" ></td></tr>
         <tr><td>Balance</td><td><input style="width:110px;margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="mbalance" value="0.00" readonly ></td></tr>
         <tr><td>Total</td><td><span style=width:100px;font-weight:bold;color:white; id="totalBalanceVenta">0.00USDT</span></td></tr>
-        <tr><td></td><td><label for="sugerirPrecioVenta">Market</label><input type="checkbox" id="sugerirPrecioVenta" checked></td></tr>
+        <tr><td></td><td><label for="sugerirPrecioVenta">Market</label><input style="display:none;" type="checkbox" id="sugerirPrecioVenta" checked></td></tr>
         <tr><td></td><td>.</td></tr>
         <tr><td></td><td>.</td></tr>
       </table>

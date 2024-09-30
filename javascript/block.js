@@ -206,7 +206,7 @@ function negativo(){
     }).then((result) => {
         if (result.isConfirmed) {
           $.post("block",{              
-            negativo: 1,
+            negativo: 1, 
             usuario: usuario,
             tipo: valor,
             cantidad: cantidad,
@@ -557,17 +557,11 @@ function leerDatos() {
       datos = JSON.parse(data);
       
       document.getElementById('moneda').value = datos.moneda;
-      document.getElementById('asset').value = datos.asset;
-      document.getElementById('capital').value = priceFixed(datos.capital);
-      document.getElementById('showCapital').value = priceFixed(datos.capital);
-      document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
+      document.getElementById('asset').value = datos.asset;            
       document.getElementById('impuesto').value = (datos.impuesto * 1);
       document.getElementById('local').checked = datos.auto *1;
-      document.getElementById('orderBinance').checked = datos.bina *1;
-      document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);
-      document.getElementById('precio_venta').value = datos.precio_venta;
-      document.getElementById('stop').value = datos.stop;
-      document.getElementById('newBalance').value = datos.balance_asset;
+      document.getElementById('orderBinance').checked = datos.bina *1;      
+      document.getElementById('stop').value = datos.stop;      
       document.getElementById('estableCoin').value = datos.par;
       $("#div3").html(datos.verescalones);
       $("#div2").html(datos.verbinance);
@@ -589,7 +583,7 @@ function leerDatos() {
 
 function refreshDatos(){
   const usuario = document.getElementById('usuario').value;
-  if(navigator.onLine){
+
     $.get("block?getPriceBinance&auto=&usuario="+usuario, function(data){
       datos= JSON.parse(data);
 
@@ -613,11 +607,17 @@ function refreshDatos(){
       document.getElementById('antbtc').innerHTML = datos.nivelbtc;
       document.getElementById('symbol').innerHTML = datos.symbol;
       document.getElementById('nivelcompra').innerHTML = datos.nivelcompra;
+      document.getElementById('precio_venta').value = datos.precio_venta;
+      document.getElementById('newBalance').value = datos.balance_asset;
+      document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
+      document.getElementById('capital').value = priceFixed(datos.capital);      
+      document.getElementById('showCapital').value = priceFixed(datos.capital);
       document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);
       document.getElementById('priceMax').value = priceFixed(datos.maxdia);
       document.getElementById('mindia').innerHTML =`<span style='font-size:12px;color:white;'>L ${datos.mindia}</span> <div style='vertical-align: middle;display:inline-block;height:4px;width:55px;background:#E8DCDC;overflow:hidden;'><div style='background:grey;height:4px;width:${datos.porcenmax};'></div></div> <span style='font-size:12px;color:white;'>${datos.maxdia} H</span>`;
       document.getElementById('priceMin').value = priceFixed(datos.mindia);
       document.getElementById('disponible').value = priceFixed(datos.xdisponible);
+      document.getElementById('showPerdidas').value = priceFixed(datos.perdida);
       document.getElementById('invxcompra').value = (datos.invxcompra *1).toFixed(2);
       document.getElementById('ultimaventa').value = datos.ultimaventa;
       document.getElementById('mbalance').value = priceFixed(datos.balance)+datos.asset;      
@@ -641,7 +641,7 @@ function refreshDatos(){
       
       $("#priceMoneda").css("color",datos.color);
       $("#priceBtc").css("color",datos.colorbtc);
-      $("#disponible").css("color",datos.colordisp);
+      $("#showCapital").css("color",datos.colordisp);
       $("#div3").html(datos.verescalones);
       $("#div2").html(datos.verbinance);
       $("#listasset").html(datos.listasset);
@@ -654,7 +654,7 @@ function refreshDatos(){
     document.getElementById('techo').innerHTML = "Ganancia ≈ 0.00";
     document.getElementById('piso').innerHTML = "0.00";
     escalon(usuario);    
-  }
+
 }
 
 function inicio(){

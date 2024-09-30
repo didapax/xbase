@@ -320,8 +320,7 @@ function autoLiquida($order) {
   if ($row['LIQUIDAR'] == 1) {
       $id = $row['ID'];
       $param = readParametros($row['USUARIO']);
-      $moneda = $row['MONEDA'];
-      $price = $row['PRECIOCOMPRA'];
+      $moneda = $row['MONEDA'];      
       $datos = readDatosMoneda($moneda);
       $operacion = descontarImpuesto($row['USUARIO'], $row['CANTIDAD']);
       $quantity = quantity($operacion, $datos['ASSET'], $datos['PAR']);
@@ -332,6 +331,7 @@ function autoLiquida($order) {
 
       try {
           if ($row['TIPO'] == "BUY") {
+              $price = $row['PRECIOCOMPRA'];
               $stopPrice = calcularMargenPerdida($price, $param['STOPLOSS']);
               echo "\n stop a = $stopPrice";
               if (readPrices($moneda)['ACTUAL'] <= $stopPrice) {
@@ -351,7 +351,9 @@ function autoLiquida($order) {
                       }
                   }
               }
-          } else {
+          } 
+          else {
+              $price = $row['PRECIOVENTA'];
               $stopPrice = calcularMargenGanancia($price, $param['STOPLOSS']);
               if (readPrices($moneda)['ACTUAL'] >= $stopPrice) {
                   $order = $api->marketBuy($moneda, $quantity);
@@ -397,7 +399,6 @@ function liquidar($id){
       $newganancia = $newventa - $compra;
     }
   
-    $capital = $datos['CAPITAL'];
     $ganancia = $datos['GANANCIA'] + $newganancia;
     $perdida = $datos['PERDIDA'] + $newperdida;
     $ajuste = $ganancia - $perdida;
@@ -405,15 +406,14 @@ function liquidar($id){
     if($ajuste < 0){
       $ganancia=0;
       $perdida=0;
-      $capital = $datos['CAPITAL'] + $ajuste;
     }
     
     sqlconector("UPDATE PARAMETROS SET GANANCIA = $ganancia, PERDIDA = $perdida WHERE USUARIO='".$row['USUARIO']."'");
     sqlconector("UPDATE DATOSUSUARIOS SET ULTIMAVENTA = $precioVenta WHERE MONEDA = '$moneda' AND USUARIO='".$row['USUARIO']."'");
     sqlconector("DELETE FROM TRADER WHERE ID = $id");
-  
-    $invxcompra = $capital / $datos['ESCALONES'];
-    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra} WHERE USUARIO='".$row['USUARIO']."'");
+  }
+  else{
+    sqlconector("DELETE FROM TRADER WHERE ID = $id");
   }
   reordenarEscalones($row['USUARIO']);
   refreshDatos($row['USUARIO']);
@@ -975,7 +975,7 @@ function findEscalones($usuario) {
   $miganancia = 0;  
   $precioActual = 0;  
   $botones = "";
-  $cadena = "<table style=width:100%;><th>Stop</th><th>Tipo</th><th>Price</th><th>Moneda</th><th style=text-align:right;>Ganancia</th><th>Opciones</th>";  
+  $cadena = "<table style=width:100%;><th>Stop</th><th>Tipo</th><th>Compra/Venta</th><th>Moneda</th><th style=text-align:right;>Ganancia</th><th>Opciones</th>";  
   
   if (recordCountUser($usuario,"TRADER") > 0) {
       $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
@@ -1002,6 +1002,7 @@ function findEscalones($usuario) {
           $datos = readDatosMoneda($row['MONEDA']);
           $precioActual = formatPrice($available['ACTUAL'], $datos['ASSET'], $datos['PAR']);
           $precioMoneda = formatPrice($precioActual, $datos['ASSET'], $datos['PAR']);
+          $precioVenta = formatPrice($row['PRECIOVENTA'], $datos['ASSET'], $datos['PAR']);
           $stopPrice = calcularMargenPerdida($row['PRECIOCOMPRA'], $puntos);
           $precioAbajo = $available['ABAJO'];
           $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) * 3.6) . "deg";
@@ -1018,18 +1019,20 @@ function findEscalones($usuario) {
             $miganancia = 0;
             $colorAlert = "#CFCFD3";
             $didable_button = "disabled";
-            $didable_cancel_button = "";
+            $didable_cancel_button = "disabled";
           }
           
           if ($row['NEGATIVO'] == 1) {
-              $laventa = $row['CANTIDAD'] * $row['PRECIOVENTA'];
-              $real_ganancia = currency($laventa - ($row['CANTIDAD'] * $precioMoneda));
+              $totalMonedaObtenida = $row['CANTIDAD'];
+              $totalMonedaActual = $row['VENTA'] / $precioActual;
+              $real_ganancia = $totalMonedaActual - $totalMonedaObtenida;
               if ($real_ganancia > 0) {
                   $bk = "#15342D"; 
                   $fg = "#4BC883";
                   $sy = "&#9650;"; 
                   $porcenMaxNeg = "360deg";
-              } else {
+              } 
+              else {
                   $bk = "#372127"; 
                   $fg = "#F37A8B";
                   $sy = "&#9660;"; 
@@ -1037,17 +1040,18 @@ function findEscalones($usuario) {
               }
               $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>" . quantity($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']) . " " . $datos['ASSET'] . "<span style=color:{$fg};> {$sy}</span></div>";
               $botones = "<input title=Auto type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})><button type=button class=escalbutton style=background:green;color:white; onclick=negativoBuy({$row['ID']})>Buy</button>";
-              $cadena .= "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>" . formatPrice($row['PRECIOVENTA'], $datos['ASSET'], $datos['PAR']) . "$</td><td>{$precioMoneda}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg};>{$real_ganancia}$</span></td><td style=text-align:right;>{$botones}</td></tr>";
-          } else {
+              $cadena .= "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>{$row['TIPO']}</td><td>{$precioVenta}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg};>".number_format($real_ganancia, 8, ".", ",")."{$datos['ASSET']}</span></td><td style=text-align:right;>{$botones}</td></tr>";
+          } 
+          else {
               $precioCompra = formatPrice($row['PRECIOCOMPRA'], $datos['ASSET'], $datos['PAR']);
               if ($didable_cancel_button == "disabled") {
                   $botones = "<input title=auto type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";              
               } else {
                   $botones = "<button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar({$row['ID']})>&#10006;</button><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";   
               }
-              $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioMoneda}$</td><td style=text-align:right;>" . totalmoneda($row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
+              $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>" . totalmoneda($row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
           }        
-      }
+       }
 
       mysqli_close($conexion);      
   }
@@ -1118,6 +1122,7 @@ function refreshDatos($usuario){
     $mercado = totalTendencia($rowBtc['MONEDA']);
     $checkMesGrafico = true;
     $checkAnoGrafico = false;
+    $invxcompra = formatPrice(($capital / $row2['ESCALONES']),$row['ASSET'],$row['PAR']);
 
     if($row2["GRAFICO"]==1){
       $checkMesGrafico = false;
@@ -1131,7 +1136,7 @@ function refreshDatos($usuario){
         $color = "#4BC883";
     }
 
-    if($row2['DISPONIBLE'] < $row2['INVXCOMPRA']){
+    if($row2['DISPONIBLE'] < $invxcompra){
       $colorDisp = "#F37A8B";
     }
     else{
@@ -1174,7 +1179,7 @@ function refreshDatos($usuario){
       'capital' => price($row2['CAPITAL']),
       'disponible' => price($row2['DISPONIBLE']),
       'escalones' => $row2['ESCALONES'],
-      'invxcompra' => $row2['INVXCOMPRA'],
+      'invxcompra' => $invxcompra,
       'totalpromedio' => $totalPromedio,
       'xdisponible' => $xdisponible,
       'grafico' => returnGrafica($usuario,$moneda),
@@ -1198,7 +1203,8 @@ function refreshDatos($usuario){
       'balance' => $row['BALANCE_ASSET'],
       'nivelcompra' => nivelCompra($moneda) ); 
 
-    sqlconector("UPDATE PARAMETROS SET DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
+    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra, DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
+
   }
 }
 

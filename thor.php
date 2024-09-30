@@ -30,6 +30,6 @@ function buscarEscalones() {
 
 //updateDecimals();
 //updateStepSize();
-refreshDataThor();
 buscarEscalones();
+refreshDataThor();
 ?>
