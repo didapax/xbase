@@ -112,7 +112,7 @@ function agregar(){
               else{
                 Swal.fire({
                   title: 'xbase',
-                  text: "No se pudo agregar la Compra.!",
+                  text: `La minima compra debe ser de 10 ${fiat} Fondos insuficientes `,
                   icon: 'error',
                   confirmButtonColor: '#3085d6',
                   confirmButtonText: 'Ok'
@@ -620,19 +620,19 @@ function refreshDatos(){
       document.getElementById('showPerdidas').value = priceFixed(datos.perdida);
       document.getElementById('invxcompra').value = (datos.invxcompra *1).toFixed(2);
       document.getElementById('ultimaventa').value = datos.ultimaventa;
-      document.getElementById('mbalance').value = priceFixed(datos.balance)+datos.asset;      
-      document.getElementById('balance').value = priceFixed(datos.balance);
+      document.getElementById('mbalance').value = priceFixed(datos.m_balance)+datos.asset;      
+      document.getElementById('balance').value = priceFixed(datos.m_balance);
       document.getElementById('perdidas').value = priceFixed(datos.perdida);
       document.getElementById('recordCount').value = datos.recordCount;
       document.getElementById('recupera').value = priceFixed(datos.recupera);
-      let resultado = datos.balance * datos.price;
+      let resultado = datos.m_balance * datos.price;
       document.getElementById('totalBalanceVenta').innerHTML = resultado.toFixed(2) +fiat;
       document.getElementById('cualmoneda').innerHTML = datos.asset;
       document.getElementById('cualmoneda2').innerHTML = datos.asset; 
       document.getElementById('xmes').checked = datos.checkMesGrafico;
       document.getElementById('xano').checked = datos.checkAnoGrafico;
       
-      if((document.getElementById('disponible').value *1) < (document.getElementById('invxcompra').value *1)){
+      if((document.getElementById('disponible').value *1) < 10){
         document.getElementById("btAgregar").value = "1"; 
       }
       else{

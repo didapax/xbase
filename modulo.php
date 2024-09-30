@@ -53,6 +53,10 @@ function readDatosMoneda($moneda){
   return row_sqlconector("select * from DATOS WHERE MONEDA='{$moneda}'");
 }
 
+function readDatosMonedaUser($usuario,$moneda){
+  return row_sqlconector("select * from DATOSUSUARIOS WHERE USUARIO='$usuario' AND MONEDA='{$moneda}'");
+}
+
 function readDatosMonedaId($id){
   return row_sqlconector("select * from DATOS WHERE ID={$id}");
 }
@@ -710,18 +714,18 @@ function sqlApiSecretAdmin(){
   return $decryptedSecret;
 }
 
-function totalmoneda($moneda){
+function totalmoneda($usuario,$moneda){ 
   $totalMoneda="0";
   $totalInversion="0";
-  $datos =readDatosMoneda($moneda);
+  $datos =readDatosMonedaUser($usuario,$moneda);
   $price = readPrices($moneda)['ACTUAL'];
   $estado = "";
   $bk="";
   
-  if(row_sqlconector("select COUNT(*) AS TOTAL from TRADER where MONEDA='{$moneda}'")['TOTAL'] > 0){
+  if(row_sqlconector("select COUNT(*) AS TOTAL from TRADER where USUARIO='$usuario' AND MONEDA='{$moneda}'")['TOTAL'] > 0){
 
-    $totalMoneda = price(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
-    $totalInversion = price(row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
+    $totalMoneda = price(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE USUARIO='$usuario' AND MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
+    $totalInversion = price(row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE USUARIO='$usuario' AND MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
 
     if($totalMoneda == 0){
       $estado = "Buy";
@@ -1049,7 +1053,7 @@ function findEscalones($usuario) {
               } else {
                   $botones = "<button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar({$row['ID']})>&#10006;</button><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";   
               }
-              $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>" . totalmoneda($row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
+              $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>" . totalmoneda($usuario,$row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
           }        
        }
 
@@ -1117,7 +1121,7 @@ function refreshDatos($usuario){
     $xdisponible =   price($capital);
     $bina = $row2['BINANCE'];
     $recordCount = recordCount("TRADER");
-    $sumMoneda = totalmoneda($moneda);
+    $sumMoneda = totalmoneda($usuario,$moneda);
     $symbol = nivelAnterior($moneda);
     $mercado = totalTendencia($rowBtc['MONEDA']);
     $checkMesGrafico = true;
@@ -1170,6 +1174,7 @@ function refreshDatos($usuario){
       'techo' => $promedioFlotante,
       'piso' => $promedioUndante,
       'totalmoneda' => $sumMoneda['total'], 
+      'm_balance' => $sumMoneda['m_balance'],
       'ant' => readFlotadorAnterior($moneda),
       'nivel' => nivel($moneda),
       'nivelbtc' => nivelBtc(),
