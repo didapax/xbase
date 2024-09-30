@@ -50,7 +50,7 @@ function escalon(usuario){
   let precio = document.getElementById('precioCompra').value*1;
   let total = cantidad / precio;
   let moneda = document.getElementById('moneda').value;
-  let cantidadComprada = quantity(total,simbolo,fiat);
+  let cantidadComprada = total.toFixed(8);
   document.getElementById('cantidadComprada').value = cantidadComprada;
   document.getElementById('piso').innerHTML = `<span style=font-weight:bold;color:white;>${cantidadComprada}<span style=font-weight:bold;color:gray;>${simbolo}</span></span>`;
 
@@ -423,7 +423,7 @@ function toFixedWithoutRounding(num, decimals) {
   return Math.floor(num * factor) / factor;
 }
 
-function  quantity(valor,simbolo,par){
+/*function  quantity(valor,simbolo,par){
   if(par === "USDT" || par === "USDC"){
     switch (simbolo) {
       case "BTC":
@@ -434,12 +434,10 @@ function  quantity(valor,simbolo,par){
       case "BNB":
       case "LTC":
         return toFixedWithoutRounding((valor *1), 3);
-      case "MATIC":
       case "TRX":
       case "RUNE":        
       case "ADA":
       case "NEAR":
-      case "INJ":
         return toFixedWithoutRounding((valor *1), 1);
       case "DOGE":
       case "SHIB":
@@ -451,7 +449,7 @@ function  quantity(valor,simbolo,par){
     return toFixedWithoutRounding((valor *1), 2);
     //return (valor *1).toFixed(2);
   }
-}
+}*/
 
 function graficoLineal(graf){
   var chart = c3.generate({

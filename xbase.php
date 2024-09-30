@@ -114,7 +114,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <span>Moneda Par </span><input readonly style="width:100px;"  type="text" maxlength="10" id="moneda" value=""><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:pointer;" onclick="deletePar()">Delete</span><br>
     <span>Asset </span><input readonly style="width:100px;"  type="text" maxlength="10" id="asset" value=""><br>
     <span>Estable Coin </span><input readonly style="width:100px;"  type="text" maxlength="10" id="estableCoin" value=""><br>
-    <span>Balance </span><input readonly style="width:100px;" type="number" step="0.01" id="newBalance" value="0" ><br>
+    <span>Balance </span><input readonly style="width:100px;" type="number" step="0.0000001" id="newBalance" value="0" ><br>
     <span>Capital </span><input readonly style="width:100px;" type="number" step="0.01" id="capital" value="0" onkeyup="calculo()" onchange="calculo()"> Usd<br>    
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
     <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>

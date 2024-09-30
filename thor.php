@@ -9,12 +9,12 @@ function buscarEscalones() {
             if ($conexion->connect_error) {
                 throw new Exception("Conexión fallida: " . $conexion->connect_error);
             }
-            $consulta = "SELECT * FROM TRADER ORDER BY ESCALON DESC";
+            $consulta = "SELECT * FROM TRADER ORDER BY FECHA DESC";
             $resultado = $conexion->query($consulta);
             while ($row = $resultado->fetch_assoc()) {
                 if (strlen($row['ORDERID']) > 0) {
                     sellOrder($row['ORDERID']);
-                    autoLiquida($row['ID']);
+                    autoLiquida($row['ORDERID']);
                     echo "\norder: ".$row['ORDERID'] ;
                 }                
             }
@@ -48,6 +48,8 @@ function buscarEscalones() {
 }*/
 
 //refresh();
+//updateDecimals();
+//updateStepSize();
 refreshDataThor();
 buscarEscalones();
 ?>

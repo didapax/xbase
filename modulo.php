@@ -76,85 +76,62 @@ function price($price){
 }
 
 function formatPrice($valor, $asset, $par) {
-  // Verificar si $par es "USDT" o "USDC"
-  if ($par == "USDT" || $par == "USDC") {
-      // Seleccionar el formato basado en el valor de $asset
-      switch ($asset) {
-          case "ADA":
-          case "MATIC":
-              return number_format($valor, 4, ".", "");
-          case "TRX":
-          case "DOGE":
-              return number_format($valor, 5, ".", "");
-          case "RUNE":
-          case "ATOM":
-          case "NEAR":
-          case "INJ":
-              return number_format($valor, 3, ".", "");
-          case "BTC":
-          case "ETH":
-          case "LTC":
-              return number_format($valor, 2, ".", "");
-          case "BNB":
-              return number_format($valor, 1, ".", "");
-          case "PAXG":
-              return number_format($valor, 0, ".", "");
-          default:
-              return $valor; // Manejar el caso por defecto
+  // Construir el símbolo
+  $symbol = $asset . $par;  
+  // Obtener el número de decimales desde la base de datos
+  $decimals = readDatosMoneda($symbol)['DECIMALS'];
+
+  // Verificar si se encontró el número de decimales
+  if ($decimals === null) {
+      echo "Error: No se pudo obtener el número de decimales para el símbolo $symbol.\n";
+      return null;
+  }
+
+  // Formatear el precio con el número de decimales adecuado
+  return number_format($valor, $decimals, ".", "");
+}
+
+function updateDecimals() {
+  $api = new Binance\API(sqlApiKeyAdmin(), sqlApiSecretAdmin());
+  $api->useServerTime();
+  $exchangeInfo = $api->exchangeInfo();
+  $symbols = $exchangeInfo['symbols'];
+
+  foreach ($symbols as $s) {
+      $symbol = $s['symbol'];
+      foreach ($s['filters'] as $filter) {
+          if ($filter['filterType'] == 'PRICE_FILTER') {
+              $tickSize = $filter['tickSize'];
+              $decimals = strlen(substr(strrchr(rtrim($tickSize, '0'), '.'), 1));
+              // Actualizar la base de datos con el número de decimales
+              $query = "UPDATE DATOS SET DECIMALS = $decimals WHERE MONEDA = '$symbol'";
+              // Ejecutar la consulta (asegúrate de tener una conexión a la base de datos configurada)
+              sqlconector($query);
+              break;
+          }
       }
-  } else {
-      // Manejar el caso cuando $par no es "USDT" o "USDC"
-      return $valor;
   }
 }
 
-function calculoDecimal(){
-  $api = new Binance\API("<api key>", "<secret>");
+function updateStepSize() {
+  $api = new Binance\API(sqlApiKeyAdmin(), sqlApiSecretAdmin());
+  $api->useServerTime();
+  $exchangeInfo = $api->exchangeInfo();
+  $symbols = $exchangeInfo['symbols'];
 
-$symbol = "BTCUSDT";
-$exchangeInfo = $api->exchangeInfo();
-$symbols = $exchangeInfo['symbols'];
-
-foreach ($symbols as $s) {
-    if ($s['symbol'] == $symbol) {
-        $minQty = $s['filters'][2]['minQty'];
-        $stepSize = $s['filters'][2]['stepSize'];
-        echo "Min Qty: $minQty\n";
-        echo "Step Size: $stepSize\n";
-        break;
-    }
-}
-}
-
-function quantity($valor, $asset, $par) {
-  // Verificar si $par es "USDT" o "USDC"
-  if ($par == "USDT" || $par == "USDC") {
-      // Seleccionar el formato basado en el valor de $asset
-      switch ($asset) {
-          case "BTC":
-              return bcdiv($valor, '1', 5);
-          case "ETH":
-          case "PAXG":
-              return bcdiv($valor, '1', 4);
-          case "BNB":
-          case "LTC":
-              return bcdiv($valor, '1', 3);
-          case "MATIC":
-          case "TRX":
-          case "RUNE":
-          case "ADA":
-          case "NEAR":
-          case "INJ":
-              return bcdiv($valor, '1', 1);
-          case "DOGE":
-          case "SHIB":
-              return bcdiv($valor, '1', 0);
-          default:
-              return bcdiv($valor, '1', 2);
+  foreach ($symbols as $s) {
+      $symbol = $s['symbol'];
+      foreach ($s['filters'] as $filter) {
+          if ($filter['filterType'] == 'LOT_SIZE') {
+              $stepSize = $filter['stepSize'];
+              $minQty = $filter['minQty'];
+              // Actualizar la base de datos con el valor de stepSize
+              $query = "UPDATE DATOS SET STEPSIZE = $stepSize, MINQTY= $minQty WHERE MONEDA = '$symbol'";
+              // Ejecutar la consulta (asegúrate de tener una conexión a la base de datos configurada)
+              sqlconector($query);
+              break;
+          }
       }
-  } else {
-      // Manejar el caso cuando $par no es "USDT" o "USDC"
-      return $valor;
   }
 }
 
@@ -281,7 +258,8 @@ return row_sqlconector("select * from TRADER where ORDERID='{$order}'");
 function sellOrder($order) {
   if (ifOrderExist($order)) {
       $row = readOrderCompraTrader($order);
-      $api = new Binance\API(sqlApiKey($row['USUARIO']), sqlApiSecret($row['USUARIO']));
+      $usuario= $row['USUARIO'];
+      $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
       $moneda = $row['MONEDA'];
       $api->useServerTime();
 
@@ -292,7 +270,7 @@ function sellOrder($order) {
             $bytes = random_bytes(5);
             $referencia = bin2hex($bytes);
             sqlconector("UPDATE TRADER SET ORDERVENTA='{$referencia}', LIQUIDAR=1 WHERE ID={$row['ID']}");
-            refreshDatosMon($moneda);
+            refreshDatos($usuario);
         }          
       } catch (Exception $e) {
           // Manejo de errores
@@ -308,67 +286,93 @@ function descontarImpuesto($usuario,$cantidad) {
   return $cantidadConDescuento;
 }
 
-function autoLiquida($id) {
+function quantity($valor, $asset, $par) {
+  // Construir el símbolo
+  $symbol = $asset . $par;
+  $datos = readDatosMoneda($symbol);
+  // Obtener el valor de stepSize desde la base de datos
+  $stepSize = $datos['STEPSIZE'];
+
+  // Verificar si se encontró el valor de stepSize
+  if ($stepSize === null) {
+      echo "Error: No se pudo obtener el 'stepSize' para el símbolo $symbol.\n";
+      return null;
+  }
+
+  // Ajustar la cantidad según el stepSize
+  $adjustedQuantity = floor($valor / $stepSize) * $stepSize;
+
+  // Obtener el valor de minQty desde la base de datos (si es necesario)
+  $minQty = $datos['MINQTY'];
+
+  // Asegurarse de que la cantidad ajustada es mayor o igual a minQty
+  if ($adjustedQuantity < $minQty) {
+      echo "Error: La cantidad ajustada $adjustedQuantity es menor que la cantidad mínima $minQty.\n";
+      return null;
+  }
+
+  return $adjustedQuantity;
+}
+
+function autoLiquida($order) {
   // Validar el parámetro de entrada
-  $row = row_sqlconector("SELECT * FROM TRADER WHERE ID={$id}");
-  if($row['LIQUIDAR'] == 1){    
-    $param = readParametros($row['USUARIO']);
-    $moneda = $row['MONEDA'];
-    $price = $row['PRECIOCOMPRA'];
-    $datos = readDatosMoneda($moneda);
-    $operacion = descontarImpuesto($row['USUARIO'],$row['CANTIDAD']);    
-    $quantity = quantity($operacion, $datos['ASSET'], $datos['PAR']);
-    echo "\noperacion sin impuesto= $operacion\nquantity= $quantity";
-  
-    $api = new Binance\API(sqlApiKey($row['USUARIO']), sqlApiSecret($row['USUARIO']));
-    $api->useServerTime();
-  
-    try {
+  $row = readOrderCompraTrader($order);
+  if ($row['LIQUIDAR'] == 1) {
+      $id = $row['ID'];
+      $param = readParametros($row['USUARIO']);
+      $moneda = $row['MONEDA'];
+      $price = $row['PRECIOCOMPRA'];
+      $datos = readDatosMoneda($moneda);
+      $operacion = descontarImpuesto($row['USUARIO'], $row['CANTIDAD']);
+      $quantity = quantity($operacion, $datos['ASSET'], $datos['PAR']);
+      echo "\noperacion sin impuesto= {$row['CANTIDAD']}\nquantity= $quantity";
+
+      $api = new Binance\API(sqlApiKey($row['USUARIO']), sqlApiSecret($row['USUARIO']));
+      $api->useServerTime();
+
+      try {
           if ($row['TIPO'] == "BUY") {
-            $stopPrice = calcularMargenPerdida($price, $param['STOPLOSS']);
-            echo "\n stop a = $stopPrice";
-            if (readPrices($moneda)['ACTUAL'] <= $stopPrice) {
-                $order = $api->marketSell($moneda, $quantity);
-                if (isset($order['orderId'])) {
-                    liquidar($id);
-                }
-            }
-            else{
-              if ($row['AUTOSELL'] == 1) {
-                $autoSell = calcularMargenGanancia($price, $param['AUTOSHELL']);
-                echo "\n  Venta a = $autoSell";
-                if (readPrices($moneda)['ACTUAL'] > $autoSell) {
-                    $order = $api->marketSell($moneda, $quantity);
-                    if (isset($order['orderId'])) {
-                        liquidar($id);
-                    }
-                }                
-              }      
-            }
+              $stopPrice = calcularMargenPerdida($price, $param['STOPLOSS']);
+              echo "\n stop a = $stopPrice";
+              if (readPrices($moneda)['ACTUAL'] <= $stopPrice) {
+                  $order = $api->marketSell($moneda, $quantity);
+                  if (isset($order['orderId'])) {
+                      liquidar($id);
+                  }
+              } else {
+                  if ($row['AUTOSELL'] == 1) {
+                      $autoSell = calcularMargenGanancia($price, $param['AUTOSHELL']);
+                      echo "\n  Venta a = $autoSell";
+                      if (readPrices($moneda)['ACTUAL'] > $autoSell) {
+                          $order = $api->marketSell($moneda, $quantity);
+                          if (isset($order['orderId'])) {
+                              liquidar($id);
+                          }
+                      }
+                  }
+              }
+          } else {
+              $stopPrice = calcularMargenGanancia($price, $param['STOPLOSS']);
+              if (readPrices($moneda)['ACTUAL'] >= $stopPrice) {
+                  $order = $api->marketBuy($moneda, $quantity);
+                  if (isset($order['orderId'])) {
+                      liquidar($id);
+                  }
+              } else {
+                  if ($row['AUTOSELL'] == 1) {
+                      $autoSell = calcularMargenPerdida($price, $param['AUTOSHELL']);
+                      if (readPrices($moneda)['ACTUAL'] < $autoSell) {
+                          $order = $api->marketBuy($moneda, $quantity);
+                          if (isset($order['orderId'])) {
+                              liquidar($id);
+                          }
+                      }
+                  }
+              }
           }
-          else {
-            $stopPrice = calcularMargenGanancia($price, $param['STOPLOSS']);
-            if (readPrices($moneda)['ACTUAL'] >= $stopPrice) {
-                $order = $api->marketBuy($moneda, $quantity);
-                if (isset($order['orderId'])) {
-                    liquidar($id);
-                }
-            }
-            else{
-              if ($row['AUTOSELL'] == 1) {
-                $autoSell = calcularMargenPerdida($price, $param['AUTOSHELL']);
-                if (readPrices($moneda)['ACTUAL'] < $autoSell) {
-                    $order = $api->marketBuy($moneda, $quantity);
-                    if (isset($order['orderId'])) {
-                        liquidar($id);
-                    }
-                }                
-              }      
-            }
-          }
-    } catch (Exception $e) {
-        error_log("Error en la operación de auto liquidación: " . $e->getMessage());
-    }
+      } catch (Exception $e) {
+          error_log("Error en la operación de auto liquidación: " . $e->getMessage());
+      }
   }
 }
 
@@ -380,8 +384,8 @@ function liquidar($id){
     $moneda = $row['MONEDA'];
     $precioVenta = readPrices($moneda)['ACTUAL'];
     $compra = $row['COMPRA'];
-    $operacion = ($row['CANTIDAD'] - $datos['IMPUESTO']) / readPrices($moneda)['ACTUAL'];
-    $cantidad = quantity($operacion,$asset['ASSET'],$asset['PAR']);
+    $operacion = descontarImpuesto($row['USUARIO'],$row['CANTIDAD']);
+    $cantidad = $operacion;
     $newventa =  $cantidad * $precioVenta;
     $newganancia = 0;
     $newperdida = 0;
@@ -404,18 +408,15 @@ function liquidar($id){
       $capital = $datos['CAPITAL'] + $ajuste;
     }
     
-    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida},CAPITAL={$capital} WHERE USUARIO='".$row['USUARIO']."'");
-    sqlconector("UPDATE DATOS SET ULTIMAVENTA={$precioVenta} WHERE MONEDA='{$moneda}' WHERE USUARIO='".$row['USUARIO']."'");
+    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida} WHERE USUARIO='".$row['USUARIO']."'");
+    sqlconector("UPDATE DATOSUSUARIOS SET ULTIMAVENTA={$precioVenta} WHERE MONEDA='{$moneda}' WHERE USUARIO='".$row['USUARIO']."'");
     sqlconector("DELETE FROM TRADER WHERE ID={$id}");
-  
-    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE USUARIO='".$row['USUARIO']."'")['SUMA'];
-    sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($capital - $inversion)." WHERE USUARIO='".$row['USUARIO']."'");
   
     $invxcompra = $capital / $datos['ESCALONES'];
     sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra} WHERE USUARIO='".$row['USUARIO']."'");
   }
   reordenarEscalones($row['USUARIO']);
-  refreshDatosMon($moneda);
+  refreshDatos($row['USUARIO']);
 }
 
 function readTrader($id){
@@ -1149,7 +1150,7 @@ function refreshDatos($usuario){
       'balance_asset'=>$row['BALANCE_ASSET'],
       'par'=>$row['PAR'],
       'asset' => $row['ASSET'], 
-      'ultimaventa' => quantity($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 
+      'ultimaventa' => formatPrice($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 
       'price' => $priceMoneda,
       'btc' => $bitcoin,
       'colorbtc' => $colorbtc, 
@@ -1194,7 +1195,7 @@ function refreshDatos($usuario){
       'precio_venta' => $row2['AUTOSHELL'],
       'listasset' => listAsset($usuario),
       'stop' => $row2['STOPLOSS'],
-      'balance' => quantity($sumMoneda['m_balance'],$row['ASSET'],$row['PAR']),
+      'balance' => $row['BALANCE_ASSET'],
       'nivelcompra' => nivelCompra($moneda) ); 
 
     sqlconector("UPDATE PARAMETROS SET DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
@@ -1244,8 +1245,7 @@ function refreshDatosMon($mon){
     $obj = array(
       'balance_asset'=>$row['BALANCE_ASSET'],
       'par'=>$row['PAR'],
-      'asset' => $row['ASSET'], 
-      'ultimaventa' => quantity($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 
+      'asset' => $row['ASSET'],
       'price' => $priceMoneda,'btc' => $bitcoin, 
       'colorbtc' => $colorbtc, 
       'symbol' => $symbol, 
