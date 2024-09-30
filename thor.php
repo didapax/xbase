@@ -28,26 +28,6 @@ function buscarEscalones() {
     }
 }
 
-/*function refresh() {
-    $tiempo = 10;
-    $limit = 1;
-    $dormir = 2;
-
-    try {
-        while ($limit <= $tiempo) {
-            refreshDataThor();
-            buscarEscalones();
-            sleep($dormir);
-            $limit++;
-        }
-    } catch (Exception $e) {
-        echo "Error en refreshDataAuto: " . $e->getMessage();
-    } finally {
-
-    }
-}*/
-
-//refresh();
 //updateDecimals();
 //updateStepSize();
 refreshDataThor();

@@ -408,9 +408,9 @@ function liquidar($id){
       $capital = $datos['CAPITAL'] + $ajuste;
     }
     
-    sqlconector("UPDATE PARAMETROS SET GANANCIA={$ganancia},PERDIDA={$perdida} WHERE USUARIO='".$row['USUARIO']."'");
-    sqlconector("UPDATE DATOSUSUARIOS SET ULTIMAVENTA={$precioVenta} WHERE MONEDA='{$moneda}' WHERE USUARIO='".$row['USUARIO']."'");
-    sqlconector("DELETE FROM TRADER WHERE ID={$id}");
+    sqlconector("UPDATE PARAMETROS SET GANANCIA = $ganancia, PERDIDA = $perdida WHERE USUARIO='".$row['USUARIO']."'");
+    sqlconector("UPDATE DATOSUSUARIOS SET ULTIMAVENTA = $precioVenta WHERE MONEDA = '$moneda' AND USUARIO='".$row['USUARIO']."'");
+    sqlconector("DELETE FROM TRADER WHERE ID = $id");
   
     $invxcompra = $capital / $datos['ESCALONES'];
     sqlconector("UPDATE PARAMETROS SET INVXCOMPRA={$invxcompra} WHERE USUARIO='".$row['USUARIO']."'");
