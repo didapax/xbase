@@ -409,7 +409,7 @@ function liquidar($id){
   
     if($ajuste < 0){
       $ganancia=0;
-      $perdida=0;
+      //$perdida=0;
     }
     
     sqlconector("UPDATE PARAMETROS SET GANANCIA = $ganancia, PERDIDA = $perdida WHERE USUARIO='".$row['USUARIO']."'");

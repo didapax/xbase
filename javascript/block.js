@@ -409,9 +409,6 @@ function alertas(data){
     else if (data === "yellow" && muted == "un-mute") {
           jsNota(329.628);
     }
-    /*else if (data === "orange" && muted == "un-mute") {
-      jsNota(233.082);
-    }*/
 }
 
 function priceFixed(valor){
@@ -422,34 +419,6 @@ function toFixedWithoutRounding(num, decimals) {
   const factor = Math.pow(10, decimals);
   return Math.floor(num * factor) / factor;
 }
-
-/*function  quantity(valor,simbolo,par){
-  if(par === "USDT" || par === "USDC"){
-    switch (simbolo) {
-      case "BTC":
-        return toFixedWithoutRounding((valor *1), 5);
-      case "ETH":
-      case "PAXG":
-        return toFixedWithoutRounding((valor *1), 4);
-      case "BNB":
-      case "LTC":
-        return toFixedWithoutRounding((valor *1), 3);
-      case "TRX":
-      case "RUNE":        
-      case "ADA":
-      case "NEAR":
-        return toFixedWithoutRounding((valor *1), 1);
-      case "DOGE":
-      case "SHIB":
-        return toFixedWithoutRounding((valor *1), 0);
-      default:
-        return toFixedWithoutRounding((valor *1), 2);
-    }
-  }else{
-    return toFixedWithoutRounding((valor *1), 2);
-    //return (valor *1).toFixed(2);
-  }
-}*/
 
 function graficoLineal(graf){
   var chart = c3.generate({
@@ -560,6 +529,7 @@ function leerDatos() {
       document.getElementById('asset').value = datos.asset;            
       document.getElementById('impuesto').value = (datos.impuesto * 1);
       document.getElementById('local').checked = datos.auto *1;
+      document.getElementById('precio_venta').value = datos.precio_venta;
       document.getElementById('orderBinance').checked = datos.bina *1;      
       document.getElementById('stop').value = datos.stop;      
       document.getElementById('estableCoin').value = datos.par;
@@ -606,8 +576,7 @@ function refreshDatos(){
       document.getElementById('ant').innerHTML = datos.nivel;
       document.getElementById('antbtc').innerHTML = datos.nivelbtc;
       document.getElementById('symbol').innerHTML = datos.symbol;
-      document.getElementById('nivelcompra').innerHTML = datos.nivelcompra;
-      document.getElementById('precio_venta').value = datos.precio_venta;
+      document.getElementById('nivelcompra').innerHTML = datos.nivelcompra;      
       document.getElementById('newBalance').value = datos.balance_asset;
       document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
       document.getElementById('capital').value = priceFixed(datos.capital);      
@@ -658,11 +627,11 @@ function refreshDatos(){
 }
 
 function inicio(){
-    leerDatos();
     refreshDatos();
     recuperarMonedas();
-    const myVar = setInterval(myTimer, 2000);
+    leerDatos();
     document.getElementById("preloader").style.display='none';
+    const myVar = setInterval(myTimer, 2000);    
 }
 
 function myTimer() {
