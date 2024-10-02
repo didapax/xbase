@@ -973,6 +973,7 @@ function listAsset($usuario){
 function findEscalones($usuario) {
   $didable_button = ""; 
   $didable_cancel_button = ""; 
+  $didable_ckecked_button ="";
   $fecha = "";
   $colorAlert = "transparent";  
   $colorRow = "transparent";  

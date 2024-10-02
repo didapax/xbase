@@ -93,7 +93,7 @@ if(isset($_POST['changue'])){
 if(isset($_POST['autosell'])){
   $usuario = $_POST['usuario'];
   $estatus =0;
-  if(readTrader($_POST['autosell'])['AUTOSELL']==0){
+  if(readTrader($_POST['autosell'])['AUTOSELL'] == 0){
     $estatus =1;
   }
   sqlconector("UPDATE TRADER SET AUTOSELL={$estatus} WHERE USUARIO='$usuario' AND ID={$_POST['autosell']}");
@@ -114,8 +114,7 @@ if(isset($_POST['guardar'])){
   $moneda =  strtoupper($_POST['moneda']);
   $asset =  strtoupper($_POST['asset']);
   $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
-  $invxcompra = number_format($_POST['capital'] / $_POST['escalones'],2,".","");
-  $disponible= $_POST['capital'] - $inversion;
+  $invxcompra = number_format($_POST['capital'] / $_POST['escalones'],2,".","");  
   $stoploss = $_POST['stop'];
   $autoshell = $_POST['precio_venta'];
   $par = $_POST['par'];
@@ -132,7 +131,6 @@ if(isset($_POST['guardar'])){
   STOPLOSS={$stoploss},
   AUTOSHELL={$autoshell},
   INVXCOMPRA={$invxcompra},
-  DISPONIBLE={$disponible},
   IMPUESTO={$_POST['impuesto']} WHERE USUARIO='$usuario'"); 
   refreshDatos($usuario);
 }
@@ -177,8 +175,8 @@ if(isset($_POST['negativoBuy'])){
   $trader = readTrader($_POST['negativo']);
   $datos = readParametros($usuario);
   $operacion = descontarImpuesto($usuario, $trader['CANTIDAD']);
-  $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);
   $asset = readDatosMoneda($trader['MONEDA']);
+  $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);  
   
     $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
     $api->useServerTime();
@@ -214,11 +212,11 @@ if(isset($_POST['negativo'])){
       $order = $api->marketSell($moneda, $quantity);        
     }    
 
-    if(isset($order['orderId'])){
+    if(isset($order['orderId'])){ 
       sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,TIPO,CANTIDAD,VENTA,PRECIOVENTA,NEGATIVO,ESCALON) VALUES(
         '$usuario',
         '$moneda',
-        '{$binance['orderId']}',
+        '{$order['orderId']}',
         'SELL',
         $cantidad,
         $venta,
@@ -312,7 +310,7 @@ if(isset($_GET['getpante'])){
   echo json_encode($obj);   
 }
 
-if(isset($_GET['getPriceBinance'])){ 
+if(isset($_GET['getPriceBinance'])){  
   if( isset($_GET['auto']) ){
       refreshDataAuto($_GET['usuario']);
   }

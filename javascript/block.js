@@ -219,7 +219,7 @@ function negativo(){
       });
 }
 
-function negativoBuy(id){
+function negativoBuy(id){ 
   const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'Retirar',
