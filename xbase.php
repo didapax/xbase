@@ -170,7 +170,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <div id="derecha" class="derecha" style="height:190px;">    
     <table style=width:100%;text-align:right;color:#767E8A;border-spacing:0px; >
       <tr><td></td><td></td></tr>
-      <tr><td><span style="font-weight:bold;cursor:pointer;font-size:16px;color:white;display:none;" title="Suma la Ganancia al Capital" onclick="sumarGanancia()">&#8721;</span><span> Capital</span></td><td><input style="background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="showCapital" value="0.00" readonly></td></tr>
+      <tr><td><span style="font-weight:bold;cursor:pointer;font-size:16px;color:white;display:none;" title="Suma la Ganancia al Capital" onclick="sumarGanancia()">&#8721;</span><span> Disponible</span></td><td><input style="background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="showCapital" value="0.00" readonly></td></tr>
       <tr><td><span style=""><span title="Reset Ganancias" style="cursor:pointer;font-size:24px; background:transparent;color:white;" onclick="resetGanancias()">&#8630;</span>Ganancias</span></td><td><input style="background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="ganancias" value="0.00" readonly ></td></tr>
       <tr><td><span style="">Perdidas </span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="showPerdidas" value="0.00"  ></td></tr>
       <tr><td><span style="">Inv x Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" step="0.01" type="text" id="invxcompra" value="0.00" readonly ></td></tr>

@@ -180,7 +180,7 @@ if(isset($_POST['negativoBuy'])){
   
     $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
     $api->useServerTime();
-    $binance = $api->marketBuy($trader['MONEDA'], $quantity);
+    $binance = $api->marketBuy($trader['MONEDA'], $quantity);    
   
     sqlconector("DELETE FROM TRADER WHERE ID={$_POST['negativo']}");
 

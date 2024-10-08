@@ -589,8 +589,8 @@ function refreshDatos(){
       document.getElementById('showPerdidas').value = priceFixed(datos.perdida);
       document.getElementById('invxcompra').value = (datos.invxcompra *1).toFixed(2);
       document.getElementById('ultimaventa').value = datos.ultimaventa;
-      document.getElementById('mbalance').value = priceFixed(datos.m_balance)+datos.asset;      
-      document.getElementById('balance').value = priceFixed(datos.m_balance);
+      document.getElementById('mbalance').value = datos.m_balance + datos.asset;      
+      document.getElementById('balance').value = datos.m_balance;
       document.getElementById('perdidas').value = priceFixed(datos.perdida);
       document.getElementById('recordCount').value = datos.recordCount;
       document.getElementById('recupera').value = priceFixed(datos.recupera);

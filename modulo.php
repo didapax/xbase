@@ -274,7 +274,7 @@ function sellOrder($order) {
             $bytes = random_bytes(5);
             $referencia = bin2hex($bytes);
             sqlconector("UPDATE TRADER SET ORDERVENTA='{$referencia}', LIQUIDAR=1 WHERE ID={$row['ID']}");
-            refreshDatos($usuario);
+            
         }          
       } catch (Exception $e) {
           // Manejo de errores
@@ -420,7 +420,6 @@ function liquidar($id){
     sqlconector("DELETE FROM TRADER WHERE ID = $id");
   }
   reordenarEscalones($row['USUARIO']);
-  refreshDatos($row['USUARIO']);
 }
 
 function readTrader($id){
@@ -757,9 +756,9 @@ function totalmoneda($usuario,$moneda){
   $t_balance = currency($totalMoneda);
 
   if($t_balance > $datos['BALANCE_ASSET']){
-    $m_balance = currency($totalMoneda - $datos['BALANCE_ASSET']);
+    $m_balance = $totalMoneda - $datos['BALANCE_ASSET'];
   }else{
-    $m_balance = currency($datos['BALANCE_ASSET'] - $totalMoneda);
+    $m_balance = $datos['BALANCE_ASSET'] - $totalMoneda;
   }
 
   $t_moneda = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$color};>".currency($totalMoneda)." {$datos['ASSET']} <span style=color:{$color};>{$symbol}</span></div>";
