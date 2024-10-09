@@ -100,6 +100,16 @@ if(isset($_POST['autosell'])){
   refreshDatos($usuario);
 }
 
+if(isset($_POST['autostop'])){
+  $usuario = $_POST['usuario'];
+  $estatus =0;
+  if(readTrader($_POST['autostop'])['AUTOSTOP'] == 0){
+    $estatus =1;
+  }
+  sqlconector("UPDATE TRADER SET AUTOSTOP={$estatus} WHERE USUARIO='$usuario' AND ID={$_POST['autostop']}");
+  refreshDatos($usuario);
+}
+
 if(isset($_POST['deletepar'])){
   $usuario = $_POST['usuario'];
   if($_POST['deletepar'] != "BTCUSDT"){
@@ -149,6 +159,8 @@ if(isset($_POST['borrar'])){
   $usuario = $_POST['usuario'];
   $trader = readTrader($_POST['borrar']);
   $moneda = $trader['MONEDA'];
+
+  /*
   if(strlen($trader['ORDERID']) > 0 &&
   strlen($trader['ORDERVENTA']) == 0){
     $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
@@ -159,11 +171,7 @@ if(isset($_POST['borrar'])){
       $cancelorder = $api->cancel($moneda, readTrader($_POST['borrar'])['ORDERID']);
     }
   }
-
-  $devolucion = $trader['COMPRA'];
-  $disponible = readParametros($usuario)['DISPONIBLE'];
-  sqlconector("UPDATE PARAMETROS SET DISPONIBLE=".strval($disponible + $devolucion)." WHERE USUARIO='$usuario'" );
-
+  */
   sqlconector("DELETE FROM TRADER WHERE ID={$_POST['borrar']}");
 
   reordenarEscalones($usuario);  

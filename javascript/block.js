@@ -289,6 +289,28 @@ function autosell(id){
     });
 }
 
+function autostop(id){
+  const usuario = document.getElementById('usuario').value;
+  Swal.fire({
+    title: 'xbase',
+    text: "Confirma que quieres activar el Auto STOP.? Al activar el auto stop se calcularan las perdidas al nivel programado y se vendera a precio de mercado.",
+    icon: 'info',
+    confirmButtonColor: '#EC7063',
+    confirmButtonText: 'Si Activar',
+    showCancelButton: true,
+    cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+          $.post("block",{
+            autostop: id,
+            usuario: usuario
+          },function(data){
+            refreshDatos();
+          });
+        }
+    });
+}
+
 function Reset(){
   const usuario = document.getElementById('usuario').value;
   let moneda = document.getElementById('newMoneda');
@@ -576,12 +598,13 @@ function refreshDatos(){
       document.getElementById('ant').innerHTML = datos.nivel;
       document.getElementById('antbtc').innerHTML = datos.nivelbtc;
       document.getElementById('symbol').innerHTML = datos.symbol;
+      document.getElementById('animotrader').innerHTML = datos.animotrader;
       document.getElementById('nivelcompra').innerHTML = datos.nivelcompra;      
       document.getElementById('newBalance').value = datos.balance_asset;
       document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
       document.getElementById('capital').value = priceFixed(datos.capital);      
       document.getElementById('showCapital').value = priceFixed(datos.capital);
-      document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);
+      document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);      
       document.getElementById('priceMax').value = priceFixed(datos.maxdia);
       document.getElementById('mindia').innerHTML =`<span style='font-size:12px;color:white;'>L ${datos.mindia}</span> <div style='vertical-align: middle;display:inline-block;height:4px;width:55px;background:#E8DCDC;overflow:hidden;'><div style='background:grey;height:4px;width:${datos.porcenmax};'></div></div> <span style='font-size:12px;color:white;'>${datos.maxdia} H</span>`;
       document.getElementById('priceMin').value = priceFixed(datos.mindia);
@@ -589,6 +612,7 @@ function refreshDatos(){
       document.getElementById('showPerdidas').value = priceFixed(datos.perdida);
       document.getElementById('invxcompra').value = (datos.invxcompra *1).toFixed(2);
       document.getElementById('ultimaventa').value = datos.ultimaventa;
+      document.getElementById('ultimacompra').value = datos.ultimacompra;
       document.getElementById('mbalance').value = datos.m_balance + datos.asset;      
       document.getElementById('balance').value = datos.m_balance;
       document.getElementById('perdidas').value = priceFixed(datos.perdida);

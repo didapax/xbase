@@ -335,19 +335,22 @@ function autoLiquida($order) {
 
       try {
           if ($row['TIPO'] == "BUY") {
-              $price = $row['PRECIOCOMPRA'];
-              $stopPrice = calcularMargenPerdida($price, $param['STOPLOSS']);
+              $priceBuy = $row['PRECIOCOMPRA'];
+              $priceActual = readPrices($moneda)['ACTUAL'];
+              $stopPrice = calcularMargenPerdida($priceBuy, $param['STOPLOSS']);
               echo "\n stop a = $stopPrice";
-              if (readPrices($moneda)['ACTUAL'] <= $stopPrice) {
+              if($precioActual > 0){
+                if ($precioActual <= $stopPrice) {
                   $order = $api->marketSell($moneda, $quantity);
                   if (isset($order['orderId'])) {
                       liquidar($id);
                   }
-              } else {
+              } 
+              else {
                   if ($row['AUTOSELL'] == 1) {
-                      $autoSell = calcularMargenGanancia($price, $param['AUTOSHELL']);
+                      $autoSell = calcularMargenGanancia($priceBuy, $param['AUTOSHELL']);
                       echo "\n  Venta a = $autoSell";
-                      if (readPrices($moneda)['ACTUAL'] > $autoSell) {
+                      if ($precioActual > $autoSell) {
                           $order = $api->marketSell($moneda, $quantity);
                           if (isset($order['orderId'])) {
                               liquidar($id);
@@ -355,18 +358,22 @@ function autoLiquida($order) {
                       }
                   }
               }
+            }
           } 
           else {
-              $price = $row['PRECIOVENTA'];
-              $stopPrice = calcularMargenGanancia($price, $param['STOPLOSS']);
-              if (readPrices($moneda)['ACTUAL'] >= $stopPrice) {
+              $priceSell = $row['PRECIOVENTA'];
+              $priceActual = readPrices($moneda)['ACTUAL'];
+              $stopPrice = calcularMargenGanancia($priceSell, $param['STOPLOSS']);
+              if($priceActual > 0){
+                if (readPrices($moneda)['ACTUAL'] >= $stopPrice) {
                   $order = $api->marketBuy($moneda, $quantity);
                   if (isset($order['orderId'])) {
                       liquidar($id);
                   }
-              } else {
+                } 
+                else {
                   if ($row['AUTOSELL'] == 1) {
-                      $autoSell = calcularMargenPerdida($price, $param['AUTOSHELL']);
+                      $autoSell = calcularMargenPerdida($priceSell, $param['AUTOSHELL']);
                       if (readPrices($moneda)['ACTUAL'] < $autoSell) {
                           $order = $api->marketBuy($moneda, $quantity);
                           if (isset($order['orderId'])) {
@@ -374,6 +381,7 @@ function autoLiquida($order) {
                           }
                       }
                   }
+                }                
               }
           }
       } catch (Exception $e) {
@@ -389,6 +397,7 @@ function liquidar($id){
     $datos= readParametros($row['USUARIO']);
     $moneda = $row['MONEDA'];
     $precioVenta = readPrices($moneda)['ACTUAL'];
+    $precioCompra = $row['PRECIOCOMPRA'];
     $compra = $row['COMPRA'];
     $operacion = descontarImpuesto($row['USUARIO'],$row['CANTIDAD']);
     $cantidad = $operacion;
@@ -405,18 +414,21 @@ function liquidar($id){
   
     $ganancia = $datos['GANANCIA'] + $newganancia;
     $perdida = $datos['PERDIDA'] + $newperdida;
-    $ajuste = $ganancia - $perdida;
+    /*$ajuste = $ganancia - $perdida;
   
     if($ajuste < 0){
       $ganancia=0;
-      //$perdida=0;
-    }
+      $perdida=0;
+    }*/
     
     sqlconector("UPDATE PARAMETROS SET GANANCIA = $ganancia, PERDIDA = $perdida WHERE USUARIO='".$row['USUARIO']."'");
-    sqlconector("UPDATE DATOSUSUARIOS SET ULTIMAVENTA = $precioVenta WHERE MONEDA = '$moneda' AND USUARIO='".$row['USUARIO']."'");
+    sqlconector("UPDATE DATOSUSUARIOS SET ULTIMACOMPRA= $precioCompra, ULTIMAVENTA = $precioVenta WHERE MONEDA = '$moneda' AND USUARIO='".$row['USUARIO']."'");
     sqlconector("DELETE FROM TRADER WHERE ID = $id");
   }
   else{
+    $precioVenta = $row['PRECIOVENTA']; 
+    $precioCompra = readPrices($moneda)['ACTUAL'];
+    sqlconector("UPDATE DATOSUSUARIOS SET ULTIMACOMPRA= $precioCompra, ULTIMAVENTA = $precioVenta WHERE MONEDA = '$moneda' AND USUARIO='".$row['USUARIO']."'");
     sqlconector("DELETE FROM TRADER WHERE ID = $id");
   }
   reordenarEscalones($row['USUARIO']);
@@ -508,6 +520,18 @@ function dayTendencia($moneda){
     $tendencia = "<span style=color:#4DCB85;font-weight:bold;>&#9650;</span>";
   }else{
     updateTendenciaBajista($moneda);
+    $tendencia = "<span style=color:#EA465C;font-weight:bold;>&#9660;</span>";
+  }
+  return $tendencia;
+}
+
+function animoTrader($usuario){
+  $tendencia = "";
+  $ganancias = readParametros($usuario)['GANANCIA'];
+  $perdidas = readParametros($usuario)['PERDIDA'];
+  if($ganancias > $perdidas){
+    $tendencia = "<span style=color:#4DCB85;font-weight:bold;>&#9650;</span>";
+  }else{
     $tendencia = "<span style=color:#EA465C;font-weight:bold;>&#9660;</span>";
   }
   return $tendencia;
@@ -972,7 +996,8 @@ function listAsset($usuario){
 function findEscalones($usuario) {
   $didable_button = ""; 
   $didable_cancel_button = ""; 
-  $didable_ckecked_button ="";
+  $didable_ckecked_button = "";
+  $didable_ckecked_stop = "";
   $fecha = "";
   $colorAlert = "transparent";  
   $colorRow = "transparent";  
@@ -1016,8 +1041,9 @@ function findEscalones($usuario) {
           if (strlen($row['ORDERVENTA']) > 0) {
             $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
             $didable_button = "";
-            $didable_cancel_button = "disabled";
+            $didable_cancel_button = "";
             $didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
+            $didable_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "checked" : "";
           }
           else {
             $miganancia = 0;
@@ -1051,7 +1077,12 @@ function findEscalones($usuario) {
               if ($didable_cancel_button == "disabled") {
                   $botones = "<input title=auto type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";              
               } else {
-                  $botones = "<button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar({$row['ID']})>&#10006;</button><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";   
+                  $botones = "
+                  <input title=autoStop type=checkbox {$didable_ckecked_stop} class=escalbutton style=background:#EAB92B;width:21px; onclick=autostop({$row['ID']})>
+                  <input title=autoSell type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})>
+                  <button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar({$row['ID']})>&#10006;</button>
+                  <button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>
+                  ";
               }
               $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>" . totalmoneda($usuario,$row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
           }        
@@ -1156,10 +1187,12 @@ function refreshDatos($usuario){
     
     $obj = array(
       'tipografico' => readParametros($usuario)['GRAFICO'],
+      'animotrader' => animoTrader($usuario),
       'balance_asset'=>$row['BALANCE_ASSET'],
       'par'=>$row['PAR'],
       'asset' => $row['ASSET'], 
       'ultimaventa' => formatPrice($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 
+      'ultimacompra' => formatPrice($row['ULTIMACOMPRA'],$row['ASSET'],$row['PAR']), 
       'price' => $priceMoneda,
       'btc' => $bitcoin,
       'colorbtc' => $colorbtc, 
