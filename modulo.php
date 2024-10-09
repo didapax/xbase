@@ -1077,12 +1077,7 @@ function findEscalones($usuario) {
               if ($didable_cancel_button == "disabled") {
                   $botones = "<input title=auto type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";              
               } else {
-                  $botones = "
-                  <input title=autoStop type=checkbox {$didable_ckecked_stop} class=escalbutton style=background:#EAB92B;width:21px; onclick=autostop({$row['ID']})>
-                  <input title=autoSell type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})>
-                  <button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar({$row['ID']})>&#10006;</button>
-                  <button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>
-                  ";
+                  $botones = "<input title=autoStop type=checkbox {$didable_ckecked_stop} class=escalbutton style=background:#EAB92B;width:21px; onclick=autostop({$row['ID']})><input title=autoSell type=checkbox {$didable_ckecked_button} class=escalbutton style=background:#EAB92B;width:21px; onclick=autosell({$row['ID']})><button {$didable_cancel_button} type=button class=escalbutton style=background:#EAB92B;width:21px; onclick=borrar({$row['ID']})>&#10006;</button><button {$didable_button} type=button class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button>";
               }
               $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>" . totalmoneda($usuario,$row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
           }        

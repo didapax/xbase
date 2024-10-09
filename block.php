@@ -321,7 +321,7 @@ if(isset($_GET['getpante'])){
 if(isset($_GET['getPriceBinance'])){  
   if( isset($_GET['auto']) ){
       refreshDataAuto($_GET['usuario']);
-  }
+  }  
   echo readParametros($_GET['usuario'])['DATOS'];
 } 
 
