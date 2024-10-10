@@ -189,12 +189,11 @@ if(isset($_POST['negativoBuy'])){
     $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
     $api->useServerTime();
     $binance = $api->marketBuy($trader['MONEDA'], $quantity);    
-  
-    sqlconector("DELETE FROM TRADER WHERE ID={$_POST['negativo']}");
 
-    reordenarEscalones($usuario);
+    liquidar($_POST['negativo']);
+
     refreshDatos($usuario);
-}
+} 
 
 if(isset($_POST['negativo'])){
   $usuario = $_POST['usuario'];
@@ -239,7 +238,7 @@ if(isset($_POST['negativo'])){
     refreshDatos($usuario);
 } 
 
-if(isset($_POST['perdida'])){ 
+if(isset($_POST['perdida'])){
   $usuario = $_POST['usuario'];
   $datos = readParametros($usuario);
   $trader = readTrader($_POST['perdida']);
@@ -253,6 +252,7 @@ if(isset($_POST['perdida'])){
   $order = $api->marketSell($moneda, $quantity);
 
   liquidar($_POST['perdida']);
+  refreshDatos($usuario);
 } 
 
 if(isset($_POST['local'])){ 

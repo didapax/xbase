@@ -271,12 +271,12 @@ function autosell(id){
   const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
-    text: "Confirma que quieres activar el Auto Sell.? se vendera a precio de mercado",
+    text: "Confirma que quieres activar/desactivar el Auto Sell.? se vendera a precio de mercado",
     icon: 'info',
     confirmButtonColor: '#EC7063',
-    confirmButtonText: 'Si Activar',
+    confirmButtonText: 'Si Confirmo',
     showCancelButton: true,
-    cancelButtonText: "Cancelar"
+    cancelButtonText: "No Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
           $.post("block",{
@@ -293,12 +293,12 @@ function autostop(id){
   const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
-    text: "Confirma que quieres activar el Auto STOP.? Al activar el auto stop se calcularan las perdidas al nivel programado y se vendera a precio de mercado.",
+    text: "Confirma que quieres activar/desactivar el Auto STOP.? Al activar/desactivar el auto stop se calcularan las perdidas al nivel programado y se vendera a precio de mercado.",
     icon: 'info',
     confirmButtonColor: '#EC7063',
-    confirmButtonText: 'Si Activar',
+    confirmButtonText: 'Si Confirmo',
     showCancelButton: true,
-    cancelButtonText: "Cancelar"
+    cancelButtonText: "No Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
           $.post("block",{
@@ -641,7 +641,6 @@ function refreshDatos(){
 
       alertas(datos.alert);
 
-      datos= null;
     });
 
     document.getElementById('techo').innerHTML = "Ganancia ≈ 0.00";
@@ -651,11 +650,11 @@ function refreshDatos(){
 }
 
 function inicio(){
-    refreshDatos();
-    recuperarMonedas();
+    //refreshDatos();
+    const myVar = setInterval(myTimer, 3000);
     leerDatos();
+    recuperarMonedas();
     document.getElementById("preloader").style.display='none';
-    const myVar = setInterval(myTimer, 2000);    
 }
 
 function myTimer() {

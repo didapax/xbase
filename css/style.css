@@ -1,5 +1,49 @@
 @import url(https://fonts.googleapis.com/css?family=Lato:700);
 
+.btn-label1 {
+  margin: 1px;
+  display: inline-block;
+  padding: 3px 1px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight:bold;
+  color: black;
+}
+
+.btn-label2 {
+  margin: 1px;
+  display: inline-block;
+  padding: 3px 1px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight:bold;
+  color: black;
+}
+
+#toggle1:checked + .btn-label1 {
+  background-color: #4caf50;
+  color: white;
+}
+
+#toggle2:checked + .btn-label2 {
+  background-color: #4caf50; 
+  color: white;
+}
+
+#toggle1 {
+  display: none;
+}
+
+#toggle2 {
+  display: none;
+}
+
 body{
   background: #171A1E;
   margin: 0;
@@ -363,14 +407,16 @@ font-weight: bold;
 }
 
 .escalbutton{
-  margin: 3px;
-  padding: 3px;
-  border: 0;
-  border-radius: 3px;
+  margin: 1px;
+  display: inline-block;
+  padding: 3px 1px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
   font-weight:bold;
-  font-size:12px;
-  text-transform: uppercase;
-  width: 48px;
+  color: black;
 }
 
 .derecha{
@@ -449,9 +495,6 @@ font-weight: bold;
   }
 
   .escalbutton{
-    margin: 2px;
-    border: 0;
-    border-radius: 3px;
     font-size:10px; 
     text-align: center;   
   }
