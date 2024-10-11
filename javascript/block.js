@@ -1,11 +1,12 @@
 /* Javascript */
-let alarMuted = 1;
-let chart;
-let dollarUSLocale = Intl.NumberFormat('en-IN');
-let datos;
-let fiat;
-let simbolo;
-let listMonedas = [];
+
+var alarMuted = 1;
+var chart;
+var dollarUSLocale = Intl.NumberFormat('en-IN');
+var datos;
+var fiat;
+var simbolo;
+var listMonedas = [];
 
 function jsNota(frecuencia){
         const context= new AudioContext();
@@ -45,20 +46,14 @@ function calculo(){
   document.getElementById('invxcompra').value = (document.getElementById('capital').value / document.getElementById('escalones').value).toFixed(0);
 }
 
-function escalon(usuario){
+function escalon(){
   let cantidad = document.getElementById('invxcompra').value*1;
   let precio = document.getElementById('precioCompra').value*1;
   let total = cantidad / precio;
-  let moneda = document.getElementById('moneda').value;
   let cantidadComprada = total.toFixed(8);
   document.getElementById('cantidadComprada').value = cantidadComprada;
   document.getElementById('piso').innerHTML = `<span style=font-weight:bold;color:white;>${cantidadComprada}<span style=font-weight:bold;color:gray;>${simbolo}</span></span>`;
-
-  $.get("block?getpante=&usuario="+usuario+"&nprice="+document.getElementById('precioCompra').value,
-  function(data){ 
-    datos= JSON.parse(data);
-    document.getElementById('stoploss').innerHTML = `<span style=font-weight:bold;color:white;>${datos.pante}<span style=font-weight:bold;color:gray;>${fiat}</span></span>`;
-  });
+  document.getElementById('stoploss').innerHTML = `<span style=font-weight:bold;color:white;>${datos.pante}<span style=font-weight:bold;color:gray;>${fiat}</span></span>`;
 }
 
 function agregar(){
@@ -104,8 +99,6 @@ function agregar(){
                       confirmButtonColor: '#3085d6',
                       confirmButtonText: 'Ok'
                       });                
-                  }else{ 
-                    leerDatos();
                   }        
                 });
               }
@@ -155,9 +148,7 @@ function perdida(id){
           $.post("block",{
             perdida:id,
             usuario: usuario
-          },function(data){
-            leerDatos();
-          });        
+          },function(data){});        
         }
       });
 }
@@ -212,9 +203,7 @@ function negativo(){
             cantidad: cantidad,
             precio: precio,
             moneda: moneda
-          },function(data){
-            leerDatos();
-          });
+          },function(data){});
         }
       });
 }
@@ -239,7 +228,6 @@ function negativoBuy(id){
             if(data.includes("error")){
                 //alert(data);
             }
-            leerDatos();
         });
         }
       });
@@ -260,9 +248,7 @@ function borrar(id){
           $.post("block",{
             borrar: id,
             usuario: usuario
-          },function(data){
-            leerDatos();
-          });
+          },function(data){});
         }
     });
 }
@@ -282,9 +268,7 @@ function autosell(id){
           $.post("block",{
             autosell: id,
             usuario: usuario
-          },function(data){
-            refreshDatos();
-          });
+          },function(data){});
         }
     });
 }
@@ -304,9 +288,7 @@ function autostop(id){
           $.post("block",{
             autostop: id,
             usuario: usuario
-          },function(data){
-            refreshDatos();
-          });
+          },function(data){});
         }
     });
 }
@@ -378,9 +360,7 @@ function local(){
   $.post("block",{
     local: valor,
     usuario: usuario
-  },function(data){
-    leerDatos();
-  });
+  },function(data){});
 }
 
 function xmes(){
@@ -389,9 +369,7 @@ function xmes(){
   $.post("block",{
     xgraf: valor,
     usuario: usuario
-  },function(data){
-    leerDatos();
-  });
+  },function(data){});
 }
 
 function xano(){
@@ -400,13 +378,11 @@ function xano(){
   $.post("block",{
     xgraf: valor,
     usuario: usuario
-  },function(data){
-    leerDatos();
-  });
+  },function(data){});
 }
 
 function xgraf(){
-  leerDatos();
+  refreshDatos();
 }
 
 function bina(){
@@ -418,9 +394,7 @@ function bina(){
   $.post("block",{
     bina: valor,
     usuario: usuario
-  },function(data){
-    leerDatos();
-  });
+  },function(data){});
 }
 
 function alertas(data){
@@ -543,41 +517,40 @@ function graficoVelas(graf) {
 }
 
 function leerDatos() {
-  const usuario = document.getElementById('usuario').value;
-  $.get("block?getPriceBinance=&usuario="+usuario, function(data) {
-      datos = JSON.parse(data);
-      
       document.getElementById('moneda').value = datos.moneda;
-      document.getElementById('asset').value = datos.asset;            
+      document.getElementById('asset').value = datos.asset;   
+      document.getElementById('estableCoin').value = datos.par;  
       document.getElementById('impuesto').value = (datos.impuesto * 1);
-      document.getElementById('local').checked = datos.auto *1;
-      document.getElementById('precio_venta').value = datos.precio_venta;
+      document.getElementById('local').checked = datos.auto *1;      
       document.getElementById('orderBinance').checked = datos.bina *1;      
-      document.getElementById('stop').value = datos.stop;      
-      document.getElementById('estableCoin').value = datos.par;
-      $("#div3").html(datos.verescalones);
-      $("#div2").html(datos.verbinance);
-      fiat = datos.par;
-      simbolo = datos.asset;
-      
-      const graf = datos.grafico;
-      
-      // Crear el gráfico con C3.js
-      if(datos.tipografico *1 == 0){
-        graficoLineal(graf);
-      }
-      else{
-        graficoVelas(graf);
-      }
-      
-  });
+      document.getElementById('stop').value = datos.stop;
+      document.getElementById('precio_venta').value = datos.precio_venta;
+      document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
+}
+
+function comprobarDatos() {
+  if (datos) {
+      leerDatos();
+  } else {
+      setTimeout(comprobarDatos, 500); // Revisa cada 500 ms si datos está lleno
+  }
+}
+
+async function obtenerDatos() {
+  const usuario = document.getElementById('usuario').value;
+  try {
+      let response = await fetch("block?getPriceBinance&usuario=" + usuario);
+      let data = await response.json();
+      datos = data;
+      refreshDatos();
+      console.log(data);
+  } catch (error) {
+      console.error('Error Obtener Datos:', error);
+  }
 }
 
 function refreshDatos(){
-  const usuario = document.getElementById('usuario').value;
-
-    $.get("block?getPriceBinance&auto=&usuario="+usuario, function(data){
-      datos= JSON.parse(data);
+  const graf = datos.grafico;
 
       if(document.getElementById('sugerirPrecioCompra').checked === true){
         document.getElementById('precioCompra').value = datos.price;
@@ -585,7 +558,8 @@ function refreshDatos(){
 
       if(document.getElementById('sugerirPrecioVenta').checked === true){
         document.getElementById('precioCompra2').value = datos.price;
-      }      
+      }
+
       document.title = datos.asset+" "+datos.labelpricemoneda; 
       document.getElementById('priceMoneda').innerHTML = "<span style='margin-right:5px;color:white;'>"+datos.asset+"/"+datos.par+"</span> "+datos.labelpricemoneda;
       document.getElementById('price').value = datos.price;
@@ -600,8 +574,7 @@ function refreshDatos(){
       document.getElementById('symbol').innerHTML = datos.symbol;
       document.getElementById('animotrader').innerHTML = datos.animotrader;
       document.getElementById('nivelcompra').innerHTML = datos.nivelcompra;      
-      document.getElementById('newBalance').value = datos.balance_asset;
-      document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
+      document.getElementById('newBalance').value = datos.balance_asset;      
       document.getElementById('capital').value = priceFixed(datos.capital);      
       document.getElementById('showCapital').value = priceFixed(datos.capital);
       document.getElementById('ganancias').value = priceFixed(datos.ganancia - datos.perdida);      
@@ -639,26 +612,29 @@ function refreshDatos(){
       $("#div2").html(datos.verbinance);
       $("#listasset").html(datos.listasset);
 
-      alertas(datos.alert);
+      // Crear el gráfico con C3.js
+      if(datos.tipografico *1 == 0){
+        graficoLineal(graf);
+      }
+      else{
+        graficoVelas(graf);
+      }
 
-    });
+      alertas(datos.alert);
+      fiat = datos.par;
+      simbolo = datos.asset;
 
     document.getElementById('techo').innerHTML = "Ganancia ≈ 0.00";
     document.getElementById('piso').innerHTML = "0.00";
-    escalon(usuario);    
-
+    escalon();
 }
 
 function inicio(){
-    //refreshDatos();
-    const myVar = setInterval(myTimer, 3000);
-    leerDatos();
+    obtenerDatos();    
     recuperarMonedas();
+    comprobarDatos();    
     document.getElementById("preloader").style.display='none';
-}
-
-function myTimer() {
-  refreshDatos();
+    const myVar = setInterval(obtenerDatos, 120000);
 }
 
 function toggleMute(){
@@ -675,20 +651,18 @@ function toggleMute(){
 
 function resetPerdidas(){ 
   const usuario = document.getElementById('usuario').value;
-  $.get("block?resetPerdidas&usuario="+usuario,function(data){
-    leerDatos();
-  })
+  $.get("block?resetPerdidas&usuario="+usuario,function(data){})
 }
 
 function resetGanancias(){
   const usuario = document.getElementById('usuario').value;
   $.get("block?resetGanancias&usuario="+usuario,function(data){
     document.getElementById("ganancias").value = "0.00";
-    leerDatos();
   })
 }
 
 function showConfig(){
+  leerDatos();
   document.getElementById('config').showModal();
 }
 

@@ -863,6 +863,7 @@ function refreshDataAuto($usuario) {
       }
 
       refreshDatos($usuario);
+
   } catch (PDOException $e) {
       echo "Error en la conexión a la base de datos: " . $e->getMessage();
   } catch (Exception $e) {
@@ -1119,13 +1120,22 @@ function findBinance($usuario) {
   return $cadena;
 }
 
+function getpante($usuario){ 
+  $row = readDatos($usuario); 
+  $moneda=$row['MONEDA'];
+  $precio = formatPrice(readPrices($moneda)['ACTUAL'],$row['ASSET'],$row['PAR']);
+  $puntos = readParametros($usuario)['STOPLOSS'];
+  $pante = calcularMargenPerdida($precio,$puntos); 
+  return formatPrice($pante,$row['ASSET'],$row['PAR']);
+}
+
 function refreshDatos($usuario){
   $row = readDatos($usuario);
   $row2 = readParametros($usuario);
   $rowBtc = readDatosAsset("BTC");
   $moneda=$row['MONEDA'];
   $auto = $row2['LOCAL'];
-  if(strlen($moneda) > 0){
+
     $readPrice = readPrices($moneda);
     $bitcoin = formatPrice(readPrices($rowBtc['MONEDA'])['ACTUAL'],$rowBtc['ASSET'],$rowBtc['PAR']);
     $priceMoneda = formatPrice($readPrice['ACTUAL'],$row['ASSET'],$row['PAR']);
@@ -1181,6 +1191,7 @@ function refreshDatos($usuario){
     }  
     
     $obj = array(
+      'pante' => getpante($usuario),
       'tipografico' => readParametros($usuario)['GRAFICO'],
       'animotrader' => animoTrader($usuario),
       'balance_asset'=>$row['BALANCE_ASSET'],
@@ -1238,7 +1249,6 @@ function refreshDatos($usuario){
 
     sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra, DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
 
-  }
 }
 
 function refreshDatosMon($mon){
@@ -1246,7 +1256,7 @@ function refreshDatosMon($mon){
   $row = readDatosMoneda($mon);
   $rowBtc = readDatosAsset("BTC");
   $moneda=$row['MONEDA'];
-  if(strlen($moneda) > 0){
+
     $readPrice = readPrices($moneda);
     $bitcoin = formatPrice(readPrices($rowBtc['MONEDA'])['ACTUAL'],$rowBtc['ASSET'],$rowBtc['PAR']);
     $priceMoneda = formatPrice($readPrice['ACTUAL'],$row['ASSET'],$row['PAR']);
@@ -1311,6 +1321,6 @@ function refreshDatosMon($mon){
       'nivelcompra' => nivelCompra($moneda)); 
 
     sqlconector("UPDATE DATOS SET DATOS='".json_encode($obj)."' WHERE MONEDA='$moneda'");
-  }
+
 }
 ?>

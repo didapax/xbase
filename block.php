@@ -306,22 +306,8 @@ if(isset($_POST['agregar'])){
   refreshDatos($usuario);
 }
 
-if(isset($_GET['getpante'])){
-  $usuario = $_GET['usuario'];
-  $row = readDatos($_GET['usuario']); 
-  $moneda=$row['MONEDA'];
-  $precio = $_GET['nprice'];
-  $puntos = readParametros($usuario)['STOPLOSS'];
-  $pante = price(calcularMargenPerdida($precio,$puntos)); 
-  $obj = array('pante' => $pante,'moneda' => $moneda,'puntos' => $puntos); 
-  
-  echo json_encode($obj);   
-}
-
-if(isset($_GET['getPriceBinance'])){  
-  if( isset($_GET['auto']) ){
-      refreshDataAuto($_GET['usuario']);
-  }  
+if(isset($_GET['getPriceBinance'])){
+  refreshDataAuto($_GET['usuario']);
   echo readParametros($_GET['usuario'])['DATOS'];
 } 
 
