@@ -336,7 +336,7 @@ function autoLiquida($order) {
       try {
           if ($row['TIPO'] == "BUY") {
               $priceBuy = $row['PRECIOCOMPRA'];
-              $priceActual = readPrices($moneda)['ACTUAL'];
+              $precioActual = readPrices($moneda)['ACTUAL'];
               $stopPrice = calcularMargenPerdida($priceBuy, $param['STOPLOSS']);
               echo "\n stop a = $stopPrice";
               if($precioActual > 0){
@@ -967,7 +967,8 @@ function listAsset($usuario){
   if (!$conexion) {
     echo "Refresh page, Failed to connect to Data...";
     exit();
-  }else{
+  }
+  else{
     $consulta = "select * from DATOSUSUARIOS WHERE USUARIO='$usuario'";
     $resultado = mysqli_query( $conexion, $consulta );
     $cadena = "<table style=text-align:right;width:100%;><th></th><th></th>";
@@ -984,7 +985,7 @@ function listAsset($usuario){
       }
       else{
           $color = "#4BC883";
-      }     
+      }
       
       $cadena = $cadena ."<tr><td><span onclick=moneyChangue({$elid}) style=cursor:pointer;color:{$color};>{$asset}</span></td><td><span style=color:{$color};font-weight:bold;>".formatPrice($price,$row['ASSET'],$row['PAR'])."</span></td><td><span class=bolita style=color:{$colorAlerta};>&#9679;</span></td></tr>";
     }
@@ -1191,11 +1192,11 @@ function refreshDatos($usuario){
     }  
     
     $obj = array(
-      'pante' => getpante($usuario),
-      'tipografico' => readParametros($usuario)['GRAFICO'],
+      'pante' => getpante($usuario),      
       'animotrader' => animoTrader($usuario),
       'balance_asset'=>$row['BALANCE_ASSET'],
       'par'=>$row['PAR'],
+      'tipografico' => readParametros($usuario)['GRAFICO'],
       'asset' => $row['ASSET'], 
       'ultimaventa' => formatPrice($row['ULTIMAVENTA'],$row['ASSET'],$row['PAR']), 
       'ultimacompra' => formatPrice($row['ULTIMACOMPRA'],$row['ASSET'],$row['PAR']), 
@@ -1225,8 +1226,7 @@ function refreshDatos($usuario){
       'escalones' => $row2['ESCALONES'],
       'invxcompra' => $invxcompra,
       'totalpromedio' => $totalPromedio,
-      'xdisponible' => $xdisponible,
-      'grafico' => returnGrafica($usuario,$moneda),
+      'xdisponible' => $xdisponible,      
       'auto' => $auto,'bina' => $bina,
       'impuesto' => price($row2['IMPUESTO']),
       'mercado' =>$mercado, 
@@ -1245,14 +1245,19 @@ function refreshDatos($usuario){
       'listasset' => listAsset($usuario),
       'stop' => $row2['STOPLOSS'],
       'balance' => $row['BALANCE_ASSET'],
-      'nivelcompra' => nivelCompra($moneda) ); 
+      'nivelcompra' => nivelCompra($moneda) 
+    ); 
 
-    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra, DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
+    $objGraf = array(
+      'grafico' => returnGrafica($usuario,$moneda)
+    );
+
+    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra,DATOSGRAF='".json_encode($objGraf)."', DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
 
 }
 
 function refreshDatosMon($mon){
-  $usuario= $GLOBALS['tokenadmin'];
+  //$usuario= $GLOBALS['tokenadmin'];
   $row = readDatosMoneda($mon);
   $rowBtc = readDatosAsset("BTC");
   $moneda=$row['MONEDA'];
@@ -1304,21 +1309,20 @@ function refreshDatosMon($mon){
       'maxdia' => $priceArriba,
       'mindia' => $priceAbajo, 
       'totalTendencia' => totalTendencia($moneda),
-      'utc' => date('g:i A'),
       'techo' => $promedioFlotante,
       'piso' => $promedioUndante,
       'ant' => readFlotadorAnterior($moneda),
       'nivel' => nivel($moneda),
       'nivelbtc' => nivelBtc(),
       'porcenmax' => $porcenmax,
-      'totalpromedio' => $totalPromedio,
-      'grafico' => returnGrafica($usuario,$moneda),
+      'totalpromedio' => $totalPromedio,      
       'mercado' =>$mercado, 
       'id' => $row['ID'],
       'alert' =>returnAlertas($moneda),
       'labelpricebitcoin' => $labelPriceBitcoin,
       'labelpricemoneda' => $labelPriceMoneda,
-      'nivelcompra' => nivelCompra($moneda)); 
+      'nivelcompra' => nivelCompra($moneda)
+    ); 
 
     sqlconector("UPDATE DATOS SET DATOS='".json_encode($obj)."' WHERE MONEDA='$moneda'");
 

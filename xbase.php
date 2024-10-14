@@ -137,7 +137,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <label for="xmes">Lineal</label>
     <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">
     <label for="xano">Velas</label>
-    <label title="Actualizar" onclick="xgraf()"><span style='margin-left:8px;color:white;cursor:pointer;font-size:18px;'>&#9851;</span></label>    
+    <label title="Actualizar" style="display:none;" onclick="xgraf()"><span style='margin-left:8px;color:white;cursor:pointer;font-size:18px;'>&#9851;</span></label>    
   </div>
   <div class="price_entrada">
     <label style="display:none;" id="priceBtc"></label>    

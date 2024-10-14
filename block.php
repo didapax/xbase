@@ -309,7 +309,11 @@ if(isset($_POST['agregar'])){
 if(isset($_GET['getPriceBinance'])){
   refreshDataAuto($_GET['usuario']);
   echo readParametros($_GET['usuario'])['DATOS'];
-} 
+}
+
+if(isset($_GET['getGraf'])){
+  echo readParametros($_GET['usuario'])['DATOSGRAF'];
+}
 
 if( isset($_GET['binancex']) ){
   $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
