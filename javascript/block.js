@@ -9,6 +9,7 @@ let graf = null;
 let chart = null;
 let listMonedas = [];
 let myVar = null;
+let moneyLoad = null;
 
 
 let lastTime = 0;
@@ -29,6 +30,7 @@ function jsNota(frecuencia){
 
 function Guardar(){
   const usuario = document.getElementById('usuario').value;
+  document.getElementById('config').close();
   document.getElementById("preloader").style.display='block';
   $.post("block",{
     guardar: "",
@@ -43,9 +45,8 @@ function Guardar(){
     impuesto: document.getElementById('impuesto').value,
     precio_venta: document.getElementById('precio_venta').value,
     stop: document.getElementById('stop').value
-  },function(data){
-    document.getElementById('config').close();
-    window.location.href="xbase?token="+usuario;
+  },function(data){    
+    //window.location.href="xbase?token="+usuario;
   });
 }
 
@@ -348,13 +349,15 @@ function Reset(){
 function moneyChangue(valor){
   const usuario = document.getElementById('usuario').value;
   document.getElementById("preloader").style.display='block';
+  moneyLoad = valor;
   $.post("block",{ 
     changue:"",   
     usuario: usuario, 
     moneda: valor
   },function(data){
-    document.getElementById('sugerirPrecioCompra').checked = true;
-    window.location.href="xbase?token="+usuario;
+    //document.getElementById('sugerirPrecioCompra').checked = true;
+    //window.location.href="xbase?token="+usuario;
+    refreshDatos();
   });
 }
 
@@ -442,7 +445,7 @@ function graficoLineal() {
   }];
 
   var layout = {
-      title: 'Gráfico Lineal',
+      title: `Gráfico ${simbolo}`,
       xaxis: {
           title: 'Fecha',
           rangeslider: { visible: false }
@@ -566,6 +569,9 @@ async function obtenerDatos() {
       data =null;
       dataGraf = null;
 
+      if(moneyLoad == null || moneyLoad == datos.id){
+        document.getElementById("preloader").style.display='none';
+      }
   } catch (error) {
       console.error('Error Obtener Datos:', error);
   }

@@ -398,9 +398,8 @@ function liquidar($id){
     $moneda = $row['MONEDA'];
     $precioVenta = readPrices($moneda)['ACTUAL'];
     $precioCompra = $row['PRECIOCOMPRA'];
-    $compra = $row['COMPRA'];
-    $operacion = descontarImpuesto($row['USUARIO'],$row['CANTIDAD']);
-    $cantidad = $operacion;
+    $compra = $row['COMPRA'];    
+    $cantidad = $row['CANTIDAD'];
     $newventa =  $cantidad * $precioVenta;
     $newganancia = 0;
     $newperdida = 0;
@@ -414,12 +413,6 @@ function liquidar($id){
   
     $ganancia = $datos['GANANCIA'] + $newganancia;
     $perdida = $datos['PERDIDA'] + $newperdida;
-    /*$ajuste = $ganancia - $perdida;
-  
-    if($ajuste < 0){
-      $ganancia=0;
-      $perdida=0;
-    }*/
     
     sqlconector("UPDATE PARAMETROS SET GANANCIA = $ganancia, PERDIDA = $perdida WHERE USUARIO='".$row['USUARIO']."'");
     sqlconector("UPDATE DATOSUSUARIOS SET ULTIMACOMPRA= $precioCompra, ULTIMAVENTA = $precioVenta WHERE MONEDA = '$moneda' AND USUARIO='".$row['USUARIO']."'");
@@ -860,9 +853,7 @@ function refreshDataAuto($usuario) {
             ':usuario' => $usuario,
             ':balanceUsd' => $balances[$estableCoin]['available']
         ]);
-      }
-
-      refreshDatos($usuario);
+      }      
 
   } catch (PDOException $e) {
       echo "Error en la conexión a la base de datos: " . $e->getMessage();
@@ -872,6 +863,7 @@ function refreshDataAuto($usuario) {
       if (isset($conexion)) {
           $conexion = null;
       }
+      refreshDatos($usuario);
   }
 }
 
@@ -1297,7 +1289,6 @@ function refreshDatosMon($mon){
     }  
     
     $obj = array(
-      'balance_asset'=>$row['BALANCE_ASSET'],
       'par'=>$row['PAR'],
       'asset' => $row['ASSET'],
       'price' => $priceMoneda,'btc' => $bitcoin, 
