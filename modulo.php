@@ -1225,7 +1225,7 @@ function refreshDatos($usuario){
       'disponible' => price($row2['DISPONIBLE']),
       'escalones' => $row2['ESCALONES'],
       'invxcompra' => $invxcompra,
-      'totalpromedio' => $totalPromedio,
+      'totalpromedio' => formatPrice($totalPromedio,$row['ASSET'],$row['PAR']),
       'xdisponible' => $xdisponible,      
       'auto' => $auto,'bina' => $bina,
       'impuesto' => price($row2['IMPUESTO']),
