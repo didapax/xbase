@@ -429,66 +429,35 @@ function toFixedWithoutRounding(num, decimals) {
   return Math.floor(num * factor) / factor;
 }
 
-function graficoLineal(){
-    chart = c3.generate({
-    bindto: '#chart', // Asegúrate de que el contenedor del gráfico esté definido en tu HTML
-    size: {
-      width: document.getElementById('chart-container').offsetWidth,
-      height: document.getElementById('chart-container').offsetHeight
-  },          
-    data: {
-      json: graf,
-      keys: {
-        x: 'date',
-        value: ['open', 'close','prm'],
-      },
-      colors: {
-        close: '#EA465C',
-        open: '#4DCB85',
-        prm: '#f6f646'
-    },
-        types: {
-            open: 'spline',
-            close: 'spline',
-            prm: 'spline'
-        }
-    },
-    axis: {
-        x: {
-            type: 'timeseries',
-            tick: {
-                format: '%m-%d' // Formato de fecha
-            }
-        },
-        y: {
-            tick: {
-                //format: d3.format('.8f')  Formato de número con 8 decimales
-            }
-        }
-    },
-    point: {
-        show: false 
-    },
-    legend: {
-        show: true
-    },
-    onrendered: function() {
-      d3.selectAll("svg > .bgRect").remove();
-      d3.selectAll("svg").insert("rect", ":first-child")
-          .attr("class", "bgRect")
-          .attr("width", "100%")
-          .attr("height", "100%")
-          .attr("fill", "#161A1E"); // Cambia 'lightgray' por el color que prefieras
-  }          
-});
+function graficoLineal() {
+  const dates = graf.map(item => item.date);
+  const values = graf.map(item => item.close); // Usaremos los valores de cierre para el gráfico lineal
 
-  // Redimensionar el gráfico cuando la ventana cambie de tamaño
+  var data = [{
+      x: dates,
+      y: values,
+      type: 'scatter', // Cambia a 'scatter' para un gráfico lineal
+      mode: 'lines', // 'lines' para un gráfico de líneas
+      line: { color: 'blue' } // Puedes personalizar el color de la línea
+  }];
+
+  var layout = {
+      title: 'Gráfico Lineal',
+      xaxis: {
+          title: 'Fecha',
+          rangeslider: { visible: false }
+      },
+      yaxis: {
+          title: 'Valor de Cierre'
+      },
+      responsive: true // Hacer el gráfico responsivo
+  };
+
+  Plotly.newPlot('chart', data, layout);
+
   window.addEventListener('resize', function() {
-    chart.resize({
-        width: document.getElementById('chart-container').offsetWidth,
-        height: document.getElementById('chart-container').offsetHeight
-    });
-});
+      Plotly.Plots.resize(document.getElementById('chart'));
+  });
 }
 
 function graficoVelas() {

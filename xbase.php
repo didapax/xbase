@@ -25,13 +25,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <link rel="stylesheet" href="css/style.css">
   <script src="css/SweetAlert/sweetalert2.all.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/SweetAlert/sweetalert2.min.css" /> 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css">
-   <!-- Incluir D3.js -->
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
-    <!-- Incluir C3.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.js"></script>  
-
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
     .c3-axis-x text {
             fill: white; /* Cambia 'blue' por el color que prefieras */
