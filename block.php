@@ -12,45 +12,6 @@ header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
 
 require "modulo.php";
 
-if(isset($_GET['cerrarSesion'])){
-// Destruir todas las variables de sesión
-$_SESSION = array();
-
-// Si se desea destruir la sesión completamente, también se debe destruir la cookie de sesión
-if (ini_get("session.use_cookies")) {
-    $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $params["path"], $params["domain"],
-        $params["secure"], $params["httponly"]
-    );
-}
-
-// Finalmente, destruir la sesión
-session_destroy();
-}
-
-if( isset($_GET['crear-token']) ){
-  $llave=$_GET['llave'];
-  if($llave == "dd77b701661c5b55"){
-    $bytes = random_bytes(8);
-    $referencia = bin2hex($bytes);
-    if(!ifUsuarioExist($referencia)){
-      sqlconector("INSERT INTO USER (USUARIO) VALUES('$referencia')");
-      sqlconector("INSERT INTO DATOSUSUARIOS (USUARIO,ACTIVO) VALUES('$referencia',1)");
-      sqlconector("INSERT INTO PARAMETROS (USUARIO) VALUES('$referencia')");
-      echo "Usuario creado con exito el token asignado es: $referencia";
-    }
-  }
-  else{
-    exit();
-  }
-}
-
-
-if(isset($_GET['list_assets'])){
-  echo json_encode (array_sqlconector("SELECT * FROM DATOS"));
-}
-
 if (isset($_POST['reset'])) {
   $usuario = $_POST['usuario'];
   $moneda = $_POST['moneda'];
@@ -143,16 +104,6 @@ if(isset($_POST['guardar'])){
   INVXCOMPRA={$invxcompra},
   IMPUESTO={$_POST['impuesto']} WHERE USUARIO='$usuario'"); 
   refreshDatos($usuario);
-}
-
-if(isset($_GET['resetPerdidas'])){
-  $usuario = $_GET['usuario'];  
-  sqlconector("UPDATE PARAMETROS SET PERDIDA=0 WHERE USUARIO='$usuario'");
-}
-
-if(isset($_GET['resetGanancias'])){
-  $usuario = $_GET['usuario'];
-  sqlconector("UPDATE PARAMETROS SET GANANCIA=0, PERDIDA=0 WHERE USUARIO='$usuario'");
 }
 
 if(isset($_POST['borrar'])){
@@ -306,26 +257,6 @@ if(isset($_POST['agregar'])){
   refreshDatos($usuario);
 }
 
-if(isset($_GET['getPriceBinance'])){
-  refreshDataAuto($_GET['usuario']);
-  echo readParametros($_GET['usuario'])['DATOS'];
-}
-
-if(isset($_GET['getGraf'])){
-  echo readParametros($_GET['usuario'])['DATOSGRAF'];
-}
-
-if( isset($_GET['binancex']) ){
-  $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
-      $api->useServerTime();
-      $balances = $api->balances();
-      echo "BNB owned: ".$balances['BNB']['available']."\n";
-      echo "Estimated Value: ".$api->btc_value." BTC\n";
-
-      $openorders = $api->openOrders("BTCUSDT");
-      print_r($openorders);
-}
-
 if( isset($_POST['info']) ){
   $moneda =  readTrader($_POST['info'])['MONEDA'];
   $precio = readPrices($moneda)['ACTUAL'];
@@ -333,4 +264,4 @@ if( isset($_POST['info']) ){
   $obj = array('asset' => $moneda, 'price' => $precio);
   echo json_encode($obj);   
 }
-?>
+

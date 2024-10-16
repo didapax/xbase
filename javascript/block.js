@@ -314,10 +314,10 @@ function Reset(){
   if(monedaValue && assetValue && parValue){
     Swal.fire({
       title: "xbase",
-      text: `insertando la Moneda con su Par ${monedaValue}, esta Usted Seguro?`,
+      text: `Quiere Comercializar con la Moneda y su Par ${monedaValue}, esta Usted Seguro?`,
       icon: 'warning',
       confirmButtonColor: '#EC7063',
-      confirmButtonText: 'Si Insertar',
+      confirmButtonText: 'Si Quiero',
       showCancelButton: true,
       cancelButtonText: "Cancelar"
       }).then((result) => {
@@ -433,8 +433,8 @@ function toFixedWithoutRounding(num, decimals) {
 }
 
 function graficoLineal() {
-  const dates = graf.map(item => item.date);
-  const values = graf.map(item => item.close); // Usaremos los valores de cierre para el gráfico lineal
+  const dates = graf.grafico.map(item => item.date);
+  const values = graf.grafico.map(item => item.close); // Usaremos los valores de cierre para el gráfico lineal
 
   var data = [{
       x: dates,
@@ -464,11 +464,11 @@ function graficoLineal() {
 }
 
 function graficoVelas() {
-  const dates = graf.map(item => item.date);
-  const opens = graf.map(item => item.open);
-  const highs = graf.map(item => item.high);
-  const lows = graf.map(item => item.low);
-  const closes = graf.map(item => item.close);
+  const dates = graf.grafico.map(item => item.date);
+  const opens = graf.grafico.map(item => item.open);
+  const highs = graf.grafico.map(item => item.high);
+  const lows = graf.grafico.map(item => item.low);
+  const closes = graf.grafico.map(item => item.close);
 
   var data = [{
       x: dates,
@@ -517,63 +517,29 @@ function leerDatos() {
 }
 
 function comprobarDatos() {
-  let num = 0;
-  if (datos) {
-      //animate();
-      leerDatos();      
-  } else {      
-      if(num == 3){
-        alert("No se ha podido comprobar los datos en el servidor...!");
-        window.location.href="xbase?token="+usuario;
-      }
-      else{
-        setTimeout(comprobarDatos, 500); // Revisa cada 500 ms si datos está lleno
-      }
-      
-      num += 1;
+  if(datos && listMonedas && graf) { 
+    document.getElementById("preloader").style.display='none';   
+    leerDatos();
+    requestAnimationFrame(animate);    
+  }
+  else {
+    setTimeout(comprobarDatos, 500); // Revisa cada 500 ms si datos está lleno
+    document.getElementById("preloader").style.display='block';
   }
 }
 
 async function obtenerDatos() {
-  const usuario = document.getElementById('usuario').value;
   try {
-      let response = await fetch("block?getPriceBinance&usuario=" + usuario);
-      let data = await response.json();
-
-      if (data) {
-          // Limpia los datos antiguos antes de asignar los nuevos
-          datos = null;
-
-          // Asigna los nuevos datos
-          datos = data;
-
-          // Actualiza los datos
-           refreshDatos();           
-
-          //console.log(datos);
-      }
-
-      let responseGraf = await fetch("block?getGraf&usuario=" + usuario);
-      let dataGraf = await responseGraf.json();
-      if(dataGraf){
-        // Limpia los datos antiguos antes de asignar los nuevos
-        graf = null;
-
-        // Asigna los nuevos datos
-        graf = dataGraf.grafico;
-
-        // Actualiza los datos
-        refreshGraf();
-      }
-
-      data =null;
-      dataGraf = null;
+      let result = await actualizarDatos();
+      datos = await recuperarDatos();
+      graf = await recuperarDatosGraf();
+      listMonedas = await recuperarMonedas();
 
       if(moneyLoad == null || moneyLoad == datos.id){
         document.getElementById("preloader").style.display='none';
       }
   } catch (error) {
-      console.error('Error Obtener Datos:', error);
+      console.error('Error Obtener Datos: ', error);
   }
 }
 
@@ -591,24 +557,21 @@ function animate(time) {
         lastTime = time;
         // Lógica de animación aquí
         refreshDatos();
-        refreshGraf();        
+        refreshGraf();
+        mostrarMonedas();      
     }
     
     requestAnimationFrame(animate);
 }
 
-function inicio(){
-obtenerDatos();    
-recuperarMonedas();
-comprobarDatos();    
-document.getElementById("preloader").style.display='none';
-myVar = setInterval(obtenerDatos, 3000);
+function inicio(){  
+  myVar = setInterval(obtenerDatos, 3000);
+  comprobarDatos();
 }
 
 function refreshDatos(){
       fiat = datos.par;
       simbolo = datos.asset;
-      graf = datos.grafico;
       let resultado = datos.m_balance * datos.price;
 
       if(document.getElementById('sugerirPrecioCompra').checked === true){
@@ -664,7 +627,6 @@ function refreshDatos(){
       $("#priceBtc").css("color",datos.colorbtc);
       $("#showCapital").css("color",datos.colordisp);
       $("#div3").html(datos.verescalones);
-      $("#div2").html(datos.verbinance);
       $("#listasset").html(datos.listasset);      
 
       document.getElementById('totalBalanceVenta').innerHTML = resultado.toFixed(2) +fiat;
@@ -689,12 +651,12 @@ function toggleMute(){
 
 function resetPerdidas(){ 
   const usuario = document.getElementById('usuario').value;
-  $.get("block?resetPerdidas&usuario="+usuario,function(data){})
+  $.get("server?resetPerdidas&usuario="+usuario,function(data){})
 }
 
 function resetGanancias(){
   const usuario = document.getElementById('usuario').value;
-  $.get("block?resetGanancias&usuario="+usuario,function(data){
+  $.get("server?resetGanancias&usuario="+usuario,function(data){
     document.getElementById("ganancias").value = "0.00";
   })
 }
@@ -763,49 +725,95 @@ function clickTabBinance(){
 }
 
 function cerrar_sesion(){  
-  $.get("block?cerrarSesion",function(data){
+  $.get("server?cerrarSesion",function(data){
     window.location.href="index";
   })  
 }
 
-function selMonedas(){
-  let optionMoneda = document.getElementById("monedas").value;
+function selMonedas(id){
+  let optionMoneda = id;
   const monedaEncontrada = listMonedas.find(itemMoneda => itemMoneda.ID === optionMoneda);
   if (optionMoneda) {
     document.getElementById("newMoneda").value = monedaEncontrada.MONEDA;
     document.getElementById("newAssetSimbol").value = monedaEncontrada.ASSET;
     document.getElementById("newEstableCoin").value = monedaEncontrada.PAR;
-  }
+    Reset();
+  }  
 }
 
 function mostrarMonedas() {
-  let fila = "<option value='' selected>selecciona una...</option>";
-  const selectMoneda = document.getElementById("monedas");
-  selectMoneda.innerHTML = fila;
+  const tablaCuerpo = document.getElementById("tabla-cuerpo-monedas");
+  tablaCuerpo.innerHTML = "";
 
-  listMonedas.forEach((producto) => {
-      let option = document.createElement("option");
-      option.value = producto.ID;
-      option.textContent = producto.MONEDA;
-      selectMoneda.appendChild(option);
+  listMonedas.forEach((producto, index) => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+          <td><span onclick="selMonedas('${producto.ID}')" style="cursor:pointer;">${producto.MONEDA}</span></td>
+          <td>${producto.ACTUAL}</td>
+      `;
+      tablaCuerpo.appendChild(fila);
   });
 }
 
-function recuperarMonedas() {
-  fetch("block?list_assets=")
-      .then(response => {
-          if (!response.ok) {
-              throw new Error("Error en la solicitud: " + response.status);
-          }
-          return response.json(); // Parsear la respuesta como JSON
-      })
-      .then(data => {
-          listMonedas = data;    
-          mostrarMonedas();
-          //console.log("Monedas:", data);
-      })
-      .catch(error => {
-          console.error("Error en la solicitud:", error);
-      });
-  
+  async function recuperarMonedas() {
+    try {
+        const response = await fetch(`server?list_assets=`);
+        if (!response.ok) {
+            throw new Error(`Error Recuperar Monedas: ${response.status}`);
+        }
+        const data = await response.json(); // Parsear la respuesta como JSON
+        console.log("Monedas:", data);
+        return data;
+    } catch (error) {
+        console.error("Error Recuperar Monedas: ", error);
+        return null; // Devolver null en caso de error
+    }
   }
+
+  async function recuperarDatos() {
+    const usuario = document.getElementById('usuario').value;
+    try {
+        const response = await fetch(`server?getPriceBinance&usuario=${usuario}`);
+        if (!response.ok) {
+            throw new Error(`Error Recuperar Datos: ${response.status}`);
+        }
+        const data = await response.json(); // Parsear la respuesta como JSON
+        console.log("Datos:", data);
+        return data;
+    } catch (error) {
+        console.error("Error Recuperar Datos: ", error);
+        return null; // Devolver null en caso de error
+    }
+}
+
+async function recuperarDatosGraf() {
+  const usuario = document.getElementById('usuario').value;
+    try {
+          const response = await fetch(`server?getGraf&usuario=${usuario}`);
+          if (!response.ok) {
+              throw new Error(`Error Recuperar Graficos: ${response.status}`);
+          }
+          const data = await response.json(); // Parsear la respuesta como JSON
+          console.log("Grafico:", data);
+          return data;
+      } catch (error) {
+          console.error("Error Recuperar Graficos: ", error);
+          return null; // Devolver null en caso de error
+  }
+}
+
+async function actualizarDatos() {
+  const usuario = document.getElementById('usuario').value;
+    try {
+          const response = await fetch(`server?actualizarData&usuario=${usuario}`);
+          if (!response.ok) {
+              throw new Error(`Error Actualizar Data: ${response.status}`);
+          }
+          const data = await response.json(); // Parsear la respuesta como JSON
+          console.log("DataDB: ", data);
+          return data;
+      } catch (error) {
+          console.error("Error Actualizar Data: ", error);
+          return null; // Devolver null en caso de error
+  }
+}

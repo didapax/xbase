@@ -812,10 +812,6 @@ function refreshDataAuto($usuario) {
       $api->useServerTime();
       $balances = $api->balances();
 
-      if (recordCountUser($usuario,"ORDERBINANCE") > 0) {
-          $conexion->exec("DELETE FROM ORDERBINANCE WHERE USUARIO='$usuario'");
-      }
-
       $consulta = "SELECT * FROM DATOSUSUARIOS WHERE USUARIO='$usuario'";
       $stmt = $conexion->query($consulta);
 
@@ -824,36 +820,19 @@ function refreshDataAuto($usuario) {
           $available_mon = $row['MONEDA'];
           $axie = readPrices($available_mon);
 
-          if (row_sqlconector("SELECT COUNT(*) AS TOTAL FROM TRADER WHERE USUARIO='$usuario' AND  MONEDA='{$available_mon}'")['TOTAL'] > 0) {
-              $openorders = $api->openOrders($available_mon);
-
-              $insertOrder = $conexion->prepare("INSERT INTO ORDERBINANCE (USUARIO, MONEDA, ORDERID, TIPO, ESTATUS, PRECIO, CANTIDAD) VALUES (:usuario, :moneda, :orderid, :tipo, :estatus, :precio, :cantidad)");
-              foreach ($openorders as $order) {
-                  $insertOrder->execute([
-                      ':usuario' => $usuario,
-                      ':moneda' => $order['symbol'],
-                      ':orderid' => $order['orderId'],
-                      ':tipo' => $order['side'],
-                      ':estatus' => $order['status'],
-                      ':precio' => $order['price'],
-                      ':cantidad' => $order['origQty']
-                  ]);
-              }
-          }
-
           $updateBalance = $conexion->prepare("UPDATE DATOSUSUARIOS SET BALANCE_ASSET = :balance WHERE USUARIO=:usuario AND MONEDA = :moneda");
           $updateBalance->execute([
               ':usuario' => $usuario,
               ':balance' => $balances[$asset]['available'],
               ':moneda' => $available_mon
           ]);
+      }
 
-          $updateEstableCoin = $conexion->prepare("UPDATE PARAMETROS SET CAPITAL = :balanceUsd, DISPONIBLE = :balanceUsd  WHERE USUARIO=:usuario");
-          $updateEstableCoin->execute([
-            ':usuario' => $usuario,
-            ':balanceUsd' => $balances[$estableCoin]['available']
-        ]);
-      }      
+      $updateEstableCoin = $conexion->prepare("UPDATE PARAMETROS SET CAPITAL = :balanceUsd, DISPONIBLE = :balanceUsd  WHERE USUARIO=:usuario");
+      $updateEstableCoin->execute([
+        ':usuario' => $usuario,
+        ':balanceUsd' => $balances[$estableCoin]['available']
+    ]);      
 
   } catch (PDOException $e) {
       echo "Error en la conexión a la base de datos: " . $e->getMessage();
@@ -1084,35 +1063,6 @@ function findEscalones($usuario) {
   return $cadena;
 }
 
-function findBinance($usuario) { 
-  $cadena = "<table style=width:100%;><th>Estatus</th><th>Moneda</th><th>Cant.</th><th>Orden Id</th><th>Tipo</th><th>Opciones</th>";
-  $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
-
-  if (!$conexion) {
-      error_log("Failed to connect to database: " . mysqli_connect_error());
-      return "Refresh page, Failed to connect to Data...";
-  }
-
-  $consulta = "SELECT * FROM ORDERBINANCE WHERE USUARIO='$usuario'";
-  $resultado = mysqli_query($conexion, $consulta);
-
-  if (!$resultado) {
-      error_log("Error in query: " . mysqli_error($conexion));
-      mysqli_close($conexion);
-      return "Error retrieving data.";
-  }
-
-  while ($row = mysqli_fetch_array($resultado)) {
-      $colorRow = ($row['TIPO'] == "SELL") ? "#F37A8B" : "#4BC883";
-
-      $cadena .= "<tr style=color:{$colorRow};><td><span>{$row['ESTATUS']}</span></td><td><span>{$row['MONEDA']}</span></td><td><span>" . price($row['CANTIDAD']) . "</span></td><td><span>{$row['ORDERID']}</span></td><td><span>{$row['TIPO']}</span></td><td><button type=button class=escalbutton style=background:#EAB92B; onclick=cancelOrdenBinance({$row['ORDERID']})'>&#10006;</button></td></tr>";
-  }
-
-  mysqli_close($conexion);
-  $cadena .= "</table>";
-  return $cadena;
-}
-
 function getpante($usuario){ 
   $row = readDatos($usuario); 
   $moneda=$row['MONEDA'];
@@ -1229,8 +1179,7 @@ function refreshDatos($usuario){
       'recupera' => totales($usuario,$moneda)['recupera'],
       'alert' =>returnAlertas($moneda),
       'checkAnoGrafico'=>$checkAnoGrafico,
-      'verescalones' => findEscalones($usuario),
-      'verbinance' => findBinance($usuario),
+      'verescalones' => findEscalones($usuario),      
       'labelpricebitcoin' => $labelPriceBitcoin,
       'labelpricemoneda' => $labelPriceMoneda,
       'precio_venta' => $row2['AUTOSHELL'],

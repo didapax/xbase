@@ -27,40 +27,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <link rel="stylesheet" type="text/css" href="css/SweetAlert/sweetalert2.min.css" /> 
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
-    .c3-axis-x text {
-            fill: white; /* Cambia 'blue' por el color que prefieras */
-            font-size: 12px; /* Ajusta el tamaño de la fuente si es necesario */
-        }
 
-        .c3-axis-y text {
-            fill: white; /* Cambia 'red' por el color que prefieras */
-            font-size: 12px; /* Ajusta el tamaño de la fuente si es necesario */
-        }    
-        .c3-legend-item text {
-            fill: white; /* Cambia 'blue' por el color que prefieras */
-        }    
-
-        .c3-tooltip {
-            background-color: #f9f9f9; /* Cambia el color de fondo del tooltip */
-            border: 1px solid #ccc; /* Cambia el color del borde del tooltip */
-        }
-
-        .c3-tooltip th {
-            color: blue; /* Cambia el color de la letra del encabezado del tooltip */
-        }
-
-        .c3-tooltip td {
-            color: red; /* Cambia el color de la letra del contenido del tooltip */
-        }     
-        
-        .c3-candlestick-up {
-            fill: green;
-            stroke: green;
-        }
-        .c3-candlestick-down {
-            fill: red;
-            stroke: red;
-        }      
   </style>
 
   <script>
@@ -90,17 +57,11 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 <input type="hidden" id="usuario" value="<?php if(isset($_SESSION['usuario'])) echo $_SESSION['usuario']; ?>">
 <span style=display:none; id="techo"></span>
 
-<dialog class="dialog_retiro" id="newAsset" close>
+<!--<dialog class="dialog_retiro" id="newAsset" close>
   <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Nueva Criptomoneda</div>
   <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('newAsset').close()">X</a><br>
-  <hr>  
-  <span>Moneda Par </span>
-  <select id="monedas" onchange="selMonedas()"></select>
-  <input style="width:100px;"  type="hidden" maxlength="10" id="newMoneda" value=""><br>
-  <span>Asset </span><input readonly style="width:100px;" title="Asset is: HNT, BNB, BTC" type="text" maxlength="10" id="newAssetSimbol" value=""><br>  
-  <span>Estable Coin </span><input readonly style="width:100px;" title="USDT, USDC" type="text" maxlength="10" id="newEstableCoin" value=""><br>
-  <button style="margin-left: 55px;background:transparent;" type="button" onclick="Reset()"><span style='font-size:24px;'>&#9088;</span>Insertar</button>  
-</dialog>
+  <hr>
+</dialog>-->
 
 <dialog class="dialog_retiro" id="config" close>
     <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Configuracion</div>
@@ -126,7 +87,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   <div class="price_entrada">
     <label style="margin-left:13px;font-size:18px;font-weight:bold;" id="priceMoneda"></label>
     <label title="Config" style="margin-left:13px;font-weight:bold;font-size:21px;" id="btnConfig" onclick="showConfig()" >&#9881;</label>
-    <label style="margin-left:10px;font-size:18px;color:white;cursor:pointer;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').showModal()">&#10010;</label>
+    <!--<label style="margin-left:10px;font-size:18px;color:white;cursor:pointer;" title="Insertar una Nueva" onclick="document.getElementById('newAsset').showModal()">&#10010;</label>-->
     <input type="radio" id="xmes" name="fav_language" value="xmes" onclick="xmes()">
     <label for="xmes">Lineal</label>
     <input type="radio" id="xano" name="fav_language" value="xano" onclick="xano()">
@@ -186,7 +147,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 <div class="div3" >
     <div class=bar>
       <button id="tabButtonOpera" class="bar tabButton" style="color:#F0B90B;" onclick=clickTabOpera()>Operaciones</button>
-      <button id="tabButtonBinance" class="bar tabButton" onclick=clickTabBinance()>Ordenes en Binance</button>
+      <button id="tabButtonBinance" class="bar tabButton" onclick=clickTabBinance()>MERCADO ACTUAL</button>
     </div>
 
     <div id=tabOpera class=tabContainer>
@@ -194,10 +155,25 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     </div>
 
     <div class=tabContainer id=tabBinance style=display:none;>
-      <div  id="div2"></div>
+      <div  id="div2">
+        <table id='example' class='ui celled table' style='width:100%; '> 
+            <thead>
+              <tr>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tabla-cuerpo-monedas">
+            </tbody>
+        </table>
+
+        <input type="hidden" id="newMoneda" value="">
+        <input type="hidden" id="newAssetSimbol" value="">  
+        <input type="hidden" id="newEstableCoin" value="">
+      </div>
     </div>   
 
-</div> 
+</div>
 
 <div class="div2">
   <div class="izquierda_asset" id="listasset"></div>
