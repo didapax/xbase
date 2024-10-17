@@ -100,8 +100,10 @@ if ($method == "GET") {
       }
       
       if(isset($_GET['actualizarData'])){
-        $obj = array("result" => "true");
-        refreshDataAuto($_GET['usuario']);
+        $obj = array("result" => "false");
+        if(refreshDataAuto($_GET['usuario'])){
+            $obj['result'] = "true";
+        };
         echo json_encode($obj);
       }
       

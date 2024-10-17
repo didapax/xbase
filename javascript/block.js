@@ -10,7 +10,7 @@ let chart = null;
 let listMonedas = [];
 let myVar = null;
 let moneyLoad = null;
-
+let usuario = null;
 
 let lastTime = 0;
 const fps = 30;
@@ -29,7 +29,6 @@ function jsNota(frecuencia){
 }
 
 function Guardar(){
-  const usuario = document.getElementById('usuario').value;
   document.getElementById('config').close();
   document.getElementById("preloader").style.display='block';
   $.post("block",{
@@ -55,10 +54,10 @@ function calculo(){
 }
 
 function escalon(){
-  const cantidad = document.getElementById('invxcompra').value*1;
-  const precio = document.getElementById('precioCompra').value*1;
-  const total = cantidad / precio;
-  const cantidadComprada = total.toFixed(8);
+  let cantidad = document.getElementById('invxcompra').value*1;
+  let precio = document.getElementById('precioCompra').value*1;
+  let total = cantidad / precio;
+  let cantidadComprada = total.toFixed(8);
   document.getElementById('cantidadComprada').value = cantidadComprada;
   document.getElementById('piso').innerHTML = `<span style=font-weight:bold;color:white;>${cantidadComprada}<span style=font-weight:bold;color:gray;>${simbolo}</span></span>`;
   document.getElementById('stoploss').innerHTML = `<span style=font-weight:bold;color:white;>${datos.pante}<span style=font-weight:bold;color:gray;>${fiat}</span></span>`;
@@ -67,11 +66,10 @@ function escalon(){
 function agregar(){
     if(navigator.onLine){
       let valor= "Limit";
-      const usuario = document.getElementById('usuario').value;
-      const t_precio = ""+priceFixed(document.getElementById('precioCompra').value);
-      const simbol = document.getElementById('asset').value;
-      const cantidad = document.getElementById('cantidadComprada').value;
-      const moneda = document.getElementById('moneda').value;
+      let t_precio = ""+priceFixed(document.getElementById('precioCompra').value);
+      let simbol = document.getElementById('asset').value;
+      let cantidad = document.getElementById('cantidadComprada').value;
+      let moneda = document.getElementById('moneda').value;
       let mensaje =`Confirmas la Operacion Comprar ${cantidad}  ${simbol} a un Pecio ${valor} de ${t_precio} Usdc`;
 
       if(document.getElementById('sugerirPrecioCompra').checked === true){
@@ -142,7 +140,6 @@ function crear(){
 }
 
 function perdida(id){
-  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Estas Seguro de Vender.!",
@@ -162,7 +159,6 @@ function perdida(id){
 }
 
 function deletePar(){
-  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Estas Seguro de Eliminar a "+document.getElementById('moneda').value+"...?",
@@ -186,10 +182,9 @@ function deletePar(){
 
 function negativo(){
   let valor= "Limit";
-  const usuario = document.getElementById('usuario').value;
-  const precio = document.getElementById('precioCompra2').value *1;
-  const moneda = document.getElementById('moneda').value;
-  const cantidad = document.getElementById('balance').value*1;
+  let precio = document.getElementById('precioCompra2').value *1;
+  let moneda = document.getElementById('moneda').value;
+  let cantidad = document.getElementById('balance').value*1;
 
   if(document.getElementById('sugerirPrecioVenta').checked === true){
     valor = "Market";
@@ -217,7 +212,6 @@ function negativo(){
 }
 
 function negativoBuy(id){ 
-  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'Retirar',
     text: "Estas Seguro de Liquidar tu posicion..?",
@@ -242,7 +236,6 @@ function negativoBuy(id){
 }
 
 function borrar(id){
-  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Estas Seguro de Eliminar el escalon con sus Ordenes.?",
@@ -262,7 +255,6 @@ function borrar(id){
 }
 
 function autosell(id){
-  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Confirma que quieres activar/desactivar el Auto Sell.? se vendera a precio de mercado",
@@ -282,7 +274,6 @@ function autosell(id){
 }
 
 function autostop(id){
-  const usuario = document.getElementById('usuario').value;
   Swal.fire({
     title: 'xbase',
     text: "Confirma que quieres activar/desactivar el Auto STOP.? Al activar/desactivar el auto stop se calcularan las perdidas al nivel programado y se vendera a precio de mercado.",
@@ -302,14 +293,13 @@ function autostop(id){
 }
 
 function Reset(){
-  const usuario = document.getElementById('usuario').value;
-  const moneda = document.getElementById('newMoneda');
-  const asset = document.getElementById('newAssetSimbol');
-  const par = document.getElementById('newEstableCoin');
+  let moneda = document.getElementById('newMoneda');
+  let asset = document.getElementById('newAssetSimbol');
+  let par = document.getElementById('newEstableCoin');
 
-  const monedaValue = moneda.value;
-  const assetValue = asset.value;
-  const parValue = par.value;
+  let monedaValue = moneda.value;
+  let assetValue = asset.value;
+  let parValue = par.value;
 
   if(monedaValue && assetValue && parValue){
     Swal.fire({
@@ -347,7 +337,6 @@ function Reset(){
 }
 
 function moneyChangue(valor){
-  const usuario = document.getElementById('usuario').value;
   document.getElementById("preloader").style.display='block';
   moneyLoad = valor;
   $.post("block",{ 
@@ -355,15 +344,12 @@ function moneyChangue(valor){
     usuario: usuario, 
     moneda: valor
   },function(data){
-    //document.getElementById('sugerirPrecioCompra').checked = true;
-    //window.location.href="xbase?token="+usuario;
     refreshDatos();
   });
 }
 
 function local(){
-  const usuario = document.getElementById('usuario').value;
-  var valor= 0;
+  let valor= 0;
   if(document.getElementById('local').checked === true){
     valor = 1;
   }
@@ -374,8 +360,7 @@ function local(){
 }
 
 function xmes(){
-  const usuario = document.getElementById('usuario').value;
-  var valor= 0;
+  let valor= 0;
   tipoGrafico = 0;
   $.post("block",{
     xgraf: valor,
@@ -386,8 +371,7 @@ function xmes(){
 }
 
 function xano(){
-  const usuario = document.getElementById('usuario').value;
-  var valor= 1;
+  let valor= 1;
   tipoGrafico = 1;
   $.post("block",{
     xgraf: valor,
@@ -402,8 +386,7 @@ function xgraf(){
 }
 
 function bina(){
-  const usuario = document.getElementById('usuario').value;
-  var valor= 0;
+  let valor= 0;
   if(document.getElementById('orderBinance').checked === true){
     valor = 1;
   }
@@ -414,7 +397,7 @@ function bina(){
 }
 
 function alertas(data){
-  const muted = document.getElementById("colorAlerta").value;
+  let muted = document.getElementById("colorAlerta").value;
     if(data === "green" && muted == "un-mute"){
           jsNota(184.997);
     }
@@ -428,13 +411,13 @@ function priceFixed(valor){
 }
 
 function toFixedWithoutRounding(num, decimals) {
-  const factor = Math.pow(10, decimals);
+  let factor = Math.pow(10, decimals);
   return Math.floor(num * factor) / factor;
 }
 
 function graficoLineal() {
-  const dates = graf.grafico.map(item => item.date);
-  const values = graf.grafico.map(item => item.close); // Usaremos los valores de cierre para el gráfico lineal
+  let dates = graf.grafico.map(item => item.date);
+  let values = graf.grafico.map(item => item.close); // Usaremos los valores de cierre para el gráfico lineal
 
   var data = [{
       x: dates,
@@ -464,11 +447,11 @@ function graficoLineal() {
 }
 
 function graficoVelas() {
-  const dates = graf.grafico.map(item => item.date);
-  const opens = graf.grafico.map(item => item.open);
-  const highs = graf.grafico.map(item => item.high);
-  const lows = graf.grafico.map(item => item.low);
-  const closes = graf.grafico.map(item => item.close);
+  let dates = graf.grafico.map(item => item.date);
+  let opens = graf.grafico.map(item => item.open);
+  let highs = graf.grafico.map(item => item.high);
+  let lows = graf.grafico.map(item => item.low);
+  let closes = graf.grafico.map(item => item.close);
 
   var data = [{
       x: dates,
@@ -513,7 +496,7 @@ function leerDatos() {
       document.getElementById('escalones').value = (datos.escalones * 1).toFixed(0);
       document.getElementById('xmes').checked = datos.checkMesGrafico;
       document.getElementById('xano').checked = datos.checkAnoGrafico;
-      tipoGrafico = datos.tipografico *1;
+      tipoGrafico = datos.tipografico *1;      
 }
 
 function comprobarDatos() {
@@ -536,6 +519,9 @@ async function obtenerDatos() {
         await recuperarDatos();
         await recuperarDatosGraf();
         await recuperarMonedas();  
+      }
+      else{
+        document.getElementById("preloader").style.display='block';        
       }
 
       if(moneyLoad == null || moneyLoad == datos.id){
@@ -569,8 +555,9 @@ function animate(time) {
     requestAnimationFrame(animate);
 }
 
-function inicio(){  
-  myVar = setInterval(obtenerDatos, 3000);
+function inicio(){
+  usuario = document.getElementById('usuario').value;
+  myVar = setInterval(obtenerDatos, 5000);
   comprobarDatos();
 }
 
@@ -655,12 +642,10 @@ function toggleMute(){
 }
 
 function resetPerdidas(){ 
-  const usuario = document.getElementById('usuario').value;
   $.get("server?resetPerdidas&usuario="+usuario,function(data){})
 }
 
 function resetGanancias(){
-  const usuario = document.getElementById('usuario').value;
   $.get("server?resetGanancias&usuario="+usuario,function(data){
     document.getElementById("ganancias").value = "0.00";
   })
@@ -778,7 +763,6 @@ function mostrarMonedas() {
   }
 
   async function recuperarDatos() {
-    const usuario = document.getElementById('usuario').value;
     try {
         const response = await fetch(`server?getPriceBinance&usuario=${usuario}`);
         if (!response.ok) {
@@ -796,7 +780,6 @@ function mostrarMonedas() {
 }
 
 async function recuperarDatosGraf() {
-  const usuario = document.getElementById('usuario').value;
     try {
           const response = await fetch(`server?getGraf&usuario=${usuario}`);
           if (!response.ok) {
@@ -814,7 +797,6 @@ async function recuperarDatosGraf() {
 }
 
 async function actualizarDatos() {
-  const usuario = document.getElementById('usuario').value;
     try {
           const response = await fetch(`server?actualizarData&usuario=${usuario}`);
           if (!response.ok) {

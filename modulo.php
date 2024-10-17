@@ -842,7 +842,7 @@ function refreshDataAuto($usuario) {
       if (isset($conexion)) {
           $conexion = null;
       }
-      refreshDatos($usuario);
+      return refreshDatos($usuario);
   }
 }
 
@@ -970,13 +970,18 @@ function findEscalones($usuario) {
   $didable_button = ""; 
   $didable_cancel_button = ""; 
   $didable_ckecked_button = "";
+  $style_ckecked_auto = "";
+  $style_ckecked_stop = "";
   $didable_ckecked_stop = "";
   $fecha = "";
-  $colorAlert = "transparent";  
+  $color = "#CFCFD3";
+  $bk="transparent";
+  $symbol = "&#9660;";
   $colorRow = "transparent";  
   $miganancia = 0;  
   $precioActual = 0;  
   $botones = "";
+  $t_moneda = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$color};>".currency(0.00)." MONEY</div>";
   $cadena = "<table style=width:100%;><th>Stop</th><th>Tipo</th><th>Compra/Venta</th><th>Moneda</th><th style=text-align:right;>Ganancia</th><th>Opciones</th>";  
   
   if (recordCountUser($usuario,"TRADER") > 0) {
@@ -998,7 +1003,7 @@ function findEscalones($usuario) {
       
       while ($row = mysqli_fetch_array($resultado)) {
           $puntos = readParametros($usuario)['STOPLOSS'];
-          $colorAlert = "#CFCFD3"; 
+          $color = "#CFCFD3"; 
           $colorRow = "transparent";
           $available = readPrices($row['MONEDA']);  
           $datos = readDatosMoneda($row['MONEDA']);
@@ -1009,18 +1014,21 @@ function findEscalones($usuario) {
           $precioAbajo = $available['ABAJO'];
           $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) * 3.6) . "deg";
 
-          $colorAlert = ($row['PRECIOCOMPRA'] > $precioActual) ? "#F37A8B" : "#4BC883";
-          
+          //$color = ($row['PRECIOCOMPRA'] > $precioActual) ? "#F37A8B" : "#4BC883";
+
           if (strlen($row['ORDERVENTA']) > 0) {
             $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
             $didable_button = "";
             $didable_cancel_button = "";
             $didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
             $didable_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "checked" : "";
+
+            $style_ckecked_auto = ($row['AUTOSELL'] == 1) ? "style=background-color:#4caf50;color:white;" : "";
+            $style_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "style=background-color:#4caf50;color:white;" : "";            
           }
           else {
             $miganancia = 0;
-            $colorAlert = "#CFCFD3";
+            $color = "#CFCFD3";
             $didable_button = "disabled";
             $didable_cancel_button = "disabled";
           }
@@ -1042,17 +1050,31 @@ function findEscalones($usuario) {
                   $porcenMaxNeg = "0deg";
               }
               $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>" . quantity($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']) . " " . $datos['ASSET'] . "<span style=color:{$fg};> {$sy}</span></div>";
-              $botones = "<input type=checkbox {$didable_ckecked_stop} id=toggle1 onclick=autostop({$row['ID']})><label class=btn-label1 for=toggle1>Stop</label><input type=checkbox {$didable_ckecked_button} id=toggle2 onclick=autosell({$row['ID']})><label class=btn-label2 for=toggle2>Auto</label><label class=escalbutton style=background:green; onclick=negativoBuy({$row['ID']})>Buy</label><label {$didable_cancel_button}  title=eliminar class=escalbutton style=background:#EAB92B; onclick=borrar({$row['ID']})>x</label>";
+              $botones = "<input type=checkbox {$didable_ckecked_stop} id=toggle1 onclick=autostop({$row['ID']})><label class=btn-label1 {$style_ckecked_stop} for=toggle1>Stop</label><input type=checkbox {$didable_ckecked_button} id=toggle2 onclick=autosell({$row['ID']})><label class=btn-label2 {$style_ckecked_auto} for=toggle2>Auto</label><label class=escalbutton style=background:green; onclick=negativoBuy({$row['ID']})>Buy</label><label {$didable_cancel_button}  title=eliminar class=escalbutton style=background:#EAB92B; onclick=borrar({$row['ID']})>x</label>";
               $cadena .= "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>{$row['TIPO']}</td><td>{$precioVenta}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg};>".number_format($real_ganancia, 8, ".", ",")."{$datos['ASSET']}</span></td><td style=text-align:right;>{$botones}</td></tr>";
           }
           else {
-              $precioCompra = formatPrice($row['PRECIOCOMPRA'], $datos['ASSET'], $datos['PAR']);
-              if ($didable_cancel_button == "disabled") {
+            if($precioActual < $row['PRECIOCOMPRA']){
+              $color = "#F37A8B";
+              $bk = "#372127";
+              $symbol = "&#9660;"; 
+            }
+            else{
+              $color = "#4BC883";
+              $bk = "#15342D";
+              $symbol = "&#9650;";
+            }          
+
+            $t_moneda = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$color};>".formatPrice($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']) . " " . $datos['ASSET']." <span style=color:{$color};>{$symbol}</span></div>";
+            $precioCompra = formatPrice($row['PRECIOCOMPRA'], $datos['ASSET'], $datos['PAR']);
+            
+            if ($didable_cancel_button == "disabled") {
                   $botones = "";              
-              } else {
-                  $botones = "<input type=checkbox {$didable_ckecked_stop} id=toggle1 onclick=autostop({$row['ID']})><label class=btn-label1 for=toggle1>Stop</label><input type=checkbox {$didable_ckecked_button} id=toggle2 onclick=autosell({$row['ID']})><label class=btn-label2 for=toggle2>Auto</label><label {$didable_button} class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</label><label {$didable_cancel_button} class=escalbutton title=eliminar style=background:#EAB92B; onclick=borrar({$row['ID']})>x</label>";
-              }
-              $cadena .= "<tr style=background:{$colorRow};color:{$colorAlert};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>" . totalmoneda($usuario,$row['MONEDA'])['total'] . "</td><td style=text-align:right;><span style=font-weight:bold;>" . number_format($miganancia, 2, ".", ",") . "</span>$</td><td style=text-align:right;>{$botones}</td></tr>";
+            }
+            else {
+                  $botones = "<input type=checkbox {$didable_ckecked_stop} id=toggle1 onclick=autostop({$row['ID']})><label class=btn-label1 {$style_ckecked_stop} for=toggle1>Stop</label><input type=checkbox {$didable_ckecked_button} id=toggle2 onclick=autosell({$row['ID']})><label class=btn-label2 {$style_ckecked_auto} for=toggle2>Auto</label><label {$didable_button} class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</label><label {$didable_cancel_button} class=escalbutton title=eliminar style=background:#EAB92B; onclick=borrar({$row['ID']})>x</label>";
+            }
+            $cadena .= "<tr style=background:{$colorRow};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>".$t_moneda."</td><td style=text-align:right;><span style=font-weight:bold;color:{$color}>".number_format($miganancia, 2, ".", ",")."$</span></td><td style=text-align:right;>{$botones}</td></tr>";
           }        
        }
 
@@ -1193,8 +1215,12 @@ function refreshDatos($usuario){
       'grafico' => returnGrafica($usuario,$moneda)
     );
 
-    sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra,DATOSGRAF='".json_encode($objGraf)."', DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
+    $result = sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra,DATOSGRAF='".json_encode($objGraf)."', DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
 
+    if($result){
+      return TRUE;
+    }
+    return FALSE;
 }
 
 function refreshDatosMon($mon){
