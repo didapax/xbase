@@ -1044,7 +1044,7 @@ function findEscalones($usuario) {
               $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>" . quantity($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']) . " " . $datos['ASSET'] . "<span style=color:{$fg};> {$sy}</span></div>";
               $botones = "<input type=checkbox {$didable_ckecked_stop} id=toggle1 onclick=autostop({$row['ID']})><label class=btn-label1 for=toggle1>Stop</label><input type=checkbox {$didable_ckecked_button} id=toggle2 onclick=autosell({$row['ID']})><label class=btn-label2 for=toggle2>Auto</label><label class=escalbutton style=background:green; onclick=negativoBuy({$row['ID']})>Buy</label><label {$didable_cancel_button}  title=eliminar class=escalbutton style=background:#EAB92B; onclick=borrar({$row['ID']})>x</label>";
               $cadena .= "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>{$row['TIPO']}</td><td>{$precioVenta}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg};>".number_format($real_ganancia, 8, ".", ",")."{$datos['ASSET']}</span></td><td style=text-align:right;>{$botones}</td></tr>";
-          } 
+          }
           else {
               $precioCompra = formatPrice($row['PRECIOCOMPRA'], $datos['ASSET'], $datos['PAR']);
               if ($didable_cancel_button == "disabled") {

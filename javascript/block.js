@@ -107,7 +107,7 @@ function agregar(){
                       confirmButtonColor: '#3085d6',
                       confirmButtonText: 'Ok'
                       });                
-                  }        
+                  }
                 });
               }
               else{
@@ -520,7 +520,7 @@ function comprobarDatos() {
   if(datos && listMonedas && graf) { 
     document.getElementById("preloader").style.display='none';   
     leerDatos();
-    requestAnimationFrame(animate);    
+    //requestAnimationFrame(animate);    
   }
   else {
     setTimeout(comprobarDatos, 500); // Revisa cada 500 ms si datos está lleno
@@ -530,10 +530,13 @@ function comprobarDatos() {
 
 async function obtenerDatos() {
   try {
+
       let result = await actualizarDatos();
-      datos = await recuperarDatos();
-      graf = await recuperarDatosGraf();
-      listMonedas = await recuperarMonedas();
+      if(result.result){
+        await recuperarDatos();
+        await recuperarDatosGraf();
+        await recuperarMonedas();  
+      }
 
       if(moneyLoad == null || moneyLoad == datos.id){
         document.getElementById("preloader").style.display='none';
@@ -556,9 +559,11 @@ function animate(time) {
     if (time - lastTime >= interval) {
         lastTime = time;
         // Lógica de animación aquí
+        /*
         refreshDatos();
         refreshGraf();
-        mostrarMonedas();      
+        mostrarMonedas();
+        */
     }
     
     requestAnimationFrame(animate);
@@ -763,7 +768,9 @@ function mostrarMonedas() {
         }
         const data = await response.json(); // Parsear la respuesta como JSON
         console.log("Monedas:", data);
-        return data;
+        listMonedas = null;
+        listMonedas =  data;
+        mostrarMonedas();
     } catch (error) {
         console.error("Error Recuperar Monedas: ", error);
         return null; // Devolver null en caso de error
@@ -779,7 +786,9 @@ function mostrarMonedas() {
         }
         const data = await response.json(); // Parsear la respuesta como JSON
         console.log("Datos:", data);
-        return data;
+        datos = null;
+        datos =  data;
+        refreshDatos();
     } catch (error) {
         console.error("Error Recuperar Datos: ", error);
         return null; // Devolver null en caso de error
@@ -795,7 +804,9 @@ async function recuperarDatosGraf() {
           }
           const data = await response.json(); // Parsear la respuesta como JSON
           console.log("Grafico:", data);
-          return data;
+          graf = null;
+          graf =  data;
+          refreshGraf();
       } catch (error) {
           console.error("Error Recuperar Graficos: ", error);
           return null; // Devolver null en caso de error
