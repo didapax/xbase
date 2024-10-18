@@ -444,6 +444,9 @@ function graficoLineal() {
   window.addEventListener('resize', function() {
       Plotly.Plots.resize(document.getElementById('chart'));
   });
+  
+  layout = null;
+  data = null;
 }
 
 function graficoVelas() {
@@ -482,6 +485,10 @@ function graficoVelas() {
   window.addEventListener('resize', function() {
     Plotly.Plots.resize(document.getElementById('chart'));
 });
+
+layout = null;
+data = null;
+
 }
 
 function leerDatos() {
@@ -739,7 +746,7 @@ function mostrarMonedas() {
       const fila = document.createElement("tr");
       fila.innerHTML = `
           <td><span onclick="selMonedas('${producto.ID}')" style="cursor:pointer;">${producto.MONEDA}</span></td>
-          <td>${producto.ACTUAL}</td>
+          <td style="text-align: end;">${Math.round(producto.ACTUAL * 1000000) / 1000000}</td>
       `;
       tablaCuerpo.appendChild(fila);
   });
