@@ -254,7 +254,7 @@ function borrar(id){
     });
 }
 
-function autosell(id){
+function autosell(id){  
   Swal.fire({
     title: 'xbase',
     text: "Confirma que quieres activar/desactivar el Auto Sell.? se vendera a precio de mercado",
@@ -265,6 +265,7 @@ function autosell(id){
     cancelButtonText: "No Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
+          document.getElementById('btnauto'+id).disabled = true;          
           $.post("block",{
             autosell: id,
             usuario: usuario
@@ -273,7 +274,7 @@ function autosell(id){
     });
 }
 
-function autostop(id){
+function autostop(id){  
   Swal.fire({
     title: 'xbase',
     text: "Confirma que quieres activar/desactivar el Auto STOP.? Al activar/desactivar el auto stop se calcularan las perdidas al nivel programado y se vendera a precio de mercado.",
@@ -284,6 +285,7 @@ function autostop(id){
     cancelButtonText: "No Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
+          document.getElementById('btnstop'+id).disabled = true;
           $.post("block",{
             autostop: id,
             usuario: usuario
@@ -564,7 +566,7 @@ function animate(time) {
 
 function inicio(){
   usuario = document.getElementById('usuario').value;
-  myVar = setInterval(obtenerDatos, 5000);
+  myVar = setInterval(obtenerDatos, 6000);
   comprobarDatos();
 }
 
@@ -762,7 +764,9 @@ function mostrarMonedas() {
         console.log("Monedas:", data);
         listMonedas = null;
         listMonedas =  data;
-        mostrarMonedas();
+        if(listMonedas){
+          mostrarMonedas();
+        }        
     } catch (error) {
         console.error("Error Recuperar Monedas: ", error);
         return null; // Devolver null en caso de error
@@ -779,7 +783,9 @@ function mostrarMonedas() {
         console.log("Datos:", data);
         datos = null;
         datos =  data;
-        refreshDatos();
+        if(datos){
+          refreshDatos();
+        }
     } catch (error) {
         console.error("Error Recuperar Datos: ", error);
         return null; // Devolver null en caso de error
@@ -796,7 +802,9 @@ async function recuperarDatosGraf() {
           console.log("Grafico:", data);
           graf = null;
           graf =  data;
-          refreshGraf();
+          if(graf){
+            refreshGraf();
+          }          
       } catch (error) {
           console.error("Error Recuperar Graficos: ", error);
           return null; // Devolver null en caso de error
@@ -814,6 +822,6 @@ async function actualizarDatos() {
           return data;
       } catch (error) {
           console.error("Error Actualizar Data: ", error);
-          return null; // Devolver null en caso de error
+          return { result: "false" };
   }
 }

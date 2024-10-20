@@ -969,10 +969,10 @@ function listAsset($usuario){
 function findEscalones($usuario) {
   $didable_button = ""; 
   $didable_cancel_button = ""; 
-  $didable_ckecked_button = "";
+  //$didable_ckecked_button = "";
   $style_ckecked_auto = "";
   $style_ckecked_stop = "";
-  $didable_ckecked_stop = "";
+  //$didable_ckecked_stop = "";
   $fecha = "";
   $color = "#CFCFD3";
   $bk="transparent";
@@ -982,7 +982,7 @@ function findEscalones($usuario) {
   $precioActual = 0;  
   $botones = "";
   $t_moneda = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$color};>".currency(0.00)." MONEY</div>";
-  $cadena = "<table style=width:100%;><th>Stop</th><th>Tipo</th><th>Compra/Venta</th><th>Moneda</th><th style=text-align:right;>Ganancia</th><th>Opciones</th>";  
+  $cadena = "<table style=width:100%;><th></th><th>Dias</th><th>Tipo</th><th>Precio</th><th>Moneda</th><th style=text-align:right;>Ganancia</th><th>Opciones</th>";  
   
   if (recordCountUser($usuario,"TRADER") > 0) {
       $conexion = mysqli_connect($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
@@ -1013,6 +1013,7 @@ function findEscalones($usuario) {
           $stopPrice = calcularMargenPerdida($row['PRECIOCOMPRA'], $puntos);
           $precioAbajo = $available['ABAJO'];
           $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) * 3.6) . "deg";
+          $dias = "1";
 
           //$color = ($row['PRECIOCOMPRA'] > $precioActual) ? "#F37A8B" : "#4BC883";
 
@@ -1020,11 +1021,12 @@ function findEscalones($usuario) {
             $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
             $didable_button = "";
             $didable_cancel_button = "";
-            $didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
-            $didable_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "checked" : "";
+            //$didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
+            //$didable_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "checked" : "";
 
             $style_ckecked_auto = ($row['AUTOSELL'] == 1) ? "style=background-color:#4caf50;color:white;" : "";
-            $style_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "style=background-color:#4caf50;color:white;" : "";            
+            $style_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "style=background-color:#4caf50;color:white;" : ""; 
+            $dias = calcularDiasEntreFechas($row['FECHA'], date('Y-m-d'));
           }
           else {
             $miganancia = 0;
@@ -1048,10 +1050,10 @@ function findEscalones($usuario) {
                   $fg = "#F37A8B";
                   $sy = "&#9660;"; 
                   $porcenMaxNeg = "0deg";
-              }
+              } 
               $wall = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$fg};>" . quantity($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']) . " " . $datos['ASSET'] . "<span style=color:{$fg};> {$sy}</span></div>";
-              $botones = "<input type=checkbox {$didable_ckecked_stop} id=toggle1 onclick=autostop({$row['ID']})><label class=btn-label1 {$style_ckecked_stop} for=toggle1>Stop</label><input type=checkbox {$didable_ckecked_button} id=toggle2 onclick=autosell({$row['ID']})><label class=btn-label2 {$style_ckecked_auto} for=toggle2>Auto</label><label class=escalbutton style=background:green; onclick=negativoBuy({$row['ID']})>Buy</label><label {$didable_cancel_button}  title=eliminar class=escalbutton style=background:#EAB92B; onclick=borrar({$row['ID']})>x</label>";
-              $cadena .= "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td style=color:white;>{$row['TIPO']}</td><td>{$precioVenta}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg};>".number_format($real_ganancia, 8, ".", ",")."{$datos['ASSET']}</span></td><td style=text-align:right;>{$botones}</td></tr>";
+              $botones = "<button type=button id=btnstop{$row['ID']} onclick=autostop({$row['ID']}) class=btn-label1 {$style_ckecked_stop}>Stop</button><button type=button id=btnauto{$row['ID']} onclick=autosell({$row['ID']}) class=btn-label2 {$style_ckecked_auto}>Auto</button><button class=btn-label1 style=background:green; onclick=negativoBuy({$row['ID']})>Buy</button><button {$didable_cancel_button}  title=eliminar class=btn-label2 style=background:#EAB92B; onclick=borrar({$row['ID']})>x</button>";
+              $cadena .= "<tr style=background:transparent;color:white;><td><div class=odometro style=--data:{$porcenMaxNeg};></div></td><td>$dias</td><td style=color:white;>{$row['TIPO']}</td><td>{$precioVenta}$</td><td style=text-align:right;>{$wall}</td><td style=text-align:right;><span style=font-weight:bold;color:{$fg};>".number_format($real_ganancia, 8, ".", ",")."{$datos['ASSET']}</span></td><td style=text-align:right;>{$botones}</td></tr>";
           }
           else {
             if($precioActual < $row['PRECIOCOMPRA']){
@@ -1072,9 +1074,9 @@ function findEscalones($usuario) {
                   $botones = "";              
             }
             else {
-                  $botones = "<input type=checkbox {$didable_ckecked_stop} id=toggle1 onclick=autostop({$row['ID']})><label class=btn-label1 {$style_ckecked_stop} for=toggle1>Stop</label><input type=checkbox {$didable_ckecked_button} id=toggle2 onclick=autosell({$row['ID']})><label class=btn-label2 {$style_ckecked_auto} for=toggle2>Auto</label><label {$didable_button} class=escalbutton style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</label><label {$didable_cancel_button} class=escalbutton title=eliminar style=background:#EAB92B; onclick=borrar({$row['ID']})>x</label>";
+                  $botones = "<button type=button id=btnstop{$row['ID']} onclick=autostop({$row['ID']}) class=btn-label1 {$style_ckecked_stop}>Stop</button><button type=button id=btnauto{$row['ID']} onclick=autosell({$row['ID']}) class=btn-label2 {$style_ckecked_auto}>Auto</button><button {$didable_button} class=btn-label1 style=background:#EA465C; onclick=perdida({$row['ID']})>Sell</button><button {$didable_cancel_button} class=btn-label1 title=eliminar style=background:#EAB92B; onclick=borrar({$row['ID']})>x</button>";
             }
-            $cadena .= "<tr style=background:{$colorRow};><td><div class=odometro style=--data:{$porcenmax};></div></td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>".$t_moneda."</td><td style=text-align:right;><span style=font-weight:bold;color:{$color}>".number_format($miganancia, 2, ".", ",")."$</span></td><td style=text-align:right;>{$botones}</td></tr>";
+            $cadena .= "<tr style=background:{$colorRow};><td><div class=odometro style=--data:{$porcenmax};></div></td><td>$dias</td><td style=color:white;>{$row['TIPO']}</td><td style=color:white;>{$precioCompra}$</td><td style=text-align:right;>".$t_moneda."</td><td style=text-align:right;><span style=font-weight:bold;color:{$color}>".number_format($miganancia, 2, ".", ",")."$</span></td><td style=text-align:right;>{$botones}</td></tr>";
           }        
        }
 
@@ -1083,6 +1085,15 @@ function findEscalones($usuario) {
 
   $cadena .= "</table>";
   return $cadena;
+}
+
+function calcularDiasEntreFechas($fechaInicial, $fechaFinal) {
+  $fechaInicio = new DateTime($fechaInicial);
+  $fechaFin = new DateTime($fechaFinal);
+
+  $diferencia = $fechaInicio->diff($fechaFin);
+
+  return $diferencia->format('%a');
 }
 
 function getpante($usuario){ 
