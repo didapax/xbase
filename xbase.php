@@ -36,13 +36,16 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 </head>
 <body onload="inicio()"> 
 
-<div id='preloader'>
-  	<div class='charge_logo'>
-      <div class='charge_word'>
-        <div class='loader'></div>
-      </div>
-    </div>
+<div id='preloader' class="preloader">
+  <div class="cs-loader-inner">
+    <label>●</label>
+    <label>●</label>
+    <label>●</label>
+    <label>●</label>
+    <label>●</label>
+    <label>●</label>
   </div>
+</div>
 
 <input type="hidden" id="recordCount" value="">
 <input type="hidden" id="priceMax" value="">
