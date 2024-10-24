@@ -79,7 +79,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>
     <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
     <span>Perdida %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
-    <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas desde un seridor local XAMPP">Xampp</label>
+    <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas con Auto-Compras">Auto Comprar</label>
     <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Server</label>   
     <br>
     <button type="button" onclick="cerrar_sesion()">Cerrar Sesion</button>

@@ -2,7 +2,7 @@
 require 'modulo.php';
 date_default_timezone_set("UTC");
 
-function buscarEscalones() {
+function buscarEscalones() { 
     try {
         if (recordCount("TRADER") > 0) {            
             $conexion = new mysqli($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
@@ -15,7 +15,6 @@ function buscarEscalones() {
                 if (strlen($row['ORDERID']) > 0) {
                     sellOrder($row['ORDERID']);
                     autoLiquida($row['ORDERID']);
-                    echo "\norder: ".$row['ORDERID'] ;
                 }                
             }
         }
@@ -28,8 +27,33 @@ function buscarEscalones() {
     }
 }
 
+function buscarAlertas() { 
+    try {      
+        $conexion = new mysqli($GLOBALS["servidor"], $GLOBALS["user"], $GLOBALS["password"], $GLOBALS["database"]);
+        if ($conexion->connect_error) {
+            throw new Exception("Conexión fallida: " . $conexion->connect_error);
+        }
+        $consulta = "SELECT * FROM DATOSUSUARIOS";
+        $resultado = $conexion->query($consulta);
+        while ($row = $resultado->fetch_assoc()) {
+            if (readParametros($row['USUARIO'])['AUTOBUY'] == 1) {
+                if(returnAlertas($row['MONEDA']) == "yellow"){
+                    autoBuy($row['USUARIO'],$row['MONEDA']);
+                }
+            }            
+        }
+    } catch (Exception $e) {
+        echo "Error en buscarEscalones: " . $e->getMessage();
+    } finally {
+        if (isset($conexion)) {
+            $conexion->close();
+        }
+    }
+}
+
 //updateDecimals();
 //updateStepSize();
-buscarEscalones();
 refreshDataThor();
+buscarEscalones();
+buscarAlertas();
 ?>

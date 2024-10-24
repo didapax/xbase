@@ -129,7 +129,7 @@ if(isset($_POST['borrar'])){
   refreshDatos($usuario);
 }
 
-if(isset($_POST['negativoBuy'])){
+if(isset($_POST['negativoBuy'])){ 
   $usuario = $_POST['usuario'];
   $trader = readTrader($_POST['negativo']);
   $datos = readParametros($usuario);
@@ -208,7 +208,7 @@ if(isset($_POST['perdida'])){
 
 if(isset($_POST['local'])){ 
   $usuario = $_POST['usuario'];
-  sqlconector("UPDATE PARAMETROS SET LOCAL ={$_POST['local']} WHERE USUARIO='$usuario'");
+  sqlconector("UPDATE PARAMETROS SET AUTOBUY ={$_POST['local']} WHERE USUARIO='$usuario'");
 }
 
 if(isset($_POST['xgraf'])){
@@ -221,11 +221,10 @@ if(isset($_POST['bina'])){
   sqlconector("UPDATE PARAMETROS SET BINANCE ={$_POST['bina']} WHERE USUARIO='$usuario'");
 }
 
-if(isset($_POST['agregar'])){
+if(isset($_POST['agregar'])){ 
   $usuario = $_POST['usuario'];
   $moneda = $_POST['moneda'];
   $asset = readDatosMoneda($moneda);
-  $datos = readParametros($usuario); 
   $quantity = quantity($_POST['cantidad'],$asset['ASSET'],$asset['PAR']);
   $price = formatPrice($_POST['preciocompra'],$asset['ASSET'],$asset['PAR']);
   $escalon = recordCountUser($usuario,"TRADER") +1;
@@ -238,7 +237,7 @@ if(isset($_POST['agregar'])){
   }else{
     $binance = $api->marketBuy($moneda, $quantity);
     $price = formatPrice(readPrices($moneda)['ACTUAL'],$asset['ASSET'],$asset['PAR']);
-  }    
+  }
   if(isset($binance['orderId'])){
     sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,COMPRA,CANTIDAD,PRECIOCOMPRA,ESCALON) VALUES(
       '$usuario',

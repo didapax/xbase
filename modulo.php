@@ -284,6 +284,39 @@ function sellOrder($order) {
   }
 }
 
+function autoBuy($usuario,$moneda){
+  $autoBuy = readParametros($usuario)['AUTOBUY'];  
+  $invxcompra = readParametros($usuario)['INVXCOMPRA'];
+  $precioMarket = readPrices($moneda)['ACTUAL'];
+  $totalCompra = $invxcompra / $precioMarket;
+  $asset = readDatosMoneda($moneda);
+  $quantity = quantity($totalCompra,$asset['ASSET'],$asset['PAR']);
+  $escalon = recordCountUser($usuario,"TRADER") +1;
+
+  if($autoBuy == 1 && $invxcompra > 9){
+    $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
+    $api->useServerTime();
+
+    $binance = $api->marketBuy($moneda, $quantity);
+    if(isset($binance['orderId'])){
+      sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,COMPRA,CANTIDAD,PRECIOCOMPRA,ESCALON) VALUES(
+        '$usuario',
+        '{$moneda}',
+        '{$binance['orderId']}',
+        {$invxcompra},
+        {$quantity},
+        {$precioMarket},
+        {$escalon}
+      )");
+    }else{
+      echo "error: 0001"; 
+    }
+  
+    reordenarEscalones($usuario);
+    refreshDatos($usuario);    
+  }
+}
+
 function descontarImpuesto($usuario,$cantidad) {
   $impuesto = readParametros($usuario)['IMPUESTO']; // 0.02% expresado como decimal
   $cantidadConDescuento = $cantidad - ($cantidad * $impuesto);
@@ -393,9 +426,9 @@ function autoLiquida($order) {
 function liquidar($id){
   $row = row_sqlconector("SELECT * FROM TRADER WHERE ID={$id}");
   $asset = readDatosMoneda($row['MONEDA']);
+  $moneda = $row['MONEDA'];
   if($row['TIPO'] == "BUY"){
-    $datos= readParametros($row['USUARIO']);
-    $moneda = $row['MONEDA'];
+    $datos= readParametros($row['USUARIO']);    
     $precioVenta = readPrices($moneda)['ACTUAL'];
     $precioCompra = $row['PRECIOCOMPRA'];
     $compra = $row['COMPRA'];    
@@ -628,13 +661,13 @@ function returnAlertas($moneda){
   
   $variable = "black"; //sin alerta
   
-  $vela_red_1 = $priceAbajo;
-  $vela_red_2 = readMinAnterior_Interval($moneda, 1);
-  $vela_red_3 = readMinAnterior_Interval($moneda, 2);
+  $vela_red_1 = readMinAnterior_Interval($moneda, 1);
+  $vela_red_2 = readMinAnterior_Interval($moneda, 2);
+  $vela_red_3 = readMinAnterior_Interval($moneda, 3);
   
   $min_value = min($vela_red_1, $vela_red_2, $vela_red_3);
 
-  $porcenmax = porcenConjunto($vela_red_1, $priceArriba, $precio);
+  $porcenmax = porcenConjunto($min_value, $priceArriba, $precio);
   $stop=0; 
 
   //Nivel mas Bajo Alerta Roja
@@ -740,8 +773,8 @@ function totalmoneda($usuario,$moneda){
   
   if(row_sqlconector("select COUNT(*) AS TOTAL from TRADER where USUARIO='$usuario' AND MONEDA='{$moneda}'")['TOTAL'] > 0){
 
-    $totalMoneda = price(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE USUARIO='$usuario' AND MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
-    $totalInversion = price(row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE USUARIO='$usuario' AND MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
+    $totalMoneda = price(row_sqlconector("SELECT SUM(CANTIDAD) AS SUMA FROM TRADER WHERE TIPO='BUY' AND USUARIO='$usuario' AND MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
+    $totalInversion = price(row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE TIPO='BUY' AND  USUARIO='$usuario' AND MONEDA='{$moneda}' AND LENGTH(ORDERVENTA) > 0")['SUMA']);
 
     if($totalMoneda == 0){
       $estado = "Buy";
@@ -828,10 +861,12 @@ function refreshDataAuto($usuario) {
           ]);
       }
 
+      $capitalinvertido = row_sqlconector("SELECT COALESCE(SUM(VENTA), 0) AS TOTAL FROM TRADER WHERE USUARIO ='$usuario' AND TIPO='SELL'")['TOTAL'];
+      $balanceUsd = $balances[$estableCoin]['available'] - $capitalinvertido;
       $updateEstableCoin = $conexion->prepare("UPDATE PARAMETROS SET CAPITAL = :balanceUsd, DISPONIBLE = :balanceUsd  WHERE USUARIO=:usuario");
       $updateEstableCoin->execute([
         ':usuario' => $usuario,
-        ':balanceUsd' => $balances[$estableCoin]['available']
+        ':balanceUsd' => $balanceUsd
     ]);      
 
   } catch (PDOException $e) {
@@ -969,10 +1004,8 @@ function listAsset($usuario){
 function findEscalones($usuario) {
   $didable_button = ""; 
   $didable_cancel_button = ""; 
-  //$didable_ckecked_button = "";
   $style_ckecked_auto = "";
   $style_ckecked_stop = "";
-  //$didable_ckecked_stop = "";
   $fecha = "";
   $color = "#CFCFD3";
   $bk="transparent";
@@ -1015,14 +1048,10 @@ function findEscalones($usuario) {
           $porcenmax = (porcenConjunto(price($stopPrice), price($row['PRECIOCOMPRA']), $precioActual) * 3.6) . "deg";
           $dias = "1";
 
-          //$color = ($row['PRECIOCOMPRA'] > $precioActual) ? "#F37A8B" : "#4BC883";
-
           if (strlen($row['ORDERVENTA']) > 0) {
             $miganancia = ($row['CANTIDAD'] * $precioActual) - ($row['CANTIDAD'] * $row['PRECIOCOMPRA']);            
             $didable_button = "";
             $didable_cancel_button = "";
-            //$didable_ckecked_button = ($row['AUTOSELL'] == 1) ? "checked" : "";
-            //$didable_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "checked" : "";
 
             $style_ckecked_auto = ($row['AUTOSELL'] == 1) ? "style=background-color:#4caf50;color:white;" : "";
             $style_ckecked_stop = ($row['AUTOSTOP'] == 1) ? "style=background-color:#4caf50;color:white;" : ""; 
@@ -1110,7 +1139,7 @@ function refreshDatos($usuario){
   $row2 = readParametros($usuario);
   $rowBtc = readDatosAsset("BTC");
   $moneda=$row['MONEDA'];
-  $auto = $row2['LOCAL'];
+  $auto = $row2['AUTOBUY'];
 
     $readPrice = readPrices($moneda);
     $bitcoin = formatPrice(readPrices($rowBtc['MONEDA'])['ACTUAL'],$rowBtc['ASSET'],$rowBtc['PAR']);
@@ -1138,7 +1167,7 @@ function refreshDatos($usuario){
     $mercado = totalTendencia($rowBtc['MONEDA']);
     $checkMesGrafico = true;
     $checkAnoGrafico = false;
-    $invxcompra = formatPrice(($capital / $row2['ESCALONES']),$row['ASSET'],$row['PAR']);
+    $invxcompra = ceil(formatPrice(($capital / $row2['ESCALONES']),$row['ASSET'],$row['PAR']));
 
     if($row2["GRAFICO"]==1){
       $checkMesGrafico = false;
@@ -1202,7 +1231,8 @@ function refreshDatos($usuario){
       'invxcompra' => $invxcompra,
       'totalpromedio' => formatPrice($totalPromedio,$row['ASSET'],$row['PAR']),
       'xdisponible' => $xdisponible,      
-      'auto' => $auto,'bina' => $bina,
+      'auto' => $auto,
+      'bina' => $bina,
       'impuesto' => price($row2['IMPUESTO']),
       'mercado' =>$mercado, 
       'id' => $row['ID'],
