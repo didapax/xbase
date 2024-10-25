@@ -1167,7 +1167,7 @@ function refreshDatos($usuario){
     $mercado = totalTendencia($rowBtc['MONEDA']);
     $checkMesGrafico = true;
     $checkAnoGrafico = false;
-    $invxcompra = ceil(formatPrice(($capital / $row2['ESCALONES']),$row['ASSET'],$row['PAR']));
+    $invxcompra = floor(formatPrice(($capital / $row2['ESCALONES']),$row['ASSET'],$row['PAR']));
 
     if($row2["GRAFICO"]==1){
       $checkMesGrafico = false;
