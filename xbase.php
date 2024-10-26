@@ -14,11 +14,12 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 
 ?>
 <!DOCTYPE html>
-<html style="overflow-x:hidden;overflow-y:auto;">
+<html lang="en-MU" style="overflow-x:hidden;overflow-y:auto;">
 <head>
+<meta charset="utf-8">
   <title>Help Trader</title>
   <link rel="shortcut icon" href="favicon.png">
-  <meta name="viewport" content="width=device-width initial-scale=1.0 maximum-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
   <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
   <script src="javascript/block.js"></script>
@@ -70,11 +71,11 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <div style="display:inline-block;font-weight: bold;text-transform:capitalize;" >Configuracion</div>
     <a title="Cerrar" style="font-weight: bold;float:right;cursor:pointer;" onclick="document.getElementById('config').close()">X</a><br>
     <hr>
-    <span>Moneda Par </span><input readonly style="width:100px;"  type="text" maxlength="10" id="moneda" value=""><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:pointer;" onclick="deletePar()">Delete</span><br>
-    <span>Asset </span><input readonly style="width:100px;"  type="text" maxlength="10" id="asset" value=""><br>
-    <span>Estable Coin </span><input readonly style="width:100px;"  type="text" maxlength="10" id="estableCoin" value=""><br>
-    <span>Balance </span><input readonly style="width:100px;" type="number" step="0.0000001" id="newBalance" value="0" ><br>
-    <span>Capital </span><input readonly style="width:100px;" type="number" step="0.01" id="capital" value="0" onkeyup="calculo()" onchange="calculo()"> Usd<br>    
+    <span>Moneda Par </span><input readonly title="Moneda" placeholder="BTCUSDT" style="width:100px;"  type="text" id="moneda" value=""><span style="float:right;border:1px solid black; border-radius:3px;padding:2px; font-size:12px;cursor:pointer;" onclick="deletePar()">Delete</span><br>
+    <span>Asset </span><input readonly title="Asset" placeholder="BTC" style="width:100px;"  type="text" id="asset" value=""><br>
+    <span>Estable Coin </span><input readonly title="Estable coin" placeholder="USDT" style="width:100px;"  type="text" id="estableCoin" value=""><br>
+    <span>Balance </span><input readonly title="Balance" placeholder="0" style="width:100px;" type="number" id="newBalance" value="0" ><br>
+    <span>Capital </span><input readonly title="Capital" placeholder="0" style="width:100px;" type="number"  id="capital" value="0" > Usd<br>    
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
     <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>
     <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>

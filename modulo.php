@@ -207,6 +207,13 @@ function ifOrderExist($order) {
   return $resultado['TOTAL'] == 1;  
 }
 
+function ifTransactionExist($moneda,$usuario) {
+  $consulta = "select COUNT(*) AS TOTAL from TRADER where MONEDA='{$moneda}' AND USUARIO='{$usuario}'";
+  $resultado = row_sqlconector($consulta);
+  
+  return $resultado['TOTAL'] == 1;  
+}
+
 function ifMonedaExist($moneda) {
   $consulta = "SELECT COUNT(*) AS TOTAL FROM DATOS WHERE MONEDA = '$moneda'";
   $resultado = row_sqlconector($consulta);
@@ -1262,7 +1269,7 @@ function refreshDatos($usuario){
       return TRUE;
     }
     return FALSE;
-}
+} 
 
 function refreshDatosMon($mon){
   //$usuario= $GLOBALS['tokenadmin'];

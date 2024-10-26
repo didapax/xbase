@@ -37,8 +37,10 @@ function buscarAlertas() {
         $resultado = $conexion->query($consulta);
         while ($row = $resultado->fetch_assoc()) {
             if (readParametros($row['USUARIO'])['AUTOBUY'] == 1) {
-                if(returnAlertas($row['MONEDA']) == "yellow"){
-                    autoBuy($row['USUARIO'],$row['MONEDA']);
+                if(!ifTransactionExist($row['MONEDA'],$row['USUARIO'])){
+                    if(returnAlertas($row['MONEDA']) == "yellow"){
+                        autoBuy($row['USUARIO'],$row['MONEDA']);
+                    }                    
                 }
             }            
         }

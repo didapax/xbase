@@ -105,7 +105,7 @@ if ($method == "GET") {
             $obj['result'] = "true";
         };
         echo json_encode($obj);
-      }
+      } 
       
       if(isset($_GET['getGraf'])){
         echo readParametros($_GET['usuario'])['DATOSGRAF'];
