@@ -1176,7 +1176,7 @@ function getpante($usuario){
   $pante = calcularMargenPerdida($precio,$puntos); 
   return formatPrice($pante,$row['ASSET'],$row['PAR']);
 }
-
+ 
 function refreshDatos($usuario){
   try {
     $row = readDatos($usuario);

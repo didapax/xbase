@@ -41,11 +41,15 @@ function buscarAlertas() {
                     if(returnAlertas($row['MONEDA']) == "yellow"){
                         autoBuy($row['USUARIO'],$row['MONEDA']);
                     }
+                }
+            }
+            if (readParametros($row['USUARIO'])['BINANCE'] == 1) {
+                if(!ifTransactionExist($row['MONEDA'],$row['USUARIO'])){
                     if(returnAlertas($row['MONEDA']) == "green"){
                         autoSell($row['USUARIO'],$row['MONEDA']);
-                    }                    
+                    }
                 }
-            }            
+            }          
         }
     } catch (Exception $e) {
         echo "Error en buscarEscalones: " . $e->getMessage();
