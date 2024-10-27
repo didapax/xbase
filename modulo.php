@@ -277,7 +277,6 @@ function sellOrder($order) {
       try {
           $openorder = $api->orderStatus($moneda, $order);
           if ($openorder['status'] === "FILLED") {
-            echo "\nestatus order= ".$openorder['status'];
             $bytes = random_bytes(5);
             $referencia = bin2hex($bytes);
             sqlconector("UPDATE TRADER SET ORDERVENTA='{$referencia}', LIQUIDAR=1 WHERE ID={$row['ID']}");
@@ -288,6 +287,43 @@ function sellOrder($order) {
           error_log("Error al obtener el estado de la orden: " . $e->getMessage());
           return;
       }
+  }
+}
+
+function autoSell($usuario,$moneda){
+  $datos= readParametros($usuario);
+  $cantidad = readDatosMonedaUser($usuario,$moneda)['BALANCE_ASSET'];
+  $escalon = recordCountUser($usuario,"TRADER") +1;
+  $asset = readDatosMoneda($moneda);
+  $price = formatPrice(readPrices($moneda)['ACTUAL'],$asset['ASSET'],$asset['PAR']);
+  $order ="";
+  $venta = $price * $cantidad;
+
+  if($venta > 9){
+    $api = new Binance\API(sqlApiKey($usuario), sqlApiSecret($usuario));
+    $api->useServerTime();
+    $operacion = descontarImpuesto($usuario, $cantidad);
+    $quantity = quantity($operacion,$asset['ASSET'],$asset['PAR']);
+    $api->useServerTime();
+    $order = $api->marketSell($moneda, $quantity);        
+
+    if(isset($order['orderId'])){
+      sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,TIPO,CANTIDAD,VENTA,PRECIOVENTA,NEGATIVO,ESCALON) VALUES(
+        '$usuario',
+        '$moneda',
+        '{$order['orderId']}',
+        'SELL',
+        $cantidad,
+        $venta,
+        $price,
+        1,
+        $escalon)");
+    }else{
+      echo "error: 0001"; 
+    }
+
+    reordenarEscalones($usuario);
+    refreshDatos($usuario);
   }
 }
 
@@ -368,7 +404,7 @@ function autoLiquida($order) {
       $datos = readDatosMoneda($moneda);
       $operacion = descontarImpuesto($row['USUARIO'], $row['CANTIDAD']);
       $quantity = quantity($operacion, $datos['ASSET'], $datos['PAR']);
-      echo "\noperacion sin impuesto= {$row['CANTIDAD']}\nquantity= $quantity";
+      //echo "\noperacion sin impuesto= {$row['CANTIDAD']}\nquantity= $quantity";
 
       $api = new Binance\API(sqlApiKey($row['USUARIO']), sqlApiSecret($row['USUARIO']));
       $api->useServerTime();
@@ -378,7 +414,7 @@ function autoLiquida($order) {
               $priceBuy = $row['PRECIOCOMPRA'];
               $precioActual = readPrices($moneda)['ACTUAL'];
               $stopPrice = calcularMargenPerdida($priceBuy, $param['STOPLOSS']);
-              echo "\n stop a = $stopPrice";
+              //echo "\n stop a = $stopPrice";
               if($precioActual > 0){
                 if ($precioActual <= $stopPrice && $row['AUTOSTOP'] == 1) {
                   $order = $api->marketSell($moneda, $quantity);
@@ -389,7 +425,7 @@ function autoLiquida($order) {
               else {
                   if ($row['AUTOSELL'] == 1) {
                       $autoSell = calcularMargenGanancia($priceBuy, $param['AUTOSHELL']);
-                      echo "\n  Venta a = $autoSell";
+                      //echo "\n  Venta a = $autoSell";
                       if ($precioActual > $autoSell) {
                           $order = $api->marketSell($moneda, $quantity);
                           if (isset($order['orderId'])) {
@@ -1142,11 +1178,12 @@ function getpante($usuario){
 }
 
 function refreshDatos($usuario){
-  $row = readDatos($usuario);
-  $row2 = readParametros($usuario);
-  $rowBtc = readDatosAsset("BTC");
-  $moneda=$row['MONEDA'];
-  $auto = $row2['AUTOBUY'];
+  try {
+    $row = readDatos($usuario);
+    $row2 = readParametros($usuario);
+    $rowBtc = readDatosAsset("BTC");
+    $moneda=$row['MONEDA'];
+    $auto = $row2['AUTOBUY'];
 
     $readPrice = readPrices($moneda);
     $bitcoin = formatPrice(readPrices($rowBtc['MONEDA'])['ACTUAL'],$rowBtc['ASSET'],$rowBtc['PAR']);
@@ -1268,8 +1305,10 @@ function refreshDatos($usuario){
     if($result){
       return TRUE;
     }
+  }catch (Exception $e){
     return FALSE;
-} 
+  }  
+}
 
 function refreshDatosMon($mon){
   //$usuario= $GLOBALS['tokenadmin'];

@@ -40,6 +40,9 @@ function buscarAlertas() {
                 if(!ifTransactionExist($row['MONEDA'],$row['USUARIO'])){
                     if(returnAlertas($row['MONEDA']) == "yellow"){
                         autoBuy($row['USUARIO'],$row['MONEDA']);
+                    }
+                    if(returnAlertas($row['MONEDA']) == "green"){
+                        autoSell($row['USUARIO'],$row['MONEDA']);
                     }                    
                 }
             }            
