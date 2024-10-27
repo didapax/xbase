@@ -81,7 +81,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
     <span>Perdida %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
     <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas con Auto-Compras">Auto Compra</label>
-    <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Auto Venta</label>   
+    <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Auto Vende</label>   
     <br>
     <button type="button" onclick="cerrar_sesion()">Cerrar Sesion</button>
     <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>    

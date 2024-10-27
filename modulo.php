@@ -581,6 +581,15 @@ function readMinAnterior_Interval($moneda,$interval){
   }  
 }
 
+function readMaxAnterior_Interval($moneda,$interval){
+  if(isset(row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'])){
+    return row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'];
+  }
+  else{
+    return row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'];
+  }  
+}
+
 function dayTendencia($moneda){
   $tendencia = "";
   $priceArriba = readPrices($moneda)['ARRIBA'];
@@ -663,16 +672,22 @@ function nivel($moneda){
 }
 
 function nivelPorcentual_Venta($moneda){
+  $vela_green_1 = readMaxAnterior_Interval($moneda, 1);
+  $vela_green_2 = readMaxAnterior_Interval($moneda, 2);
+  $vela_green_3 = readMaxAnterior_Interval($moneda, 3);
+  
+  $max_value = max($vela_green_1, $vela_green_2, $vela_green_3);
+
   $nprice = readPrices($moneda);
   $min= 0;
   $max= 0;
   $actual = $nprice['ACTUAL'];
 
-  if($nprice['ARRIBA'] < readFlotadorAnterior($moneda)){
+  if($nprice['ARRIBA'] < $max_value){
     $min = $nprice['ARRIBA'];
-    $max = readFlotadorAnterior($moneda);
+    $max = $max_value;
   }else{
-    $min = readFlotadorAnterior($moneda);
+    $min = $max_value;
     $max = $nprice['ARRIBA'];
   }
 
@@ -720,7 +735,7 @@ function returnAlertas($moneda){
   }
 
   //Nivel mas alto de venta  Alerta Verde
-  if (nivelPorcentual_Venta($moneda)>90){
+  if (nivelPorcentual_Venta($moneda)>89){
     $variable = "green"; //alerta de venta
   }
 
