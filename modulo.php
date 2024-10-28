@@ -590,10 +590,19 @@ function readMaxAnterior_Interval($moneda,$interval){
   }  
 }
 
+function readClose_Interval($moneda,$interval){
+  if(isset(row_sqlconector("select CLOSE from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['CLOSE'])){
+    return row_sqlconector("select CLOSE from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['CLOSE'];
+  }
+  else{
+    return row_sqlconector("select CLOSE from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['CLOSE'];
+  }  
+}
+
 function dayTendencia($moneda){
   $tendencia = "";
-  $priceArriba = readPrices($moneda)['ARRIBA'];
-  if($priceArriba > readFlotadorAnterior($moneda)){
+  $priceArriba = readPrices($moneda)['CLOSE'];
+  if($priceArriba > readClose_Interval($moneda,1)){
     updateTendenciaAlcista($moneda);
     $tendencia = "<span style=color:#4DCB85;font-weight:bold;>&#9650;</span>";
   }else{
@@ -617,8 +626,8 @@ function animoTrader($usuario){
 
 function dayTendenciaAnalog($moneda){
   $tendencia = "0";
-  $priceArriba = readPrices($moneda)['ARRIBA'];
-  if($priceArriba > readFlotadorAnterior($moneda)){
+  $priceArriba = readPrices($moneda)['CLOSE'];
+  if($priceArriba > readClose_Interval($moneda,1)){
     $tendencia = "1";
   }else{
     $tendencia = "0";
