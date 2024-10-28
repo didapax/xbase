@@ -1217,7 +1217,7 @@ function refreshDatos($usuario){
     $totalPromedio = ($promedioFlotante + $promedioUndante) /2;  
     $porcenmax = porcenConjunto($priceAbajo, $priceArriba, $priceMoneda)."%";  
     $capital = price($row2['CAPITAL']);
-    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER")['SUMA'];
+    $inversion = row_sqlconector("SELECT SUM(COMPRA) AS SUMA FROM TRADER WHERE USUARIO='$usuario'")['SUMA'];
     $xdisponible =   price($capital);
     $bina = $row2['BINANCE'];
     $recordCount = recordCount("TRADER");
@@ -1226,7 +1226,9 @@ function refreshDatos($usuario){
     $mercado = totalTendencia($rowBtc['MONEDA']);
     $checkMesGrafico = true;
     $checkAnoGrafico = false;
-    $invxcompra = floor(formatPrice(($capital / $row2['ESCALONES']),$row['ASSET'],$row['PAR']));
+    $numEscalones = row_sqlconector("SELECT COUNT(*) AS SUMA FROM TRADER WHERE USUARIO='$usuario'")['SUMA'];
+    $escalonesRestantes = $row2['ESCALONES'] - $numEscalones;
+    $invxcompra = floor(formatPrice(($capital / $escalonesRestantes),$row['ASSET'],$row['PAR']));
 
     if($row2["GRAFICO"]==1){
       $checkMesGrafico = false;
@@ -1315,7 +1317,7 @@ function refreshDatos($usuario){
       'grafico' => returnGrafica($usuario,$moneda)
     );
 
-    $result = sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra,DATOSGRAF='".json_encode($objGraf)."', DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
+    $result = sqlconector("UPDATE PARAMETROS SET INVXCOMPRA=$invxcompra, DATOSGRAF='".json_encode($objGraf)."', DATOS='".json_encode($obj)."' WHERE USUARIO = '$usuario'");
 
     if($result){
       return TRUE;
