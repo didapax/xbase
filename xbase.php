@@ -78,8 +78,8 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <span>Capital </span><input readonly title="Capital" placeholder="0" style="width:100px;" type="number"  id="capital" value="0" > Usd<br>    
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
     <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>
-    <span>Ganancia %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
-    <span>Perdida %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
+    <span>Ganancia &#8723; %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
+    <span>Perdida &#8723; %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
     <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas con Auto-Compras">Auto Compra</label>
     <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Auto Vende</label>   
     <br>
