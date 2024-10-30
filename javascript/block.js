@@ -159,6 +159,7 @@ function perdida(id){
 }
 
 function deletePar(){
+  document.getElementById('config').close();  
   Swal.fire({
     title: 'xbase',
     text: "Estas Seguro de Eliminar a "+document.getElementById('moneda').value+"...?",
@@ -174,7 +175,7 @@ function deletePar(){
             deletepar: document.getElementById('moneda').value,
             usuario: usuario
           },function(data){            
-            window.location.href="xbase?token="+usuario;
+            //window.location.href="xbase?token="+usuario;
           });
         }
     });

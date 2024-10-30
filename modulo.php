@@ -1235,7 +1235,7 @@ function refreshDatos($usuario){
     $mercado = totalTendencia($rowBtc['MONEDA']);
     $checkMesGrafico = true;
     $checkAnoGrafico = false;
-    $numEscalones = row_sqlconector("SELECT COUNT(*) AS SUMA FROM TRADER WHERE USUARIO='$usuario'")['SUMA'];
+    $numEscalones = row_sqlconector("SELECT COUNT(*) AS SUMA FROM TRADER WHERE TIPO='BUY' AND USUARIO='$usuario'")['SUMA'];
     $escalonesRestantes = $row2['ESCALONES'] - $numEscalones;
     $invxcompra = floor(formatPrice(($capital / $escalonesRestantes),$row['ASSET'],$row['PAR']));
 
