@@ -5,7 +5,7 @@ if %ERRORLEVEL% equ 0 (
     echo XAMPP ya está corriendo.
 ) else (
     echo Iniciando XAMPP...
-    start "" "C:\xampp\xampp_start.exe"
+    start "" "C:\xampp\xampp-control.exe"
     timeout /t 10 /nobreak >nul
 )
 :: Ejecutar el script PHP
