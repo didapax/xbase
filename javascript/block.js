@@ -593,11 +593,11 @@ function refreshDatos(){
       document.getElementById('mercado').innerHTML = "Mercado "+datos.mercado;
       document.getElementById('zona').innerHTML = "Promedio <span style='color:white;'> "+datos.totalpromedio+"</span>";
       document.getElementById('utc').innerHTML = "<span style=color:#858E9B>Hora Utc </span>"+datos.utc;
-      document.getElementById('ant').innerHTML = datos.nivel;
-      document.getElementById('antbtc').innerHTML = datos.nivelbtc;
-      document.getElementById('symbol').innerHTML = datos.symbol;
+      /*document.getElementById('ant').innerHTML = datos.nivel;*/
+      /*document.getElementById('antbtc').innerHTML = datos.nivelbtc;*/
+      /*document.getElementById('symbol').innerHTML = datos.symbol;*/
       document.getElementById('animotrader').innerHTML = datos.animotrader;
-      document.getElementById('nivelcompra').innerHTML = datos.nivelcompra;      
+      /*document.getElementById('nivelcompra').innerHTML = datos.nivelcompra; */
       document.getElementById('newBalance').value = datos.balance_asset;      
       document.getElementById('capital').value = priceFixed(datos.capital);      
       document.getElementById('showCapital').value = priceFixed(datos.capital);

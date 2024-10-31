@@ -659,7 +659,7 @@ function updateTendenciaAlcista($moneda){
   }
 }
 
-function nivel($moneda){
+/*function nivel($moneda){
   $nprice = readPrices($moneda);
   $asset = "SELL"; 
   $min= 0;
@@ -678,7 +678,7 @@ function nivel($moneda){
   $nivel = "<div class=odometros style=--data:{$porcenmax};><div id=grad2>{$asset}</div></div>";
 
   return $nivel;
-}
+}*/
 
 function nivelPorcentual_Venta($moneda){
   $vela_green_1 = readMaxAnterior_Interval($moneda, 1);
@@ -703,7 +703,7 @@ function nivelPorcentual_Venta($moneda){
   return porcenConjunto($min,$max,$actual);
 }
 
-function nivelCompra($moneda){  
+/*function nivelCompra($moneda){  
   $alerta = returnAlertas($moneda);
   $asset = "BUY";
   $nivel="<div class=odometroalert style=--color1:#F6465D;--data1:-80deg;--color2:#F6465D;--data2:-220deg;--color3:#F6465D;--data3:-360deg;--color4:#85929e;--data4:-360deg;><div id=grad2>{$asset}</div></div>";
@@ -718,7 +718,7 @@ function nivelCompra($moneda){
   }
 
   return $nivel; 
-}
+}*/
 
 function returnAlertas($moneda){
   $readPrice = readPrices($moneda);
@@ -766,7 +766,7 @@ function returnAlertas($moneda){
   return $variable;  
 }
 
-function nivelBtc(){
+/*function nivelBtc(){
   $asset =  readDatosAsset("BTC");
   $nprice = readPrices($asset['MONEDA']);
   $min= 0;
@@ -784,7 +784,7 @@ function nivelBtc(){
   $nivel = "<div class=odometrosBtc style=--data:{$porcenmax};><div id=grad2>BTC</div></div>";
 
   return $nivel;
-}
+}*/
 
 function nivelAnterior($moneda){
   $nprice = readPrices($moneda);
@@ -1290,8 +1290,6 @@ function refreshDatos($usuario){
       'totalmoneda' => $sumMoneda['total'], 
       'm_balance' => $sumMoneda['m_balance'],
       'ant' => readFlotadorAnterior($moneda),
-      'nivel' => nivel($moneda),
-      'nivelbtc' => nivelBtc(),
       'porcenmax' => $porcenmax,
       'ganancia' => price($row2['GANANCIA']),
       'perdida' => price($row2['PERDIDA']),
@@ -1318,8 +1316,7 @@ function refreshDatos($usuario){
       'precio_venta' => $row2['AUTOSHELL'],
       'listasset' => listAsset($usuario),
       'stop' => $row2['STOPLOSS'],
-      'balance' => $row['BALANCE_ASSET'],
-      'nivelcompra' => nivelCompra($moneda) 
+      'balance' => $row['BALANCE_ASSET']
     ); 
 
     $objGraf = array(
@@ -1391,16 +1388,13 @@ function refreshDatosMon($mon){
       'techo' => $promedioFlotante,
       'piso' => $promedioUndante,
       'ant' => readFlotadorAnterior($moneda),
-      'nivel' => nivel($moneda),
-      'nivelbtc' => nivelBtc(),
       'porcenmax' => $porcenmax,
       'totalpromedio' => $totalPromedio,      
       'mercado' =>$mercado, 
       'id' => $row['ID'],
       'alert' =>returnAlertas($moneda),
       'labelpricebitcoin' => $labelPriceBitcoin,
-      'labelpricemoneda' => $labelPriceMoneda,
-      'nivelcompra' => nivelCompra($moneda)
+      'labelpricemoneda' => $labelPriceMoneda
     ); 
 
     sqlconector("UPDATE DATOS SET DATOS='".json_encode($obj)."' WHERE MONEDA='$moneda'");

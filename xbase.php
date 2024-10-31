@@ -139,11 +139,12 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
   </div>
 
   <div id="abajo" class="abajo">    
-    <label title="Nivel vela con dia anterior Bitcoin" class=stylenivel id="antbtc"></label> 
-    <label title="Posibilidad de Vender" class=stylenivel id="ant"></label>  
-    <label title="Min de Vela con dia anterior" class=stylenivel id="symbol" style="display:none;"></label>
-    <label title="Posiblidad de Comprar" class=stylenivel id="nivelcompra"></label>
-    <span style="float:right;font-weight:bold;" id="mindia"></span>
+    <span title="Min and Max" style="float:right;font-weight:bold;" id="mindia"></span>  
+    <!--<label title="Animo de Bitcoin" class=stylenivel id="antbtc"></label> 
+    <label title="Posibilidad de Vender" class=stylenivel id="ant"></label>
+    <label title="" class=stylenivel id="symbol" style="display:none;"></label>
+    <label title="Posiblidad de Comprar" class=stylenivel id="nivelcompra"></label>-->
+        
     <label id="buttonMuted" class="mute is-muted" onclick="toggleMute()" style=" display:none;margin-left:13px;font-size:21px;cursor: pointer;">&#128266;</label>
   </div>
 </div>
