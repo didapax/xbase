@@ -170,7 +170,7 @@ if(isset($_POST['negativo'])){
       $order = $api->marketSell($moneda, $quantity);        
     }    
 
-    if(isset($order['orderId'])){ 
+    if(isset($order['orderId'])){
       sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,TIPO,CANTIDAD,VENTA,PRECIOVENTA,NEGATIVO,ESCALON) VALUES(
         '$usuario',
         '$moneda',

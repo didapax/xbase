@@ -308,7 +308,7 @@ function autoSell($usuario,$moneda){
     $order = $api->marketSell($moneda, $quantity);        
 
     if(isset($order['orderId'])){
-      sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,TIPO,CANTIDAD,VENTA,PRECIOVENTA,NEGATIVO,ESCALON) VALUES(
+      sqlconector("INSERT INTO TRADER(USUARIO,MONEDA,ORDERID,TIPO,CANTIDAD,VENTA,PRECIOVENTA,NEGATIVO,ESCALON,AUTOSTOP) VALUES(
         '$usuario',
         '$moneda',
         '{$order['orderId']}',
@@ -317,7 +317,8 @@ function autoSell($usuario,$moneda){
         $venta,
         $price,
         1,
-        $escalon)");
+        $escalon,
+        0)");
     }else{
       echo "error: 0001"; 
     }
@@ -901,6 +902,8 @@ function totales($usuario,$moneda){
   return array('cripto' => $total,'recupera' => $recupera,'color' => $color );
 }
 
+//refreshDataAuto("dd77b701661c5b55");
+
 function refreshDataAuto($usuario) {
   try {
       $estableCoin = readParametros($usuario)['ESTABLECOIN'];
@@ -1208,7 +1211,7 @@ function refreshDatos($usuario){
     $rowBtc = readDatosAsset("BTC");
     $moneda=$row['MONEDA'];
     $auto = $row2['AUTOBUY'];
-
+    $invxcompra = 0;
     $readPrice = readPrices($moneda);
     $bitcoin = formatPrice(readPrices($rowBtc['MONEDA'])['ACTUAL'],$rowBtc['ASSET'],$rowBtc['PAR']);
     $priceMoneda = formatPrice($readPrice['ACTUAL'],$row['ASSET'],$row['PAR']);
@@ -1237,7 +1240,10 @@ function refreshDatos($usuario){
     $checkAnoGrafico = false;
     $numEscalones = row_sqlconector("SELECT COUNT(*) AS SUMA FROM TRADER WHERE TIPO='BUY' AND USUARIO='$usuario'")['SUMA'];
     $escalonesRestantes = $row2['ESCALONES'] - $numEscalones;
-    $invxcompra = floor(formatPrice(($capital / $escalonesRestantes),$row['ASSET'],$row['PAR']));
+    if($escalonesRestantes > 0){
+      $invxcompra = floor(formatPrice(($capital / $escalonesRestantes),$row['ASSET'],$row['PAR']));
+    }
+    
 
     if($row2["GRAFICO"]==1){
       $checkMesGrafico = false;
