@@ -1166,7 +1166,7 @@ function findEscalones($usuario) {
               $symbol = "&#9650;";
             }          
 
-            $t_moneda = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$color};>".formatPrice($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']) . " " . $datos['ASSET']." <span style=color:{$color};>{$symbol}</span></div>";
+            $t_moneda = "<div style=width:100%;padding:3px;background:{$bk};border-radius:3px;color:{$color};>".quantity($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']). " " . $datos['ASSET']." <span style=color:{$color};>{$symbol}</span></div>";
             $precioCompra = formatPrice($row['PRECIOCOMPRA'], $datos['ASSET'], $datos['PAR']);
             
             if ($didable_cancel_button == "disabled") {
