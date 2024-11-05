@@ -550,8 +550,15 @@ function readPrices($moneda) {
 }
 
 function readPriceIntervar($moneda,$num_day){
+  if(isset(row_sqlconector("SELECT * FROM PRICES WHERE MONEDA = '$moneda' AND DATE(FECHA) = CURDATE() - INTERVAL $num_day DAY")['ACTUAL'])){
+    return row_sqlconector("SELECT * FROM PRICES WHERE MONEDA = '$moneda' AND DATE(FECHA) = CURDATE() - INTERVAL $num_day DAY");
+  }
+  else{
+    return row_sqlconector("SELECT * FROM PRICES WHERE MONEDA = '$moneda' AND DATE(FECHA) = CURDATE()");
+  }  
+  /*
   $query = "SELECT * FROM PRICES WHERE MONEDA = '$moneda' AND DATE(FECHA) = CURDATE() - INTERVAL $num_day DAY";
-  return row_sqlconector($query);
+  return row_sqlconector($query);*/
 }
 
 
