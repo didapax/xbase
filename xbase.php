@@ -79,9 +79,7 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <span>N. Escalones </span><input style="width:30px;" type="number" min="1" max="21" step="1" id="escalones" value="" onkeyup="calculo()" onchange="calculo()"><br>
     <span>Impuesto %</span><input style="width:80px;" type="number" step="0.01" id="impuesto" value="" ><br>
     <span>Ganancia &#8723; %</span><input style="width:80px;" type="number" step="1" id="precio_venta" value="" ><br>
-    <span>Perdida &#8723; %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>
-    <input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><label for="local" title="Indica si trabajas con Auto-Compras">Auto Compra</label>
-    <input onclick="bina()" type="checkbox" id="orderBinance" ><label for="orderBinance" title="Colocar los Escalones como Ordenes en Binance">Auto Vende</label>   
+    <span>Perdida &#8723; %</span><input style="width:80px;" type="number" step="1" id="stop" value="" ><br>      
     <br>
     <button type="button" onclick="cerrar_sesion()">Cerrar Sesion</button>
     <button style="margin-left: 55px;background:transparent;" type="button" onclick="Guardar()"><span style='font-size:24px;'>&#128190;</span>Guardar</button>    
@@ -123,6 +121,8 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <tr><td><label style="font-weight:bold;" id="tendencia"></label></td></tr>
     <tr><td><label style="font-weight:bold;" id="totalTendencia"></label></td></tr>
     <tr><td><label style="font-weight:bold;" id="mercado"></label></td></tr>
+    <tr><td><span style="">Ult. Venta</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;"  type="text" id="ultimaventa" value="0.00" readonly ></td></tr>
+    <tr><td><span style="">Ult. Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="ultimacompra" value="0.00" readonly ></td></tr>    
   </table>
   </div> 
 
@@ -133,8 +133,8 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
       <tr><td><span style=""><span title="Reset Ganancias" style="cursor:pointer;font-size:24px; background:transparent;color:white;" onclick="resetGanancias()">&#8630;</span>Ganancias</span></td><td><label style="font-weight:bold;" id="animotrader"></label><input style="display:none;background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="ganancias" value="0.00" readonly ></td></tr>
       <tr style="display:none;"><td><span style="">Perdidas </span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="showPerdidas" value="0.00"  ></td></tr>
       <tr><td><span style="">Inv x Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="invxcompra" value="0.00" readonly ></td></tr>
-      <tr><td><span style="">Ult. Venta</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;"  type="text" id="ultimaventa" value="0.00" readonly ></td></tr>
-      <tr><td><span style="">Ult. Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="ultimacompra" value="0.00" readonly ></td></tr>
+      <tr><td>Auto Comprar</td><td><label class="switch" for="local" title="Indica si trabajas con Auto-Compras"><input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><span class="slider round"></span></label></td></tr>
+      <tr><td>Auto Vender</td><td><label class="switch" for="orderBinance" title="Colocar los Escalones como Ordenes en Binance"><input onclick="bina()" type="checkbox" id="orderBinance" ><span class="slider round"></span></label></td></tr>
     </table>
   </div>
 
