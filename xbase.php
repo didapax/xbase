@@ -121,8 +121,6 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
     <tr><td><label style="font-weight:bold;" id="tendencia"></label></td></tr>
     <tr><td><label style="font-weight:bold;" id="totalTendencia"></label></td></tr>
     <tr><td><label style="font-weight:bold;" id="mercado"></label></td></tr>
-    <tr><td><span style="">Ult. Venta</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;"  type="text" id="ultimaventa" value="0.00" readonly ></td></tr>
-    <tr><td><span style="">Ult. Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="ultimacompra" value="0.00" readonly ></td></tr>    
   </table>
   </div> 
 
@@ -133,6 +131,8 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
       <tr><td><span style=""><span title="Reset Ganancias" style="cursor:pointer;font-size:24px; background:transparent;color:white;" onclick="resetGanancias()">&#8630;</span>Ganancias</span></td><td><label style="font-weight:bold;" id="animotrader"></label><input style="display:none;background: #171A1E; color:white;font-weight:bold;margin: 0;text-align:right;" type="text" id="ganancias" value="0.00" readonly ></td></tr>
       <tr style="display:none;"><td><span style="">Perdidas </span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="showPerdidas" value="0.00"  ></td></tr>
       <tr><td><span style="">Inv x Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="invxcompra" value="0.00" readonly ></td></tr>
+      <tr><td><span style="">Ult. Venta</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;"  type="text" id="ultimaventa" value="0.00" readonly ></td></tr>
+      <tr><td><span style="">Ult. Compra</span></td><td><input style="margin: 0;background: #171A1E; color:white;font-weight:bold;text-align: right;" type="text" id="ultimacompra" value="0.00" readonly ></td></tr>
       <tr><td>Auto Comprar</td><td><label class="switch" for="local" title="Indica si trabajas con Auto-Compras"><input onclick="local()" style="margin-left: 0px;" type="checkbox" id="local"><span class="slider round"></span></label></td></tr>
       <tr><td>Auto Vender</td><td><label class="switch" for="orderBinance" title="Colocar los Escalones como Ordenes en Binance"><input onclick="bina()" type="checkbox" id="orderBinance" ><span class="slider round"></span></label></td></tr>
     </table>
