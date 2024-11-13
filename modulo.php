@@ -739,8 +739,9 @@ function returnAlertas($moneda){
   $vela_red_1 = readMinAnterior_Interval($moneda, 1);
   $vela_red_2 = readMinAnterior_Interval($moneda, 2);
   $vela_red_3 = readMinAnterior_Interval($moneda, 3);
+  $vela_red_4 = readMinAnterior_Interval($moneda, 4);
   
-  $min_value = min($vela_red_1, $vela_red_2, $vela_red_3);
+  $min_value = min($vela_red_1, $vela_red_2, $vela_red_3,$vela_red_4);
 
   $porcenmax = porcenConjunto($min_value, $priceArriba, $precio);
   $stop=0; 
@@ -748,7 +749,9 @@ function returnAlertas($moneda){
   //Nivel mas Bajo Alerta Roja
   if($priceAbajo < $min_value){
     $stop=1; //stop de alerta de compra
-    $variable = "red";
+    if(dayTendenciaAnalog($moneda) == 0){      
+      $variable = "red";
+    }
   }
 
   //Nivel mas alto de venta  Alerta Verde
@@ -767,8 +770,10 @@ function returnAlertas($moneda){
   }
   
   //Nivel de Fondo entre la baja y el alza
-  if($porcenmax > 1 && $porcenmax < 21 && $stop==0){
-    $variable = "yellow"; //se puede comprar
+  if($porcenmax > 1 && $porcenmax < 55 && $stop==1){
+    if(dayTendenciaAnalog($moneda) > 0){
+      $variable = "yellow"; //se puede comprar
+    }    
   }
 
   return $variable;  
