@@ -65,6 +65,7 @@ function escalon(){
 
 function agregar(){
     if(navigator.onLine){
+      leerDatos();
       let valor= "Limit";
       let t_precio = ""+priceFixed(document.getElementById('precioCompra').value);
       let simbol = document.getElementById('asset').value;

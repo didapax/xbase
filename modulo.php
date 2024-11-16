@@ -25,7 +25,7 @@ function getRealIpAddr(){
 }
 
 function getSession($usuario){
-  $row;
+  $row = array();
   $consulta = "SELECT * FROM USER WHERE USUARIO='{$usuario}'";
   $conexion = mysqli_connect($GLOBALS["servidor"],$GLOBALS["user"],$GLOBALS["password"],$GLOBALS["data"]);
   if (!$conexion) {
