@@ -607,6 +607,15 @@ function readClose_Interval($moneda,$interval){
   }  
 }
 
+function readOpen_Interval($moneda,$interval){
+  if(isset(row_sqlconector("select OPEN from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['OPEN'])){
+    return row_sqlconector("select OPEN from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['OPEN'];
+  }
+  else{
+    return row_sqlconector("select OPEN from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['OPEN'];
+  } 
+}
+
 function dayTendencia($moneda){
   $tendencia = "";
   $priceArriba = readPrices($moneda)['CLOSE'];
@@ -620,6 +629,17 @@ function dayTendencia($moneda){
   return $tendencia;
 }
 
+function dayTendenciaAnalog($moneda){
+  $tendencia = "0";
+  $priceArriba = readPrices($moneda)['CLOSE'];
+  if($priceArriba > readOpen_Interval($moneda,1)){
+    $tendencia = "1";
+  }else{
+    $tendencia = "0";
+  }
+  return $tendencia;
+}
+
 function animoTrader($usuario){
   $tendencia = "";
   $ganancias = readParametros($usuario)['GANANCIA'];
@@ -628,17 +648,6 @@ function animoTrader($usuario){
     $tendencia = "<span style=color:#4DCB85;font-weight:bold;>&#9650;</span>";
   }else{
     $tendencia = "<span style=color:#EA465C;font-weight:bold;>&#9660;</span>";
-  }
-  return $tendencia;
-}
-
-function dayTendenciaAnalog($moneda){
-  $tendencia = "0";
-  $priceArriba = readPrices($moneda)['CLOSE'];
-  if($priceArriba > readClose_Interval($moneda,1)){
-    $tendencia = "1";
-  }else{
-    $tendencia = "0";
   }
   return $tendencia;
 }
@@ -734,16 +743,22 @@ function returnAlertas($moneda){
   $priceArriba= $readPrice['ARRIBA'];
   $priceAbajo= $readPrice['ABAJO']; 
   
-  $variable = "black"; //sin alerta
+  $variable = "black"; //sin alerta 
   
   $vela_red_1 = readMinAnterior_Interval($moneda, 1);
   $vela_red_2 = readMinAnterior_Interval($moneda, 2);
   $vela_red_3 = readMinAnterior_Interval($moneda, 3);
   $vela_red_4 = readMinAnterior_Interval($moneda, 4);
   
-  $min_value = min($vela_red_1, $vela_red_2, $vela_red_3,$vela_red_4);
+  $vela_green_1 = readMaxAnterior_Interval($moneda, 1);
+  $vela_green_2 = readMaxAnterior_Interval($moneda, 2);
+  $vela_green_3 = readMaxAnterior_Interval($moneda, 3);
+  $vela_green_4 = readMaxAnterior_Interval($moneda, 4);
 
-  $porcenmax = porcenConjunto($min_value, $priceArriba, $precio);
+  $min_value = min($vela_red_1, $vela_red_2, $vela_red_3,$vela_red_4);
+  $max_value = max($vela_green_1, $vela_green_2, $vela_green_3,$vela_green_4);
+
+  $porcenmax = porcenConjunto($min_value, $max_value, $precio);
   $stop=0; 
 
   //Nivel mas Bajo Alerta Roja
@@ -756,17 +771,23 @@ function returnAlertas($moneda){
 
   //Nivel mas alto de venta  Alerta Verde
   if (nivelPorcentual_Venta($moneda)>89){
-    $variable = "green"; //alerta de venta
+    if(dayTendenciaAnalog($moneda) > 0){
+      $variable = "green"; //alerta de venta
+    }
   }
 
   //Nivel alto que Indicaria Posible alza
   if($porcenmax > 55 && $porcenmax < 89 && $stop==0){
-    $variable = "olive"; //alerta de venta
+    if(dayTendenciaAnalog($moneda) > 0){
+      $variable = "olive"; //alerta de venta
+    }
   }
 
   //Nivel Medio que indica podria ir al alza
   if( $porcenmax > 21 && $porcenmax < 55 && $stop==0 ){
-    $variable = "orange"; //intension de subir
+    if(dayTendenciaAnalog($moneda) > 0){
+      $variable = "orange"; //intension de subir
+    }
   }
   
   //Nivel de Fondo entre la baja y el alza
