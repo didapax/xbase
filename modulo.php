@@ -632,7 +632,7 @@ function dayTendencia($moneda){
 function dayTendenciaAnalog($moneda){
   $tendencia = "0";
   $priceArriba = readPrices($moneda)['CLOSE'];
-  if($priceArriba > readOpen_Interval($moneda,1)){
+  if($priceArriba > readClose_Interval($moneda,1)){
     $tendencia = "1";
   }else{
     $tendencia = "0";
@@ -758,7 +758,7 @@ function returnAlertas($moneda){
   $min_value = min($vela_red_1, $vela_red_2, $vela_red_3,$vela_red_4);
   $max_value = max($vela_green_1, $vela_green_2, $vela_green_3,$vela_green_4);
 
-  $porcenmax = porcenConjunto($min_value, $max_value, $precio);
+  $porcenmax = porcenConjunto($min_value, $priceArriba, $precio);
   $stop=0; 
 
   //Nivel mas Bajo Alerta Roja
