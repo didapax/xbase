@@ -556,64 +556,195 @@ function readPriceIntervar($moneda,$num_day){
   else{
     return row_sqlconector("SELECT * FROM PRICES WHERE MONEDA = '$moneda' AND DATE(FECHA) = CURDATE()");
   }  
-  /*
-  $query = "SELECT * FROM PRICES WHERE MONEDA = '$moneda' AND DATE(FECHA) = CURDATE() - INTERVAL $num_day DAY";
-  return row_sqlconector($query);*/
 }
 
+function readFlotadorAnterior($moneda) {
+  // Consultar con intervalo de 1 día
+  $queryConInterval = "
+      SELECT ARRIBA 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = DATE(CURRENT_DATE() - INTERVAL 1 DAY)";
 
-function readFlotadorAnterior($moneda){
-  if(isset(row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL 1 DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'])){
-    return row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL 1 DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'];
+  // Consultar sin intervalo (fecha actual)
+  $querySinInterval = "
+      SELECT ARRIBA 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = CURRENT_DATE()";
+
+  // Ejecutar consulta con intervalo
+  $resultConInterval = row_sqlconector($queryConInterval);
+
+  if (isset($resultConInterval['ARRIBA'])) {
+      return $resultConInterval['ARRIBA'];
+  } else {
+      // Ejecutar consulta sin intervalo
+      $resultSinInterval = row_sqlconector($querySinInterval);
+      return $resultSinInterval['ARRIBA'];
   }
-  else{
-    return row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'];
-  }  
 }
 
-function readMinAnterior($moneda){
-  if(isset(row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL 1 DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'])){
-    return row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL 1 DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'];
+function readMinAnterior($moneda) {
+  // Consultar con intervalo de 1 día
+  $queryConInterval = "
+      SELECT ABAJO 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = DATE(CURRENT_DATE() - INTERVAL 1 DAY)";
+
+  // Consultar sin intervalo (fecha actual)
+  $querySinInterval = "
+      SELECT ABAJO 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = CURRENT_DATE()";
+
+  // Ejecutar consulta con intervalo
+  $resultConInterval = row_sqlconector($queryConInterval);
+
+  if (isset($resultConInterval['ABAJO'])) {
+      return $resultConInterval['ABAJO'];
+  } else {
+      // Ejecutar consulta sin intervalo
+      $resultSinInterval = row_sqlconector($querySinInterval);
+      return $resultSinInterval['ABAJO'];
   }
-  else{
-    return row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'];
-  }  
 }
 
-function readMinAnterior_Interval($moneda,$interval){
-  if(isset(row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'])){
-    return row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'];
+function readMinAnterior_Interval($moneda, $interval) {
+  // Consultar con intervalo de días
+  $queryConInterval = "
+      SELECT ABAJO 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = DATE(CURRENT_DATE() - INTERVAL {$interval} DAY)";
+
+  // Consultar sin intervalo (fecha actual)
+  $querySinInterval = "
+      SELECT ABAJO 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = CURRENT_DATE()";
+
+  // Ejecutar consulta con intervalo
+  $resultConInterval = row_sqlconector($queryConInterval);
+
+  if (isset($resultConInterval['ABAJO'])) {
+      return $resultConInterval['ABAJO'];
+  } else {
+      // Ejecutar consulta sin intervalo
+      $resultSinInterval = row_sqlconector($querySinInterval);
+      return $resultSinInterval['ABAJO'];
   }
-  else{
-    return row_sqlconector("select ABAJO from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ABAJO'];
-  }  
 }
 
-function readMaxAnterior_Interval($moneda,$interval){
-  if(isset(row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'])){
-    return row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'];
+function readMaxAnterior_Interval($moneda, $interval) {
+  // Consultar con intervalo de días
+  $queryConInterval = "
+      SELECT ARRIBA 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = DATE(CURRENT_DATE() - INTERVAL {$interval} DAY)";
+
+  // Consultar sin intervalo (fecha actual)
+  $querySinInterval = "
+      SELECT ARRIBA 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = CURRENT_DATE()";
+
+  // Ejecutar consulta con intervalo
+  $resultConInterval = row_sqlconector($queryConInterval);
+
+  if (isset($resultConInterval['ARRIBA'])) {
+      return $resultConInterval['ARRIBA'];
+  } else {
+      // Ejecutar consulta sin intervalo
+      $resultSinInterval = row_sqlconector($querySinInterval);
+      return $resultSinInterval['ARRIBA'];
   }
-  else{
-    return row_sqlconector("select ARRIBA from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['ARRIBA'];
-  }  
 }
 
-function readClose_Interval($moneda,$interval){
-  if(isset(row_sqlconector("select CLOSE from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['CLOSE'])){
-    return row_sqlconector("select CLOSE from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['CLOSE'];
+function readBajista_Interval($moneda, $interval) {
+  // Consultar con intervalo de días
+  $queryConInterval = "
+      SELECT BAJISTA 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = DATE(CURRENT_DATE() - INTERVAL {$interval} DAY)";
+
+  // Consultar sin intervalo (fecha actual)
+  $querySinInterval = "
+      SELECT BAJISTA 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = CURRENT_DATE()";
+
+  // Ejecutar consulta con intervalo
+  $resultConInterval = row_sqlconector($queryConInterval);
+
+  if (isset($resultConInterval['BAJISTA'])) {
+      return $resultConInterval['BAJISTA'];
+  } else {
+      // Ejecutar consulta sin intervalo
+      $resultSinInterval = row_sqlconector($querySinInterval);
+      return $resultSinInterval['BAJISTA'];
   }
-  else{
-    return row_sqlconector("select CLOSE from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['CLOSE'];
-  }  
 }
 
-function readOpen_Interval($moneda,$interval){
-  if(isset(row_sqlconector("select OPEN from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['OPEN'])){
-    return row_sqlconector("select OPEN from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()  - INTERVAL $interval DAY) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['OPEN'];
+function readClose_Interval($moneda, $interval) {
+  // Consultar con intervalo de días
+  $queryConInterval = "
+      SELECT CLOSE 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = DATE(CURRENT_DATE() - INTERVAL {$interval} DAY)";
+
+  // Consultar sin intervalo (fecha actual)
+  $querySinInterval = "
+      SELECT CLOSE 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = CURRENT_DATE()";
+
+  // Ejecutar consulta con intervalo
+  $resultConInterval = row_sqlconector($queryConInterval);
+
+  if (isset($resultConInterval['CLOSE'])) {
+      return $resultConInterval['CLOSE'];
+  } else {
+      // Ejecutar consulta sin intervalo
+      $resultSinInterval = row_sqlconector($querySinInterval);
+      return $resultSinInterval['CLOSE'];
   }
-  else{
-    return row_sqlconector("select OPEN from PRICES WHERE MONEDA='{$moneda}' AND DAY(FECHA)= DAY(CURRENT_TIMESTAMP()) AND MONTH(FECHA)= MONTH(CURRENT_TIMESTAMP()) AND YEAR(FECHA)= YEAR(CURRENT_TIMESTAMP())")['OPEN'];
-  } 
+}
+
+function readOpen_Interval($moneda, $interval) {
+  // Consultar con intervalo de días
+  $queryConInterval = "
+      SELECT OPEN 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = DATE(CURRENT_DATE() - INTERVAL {$interval} DAY)";
+
+  // Consultar sin intervalo (fecha actual)
+  $querySinInterval = "
+      SELECT OPEN 
+      FROM PRICES 
+      WHERE MONEDA = '{$moneda}' 
+      AND FECHA = CURRENT_DATE()";
+
+  // Ejecutar consulta con intervalo
+  $resultConInterval = row_sqlconector($queryConInterval);
+
+  if (isset($resultConInterval['OPEN'])) {
+      return $resultConInterval['OPEN'];
+  } else {
+      // Ejecutar consulta sin intervalo
+      $resultSinInterval = row_sqlconector($querySinInterval);
+      return $resultSinInterval['OPEN'];
+  }
 }
 
 function dayTendencia($moneda){
@@ -742,6 +873,7 @@ function returnAlertas($moneda){
   $precio = $readPrice['ACTUAL'];
   $priceArriba= $readPrice['ARRIBA'];
   $priceAbajo= $readPrice['ABAJO']; 
+  $priceOpen = $readPrice['OPEN'];
   
   $variable = "black"; //sin alerta 
   
@@ -772,30 +904,39 @@ function returnAlertas($moneda){
   //Nivel mas alto de venta  Alerta Verde
   if (nivelPorcentual_Venta($moneda)>89){
     if(dayTendenciaAnalog($moneda) > 0){
-      $variable = "green"; //alerta de venta
+      $variable = "lime"; //alerta de venta
     }
   }
 
   //Nivel alto que Indicaria Posible alza
   if($porcenmax > 55 && $porcenmax < 89 && $stop==0){
     if(dayTendenciaAnalog($moneda) > 0){
-      $variable = "olive"; //alerta de venta
+      $variable = "green"; //alerta de venta
     }
   }
 
   //Nivel Medio que indica podria ir al alza
   if( $porcenmax > 21 && $porcenmax < 55 && $stop==0 ){
     if(dayTendenciaAnalog($moneda) > 0){
-      $variable = "orange"; //intension de subir
+      $variable = "olive"; //intension de subir
     }
   }
   
   //Nivel de Fondo entre la baja y el alza
+  //niveles de compra
   if($porcenmax > 1 && $porcenmax < 55 && $stop==1){
     if(dayTendenciaAnalog($moneda) > 0){
       $variable = "yellow"; //se puede comprar
     }    
   }
+
+  if($porcenmax > 1 && $porcenmax < 55 && $stop==0){
+    if((dayTendenciaAnalog($moneda) > 0) && ($priceOpen >= readClose_Interval($moneda,1)) &&($priceArriba > $vela_green_1)){
+      if($precio > readClose_Interval($moneda,1) &&  $precio <= readOpen_Interval($moneda,1) && readBajista_Interval($moneda,1) == 1){
+        $variable = "gold"; //se puede comprar
+      }      
+    }
+  }  
 
   return $variable;  
 }

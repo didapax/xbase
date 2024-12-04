@@ -36,20 +36,21 @@ function buscarAlertas() {
         $consulta = "SELECT * FROM DATOSUSUARIOS";
         $resultado = $conexion->query($consulta);
         while ($row = $resultado->fetch_assoc()) {
+            $colorAlerta = returnAlertas($row['MONEDA']);
             if (readParametros($row['USUARIO'])['AUTOBUY'] == 1) {
-                if(!ifTransactionExist($row['MONEDA'],$row['USUARIO'])){
-                    if(returnAlertas($row['MONEDA']) == "yellow"){
+                if(!ifTransactionExist($row['MONEDA'],$row['USUARIO'])){                    
+                    if($colorAlerta == "yellow" || $colorAlerta == "gold"){
                         autoBuy($row['USUARIO'],$row['MONEDA']);
                     }
                 }
             }
             if (readParametros($row['USUARIO'])['BINANCE'] == 1) {
                 if(!ifTransactionExist($row['MONEDA'],$row['USUARIO'])){
-                    if(returnAlertas($row['MONEDA']) == "green"){
+                    if($colorAlerta == "lime"){
                         autoSell($row['USUARIO'],$row['MONEDA']);
                     }
                 }
-            }          
+            }
         }
     } catch (Exception $e) {
         echo "Error en buscarEscalones: " . $e->getMessage();

@@ -223,9 +223,10 @@ if(getRealIpAddr() != getSession($_GET['token'])['IP']){
 <div style="width: 100%;padding: 3px; text-align: center;">  
   <span class="bolita" style="color:red;">&#9679; </span>En Baja
   <span class="bolita" style="color:yellow;">&#9679; </span>Comprar
-  <span class="bolita" style="color:orange;">&#9679; </span>Puede Subir
-  <span class="bolita" style="color:olive;">&#9679; </span>Alerta Venta
-  <span class="bolita" style="color:green;">&#9679; </span>Vende
+  <span class="bolita" style="color:gold;">&#9679; </span>Puede Comprar
+  <span class="bolita" style="color:olive;">&#9679; </span>Puede Subir
+  <span class="bolita" style="color:green;">&#9679; </span>Subiendo
+  <span class="bolita" style="color:lime;">&#9679; </span>Vende
 </div>
   </body>
 </html>
