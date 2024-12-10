@@ -73,11 +73,13 @@ if ($method == "GET") {
                 sqlconector("INSERT INTO USER (USUARIO) VALUES('$referencia')");
                 sqlconector("INSERT INTO DATOSUSUARIOS (USUARIO,ACTIVO) VALUES('$referencia',1)");
                 sqlconector("INSERT INTO PARAMETROS (USUARIO) VALUES('$referencia')");
-                echo "Usuario creado con exito el token asignado es: $referencia";
+		$obj = array('estatus'=>true,'token'=>$referencia);
+                echo json_encode($obj);
             }
         }
         else{
-            exit();
+		$obj = array('estatus'=>false,'token'=>'');
+                echo json_encode($obj);
             }
     }
 

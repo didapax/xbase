@@ -371,26 +371,31 @@ function quantity($valor, $asset, $par) {
   // Construir el símbolo
   $symbol = $asset . $par;
   $datos = readDatosMoneda($symbol);
+  
   // Obtener el valor de stepSize desde la base de datos
   $stepSize = $datos['STEPSIZE'];
-
+  
   // Verificar si se encontró el valor de stepSize
   if ($stepSize === null) {
       echo "Error: No se pudo obtener el 'stepSize' para el símbolo $symbol.\n";
       return null;
   }
-
+  
   // Ajustar la cantidad según el stepSize
   $adjustedQuantity = floor($valor / $stepSize) * $stepSize;
-
+  
   // Obtener el valor de minQty desde la base de datos (si es necesario)
   $minQty = $datos['MINQTY'];
-
+  
   // Asegurarse de que la cantidad ajustada es mayor o igual a minQty
   if ($adjustedQuantity < $minQty) {
       echo "Error: La cantidad ajustada $adjustedQuantity es menor que la cantidad mínima $minQty.\n";
       return null;
   }
+  
+  // Redondear la cantidad ajustada a la precisión adecuada
+  $precision = ceil(log10(1 / $stepSize)); // Determinar la cantidad de decimales necesarios según el stepSize
+  $adjustedQuantity = round($adjustedQuantity, $precision);
 
   return $adjustedQuantity;
 }
@@ -416,16 +421,17 @@ function autoLiquida($order) {
               $precioActual = readPrices($moneda)['ACTUAL'];
               $stopPrice = calcularMargenPerdida($priceBuy, $param['STOPLOSS']);
               //echo "\n stop a = $stopPrice";
-              if($precioActual > 0){
+            if($precioActual > 0){
                 if ($precioActual <= $stopPrice && $row['AUTOSTOP'] == 1) {
                   $order = $api->marketSell($moneda, $quantity);
                   if (isset($order['orderId'])) {
                       liquidar($id);
                   }
-              } 
-              else {
+                }
+                else {
                   if ($row['AUTOSELL'] == 1) {
                       $autoSell = calcularMargenGanancia($priceBuy, $param['AUTOSHELL']);
+                      $dias = calcularDiasEntreFechas($row['FECHA'], date('Y-m-d'));
                       //echo "\n  Venta a = $autoSell";
                       if ($precioActual > $autoSell) {
                           $order = $api->marketSell($moneda, $quantity);
@@ -433,8 +439,20 @@ function autoLiquida($order) {
                               liquidar($id);
                           }
                       }
+                      else{
+                        if($dias > 2){
+                          if($precioActual > $priceBuy){
+                            //si han pasado mas de dos dias estancado y ve la oportunidad de vender y recuperar lo hace sin cobro de impuesto solo recupera
+                            $quantityMarket = quantity($row['CANTIDAD'], $datos['ASSET'], $datos['PAR']);                            
+                            $order = $api->marketSell($moneda, $quantityMarket);
+                            if (isset($order['orderId'])) {
+                                liquidar($id);
+                            }
+                          }
+                        }
+                      }
                   }
-              }
+               }
             }
           } 
           else {
